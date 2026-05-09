@@ -32,9 +32,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ResponseStructure<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request, HttpServletResponse response
+            @Valid @RequestBody LoginRequest request, HttpServletResponse response,HttpServletRequest httpRequest
     ) {
-        return authService.login(request,response);
+        return authService.login(request,response,httpRequest);
     }
 
 

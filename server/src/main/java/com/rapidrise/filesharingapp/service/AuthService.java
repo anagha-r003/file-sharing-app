@@ -74,9 +74,12 @@ public class AuthService {
 
     public ResponseEntity<ResponseStructure<LoginResponse>> login(
             LoginRequest request,
-            HttpServletResponse httpResponse  // ADD THIS PARAMETER
+            HttpServletResponse httpResponse,
+            HttpServletRequest httpRequest
     ) {
         log.info("Login request received for email: {}", request.getEmail());
+
+        String deviceId = httpRequest.getHeader("X-Device-Id");
 
         // Check if user exists
         User user = userRepository.findByEmail(request.getEmail())
@@ -101,6 +104,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .expiryDate(LocalDateTime.now().plusDays(7))
                 .revoked(false)
+                .deviceId(deviceId)
                 .build();
         refreshTokenRepository.save(refreshTokenEntity);
 
