@@ -1,11 +1,14 @@
 package com.rapidrise.filesharingapp.controller;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
+import com.rapidrise.filesharingapp.dto.request.ForgotPasswordRequest;
 import com.rapidrise.filesharingapp.dto.request.LoginRequest;
 import com.rapidrise.filesharingapp.dto.request.RegisterRequest;
+import com.rapidrise.filesharingapp.dto.request.ResetPasswordRequest;
 import com.rapidrise.filesharingapp.dto.response.LoginResponse;
 import com.rapidrise.filesharingapp.dto.response.RefreshTokenResponse;
 import com.rapidrise.filesharingapp.service.AuthService;
+import com.rapidrise.filesharingapp.service.CreatePasswordResetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final CreatePasswordResetService passwordResetService;
 
     @PostMapping("/register")
     public ResponseEntity<ResponseStructure<String>> register(
@@ -51,5 +55,19 @@ public class AuthController {
             HttpServletResponse response
     ) {
         return authService.logout(request, response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ResponseStructure<String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        return passwordResetService.forgotPassword(request);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ResponseStructure<String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        return passwordResetService.resetPassword(request);
     }
 }

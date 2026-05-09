@@ -126,4 +126,14 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ResponseStructure<String>> handleTooManyRequests(
+            TooManyRequestsException ex) {
+        return ResponseBuilder.build(
+                HttpStatus.TOO_MANY_REQUESTS,
+                ex.getMessage(),
+                null
+        );
+    }
 }
