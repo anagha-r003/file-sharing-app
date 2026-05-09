@@ -33,7 +33,7 @@ public class CreatePasswordResetService {
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
     public ResponseEntity<ResponseStructure<String>> forgotPassword(
@@ -86,7 +86,7 @@ public class CreatePasswordResetService {
         String resetLink =
                 "http://localhost:5173/reset-password?token=" + rawToken;
 
-        sendResetEmail(email, resetLink);
+        emailService.sendPasswordResetEmail(email, resetLink);
 
         log.info("Reset link sent to email: {}", email);
 
@@ -162,18 +162,5 @@ public class CreatePasswordResetService {
         );
     }
 
-    // ─── SEND EMAIL ────────────────────────────────────────────
-
-    private void sendResetEmail(String toEmail, String resetLink) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("Password Reset Request");
-        message.setText(
-                "Click the link below to reset your password:\n\n"
-                        + resetLink
-                        + "\n\nThis link expires in 15 minutes."
-                        + "\n\nIf you did not request this, ignore this email."
-        );
-        mailSender.send(message);
-    }
+   
 }
