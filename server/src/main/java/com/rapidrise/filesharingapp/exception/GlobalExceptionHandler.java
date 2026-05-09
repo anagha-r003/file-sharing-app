@@ -115,4 +115,15 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ResponseStructure<String>> handleInvalidCredentials(
+            InvalidCredentialsException ex
+    ) {
+        return ResponseBuilder.build(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                null
+        );
+    }
 }
