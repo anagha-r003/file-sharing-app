@@ -143,6 +143,6 @@ public class JwtFilter extends OncePerRequestFilter {
             HttpServletRequest request
     ) {
         return request.getServletPath()
-                .startsWith("/api/auth");
+                .startsWith("/auth");
     }
 }

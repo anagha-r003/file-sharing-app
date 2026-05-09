@@ -3,14 +3,17 @@ package com.rapidrise.filesharingapp.service;
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.dto.request.LoginRequest;
 import com.rapidrise.filesharingapp.dto.response.LoginResponse;
+import com.rapidrise.filesharingapp.dto.response.RefreshTokenResponse;
+import com.rapidrise.filesharingapp.entity.RefreshToken;
 import com.rapidrise.filesharingapp.entity.User;
-import com.rapidrise.filesharingapp.exception.EmailAlreadyExistsException;
-import com.rapidrise.filesharingapp.exception.InvalidCredentialsException;
-import com.rapidrise.filesharingapp.exception.PasswordMismatchException;
-import com.rapidrise.filesharingapp.exception.UserNotFoundException;
+import com.rapidrise.filesharingapp.exception.*;
 import com.rapidrise.filesharingapp.jwt.JwtService;
+import com.rapidrise.filesharingapp.repository.RefreshTokenRepository;
 import com.rapidrise.filesharingapp.repository.UserRepository;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.rapidrise.filesharingapp.dto.request.RegisterRequest;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -26,6 +32,7 @@ import com.rapidrise.filesharingapp.dto.request.RegisterRequest;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     public ResponseEntity<ResponseStructure<String>> register(
@@ -66,7 +73,8 @@ public class AuthService {
     }
 
     public ResponseEntity<ResponseStructure<LoginResponse>> login(
-            LoginRequest request
+            LoginRequest request,
+            HttpServletResponse httpResponse  // ADD THIS PARAMETER
     ) {
         log.info("Login request received for email: {}", request.getEmail());
 
@@ -87,12 +95,28 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(user.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
+        // Save refresh token to DB
+        RefreshToken refreshTokenEntity = RefreshToken.builder()
+                .token(refreshToken)
+                .email(user.getEmail())
+                .expiryDate(LocalDateTime.now().plusDays(7))
+                .revoked(false)
+                .build();
+        refreshTokenRepository.save(refreshTokenEntity);
+
+        // Send refresh token as HttpOnly cookie
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // set true in production
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+        httpResponse.addCookie(cookie);
+
         log.info("Login successful for email: {}", request.getEmail());
 
-        // Response payload
+        // Response payload — NO refreshToken here
         LoginResponse response = LoginResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
@@ -104,5 +128,104 @@ public class AuthService {
                 response
         );
     }
+
+    public ResponseEntity<ResponseStructure<RefreshTokenResponse>> refreshToken(HttpServletRequest request ) {
+
+        String refreshToken = extractRefreshToken(request);
+        // Find token in DB
+        RefreshToken storedToken = refreshTokenRepository
+                .findByToken(refreshToken)
+                .orElseThrow(() ->
+                        new InvalidTokenException("Invalid refresh token"));
+
+        // Grace period — allow 30 seconds after revocation
+        if (storedToken.getRevoked() &&
+                storedToken.getExpiryDate()
+                        .isBefore(LocalDateTime.now().minusSeconds(30))) {
+            throw new InvalidTokenException("Refresh token revoked");
+        }
+
+        // Check token validity
+        if (!jwtService.isTokenValid(refreshToken)) {
+            throw new InvalidTokenException("Expired refresh token");
+        }
+
+        String email = jwtService.extractUsername(refreshToken);
+        String newAccessToken = jwtService.generateAccessToken(email);
+        String newRefreshToken = jwtService.generateRefreshToken(email);
+
+        // Revoke old token
+        storedToken.setRevoked(true);
+        refreshTokenRepository.save(storedToken);
+
+        // Save new token
+        RefreshToken newToken = RefreshToken.builder()
+                .token(newRefreshToken)
+                .email(email)
+                .expiryDate(LocalDateTime.now().plusDays(7))
+                .revoked(false)
+                .deviceId(storedToken.getDeviceId())
+                .build();
+        refreshTokenRepository.save(newToken);
+
+        log.info("Refresh token rotated for email: {}", email);
+
+        RefreshTokenResponse response=RefreshTokenResponse.builder()
+                .accessToken(newAccessToken)
+                .build();
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Token refershed",
+                response
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseStructure<String>> logout(
+            HttpServletRequest request,
+            HttpServletResponse httpResponse
+    ) {
+
+        String refreshToken = extractRefreshToken(request);
+        // Delete from DB
+        if (refreshToken != null) {
+            refreshTokenRepository
+                    .findByToken(refreshToken)
+                    .ifPresent(token -> {
+                        refreshTokenRepository.deleteByToken(refreshToken);
+                        log.info("Refresh token deleted for email: {}", token.getEmail());
+                    });
+        } else {
+            throw new InvalidTokenException("No refresh token found");
+        }
+
+        // Clear cookie from browser
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // set true in production
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // deletes the cookie
+        httpResponse.addCookie(cookie);
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Logout Successful",
+                null
+        );
+    }
+
+    private String extractRefreshToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("refreshToken")) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        throw new InvalidTokenException("No refresh token found");
+    }
+
 
 }

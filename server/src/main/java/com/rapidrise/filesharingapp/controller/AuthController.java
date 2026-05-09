@@ -4,7 +4,10 @@ import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.dto.request.LoginRequest;
 import com.rapidrise.filesharingapp.dto.request.RegisterRequest;
 import com.rapidrise.filesharingapp.dto.response.LoginResponse;
+import com.rapidrise.filesharingapp.dto.response.RefreshTokenResponse;
 import com.rapidrise.filesharingapp.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +32,24 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ResponseStructure<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request
+            @Valid @RequestBody LoginRequest request, HttpServletResponse response
     ) {
-        return authService.login(request);
+        return authService.login(request,response);
+    }
+
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ResponseStructure<RefreshTokenResponse>> refresh(
+            HttpServletRequest request
+    ) {
+        return authService.refreshToken(request);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ResponseStructure<String>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        return authService.logout(request, response);
     }
 }
