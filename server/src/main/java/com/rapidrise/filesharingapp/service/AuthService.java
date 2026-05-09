@@ -1,11 +1,16 @@
 package com.rapidrise.filesharingapp.service;
 
+import com.rapidrise.filesharingapp.entity.User;
+import com.rapidrise.filesharingapp.exception.PasswordMismatchException;
+import com.rapidrise.filesharingapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.rapidrise.filesharingapp.dto.request.RegisterRequest;
+
 
 @Service
 @RequiredArgsConstructor
@@ -14,7 +19,6 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
 
     public ResponseEntity<ResponseStructure<String>> register(
             RegisterRequest request
