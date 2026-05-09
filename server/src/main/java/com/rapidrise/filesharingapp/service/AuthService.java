@@ -1,8 +1,11 @@
 package com.rapidrise.filesharingapp.service;
 
+import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.entity.User;
+import com.rapidrise.filesharingapp.exception.EmailAlreadyExistsException;
 import com.rapidrise.filesharingapp.exception.PasswordMismatchException;
 import com.rapidrise.filesharingapp.repository.UserRepository;
+import com.rapidrise.filesharingapp.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
