@@ -1,6 +1,7 @@
 package com.rapidrise.filesharingapp.service;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
+import com.rapidrise.filesharingapp.dto.response.FileResponse;
 import com.rapidrise.filesharingapp.entity.User;
 import com.rapidrise.filesharingapp.entity.UserFile;
 import com.rapidrise.filesharingapp.enums.FileType;
@@ -15,23 +16,33 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -211,6 +222,186 @@ public class FileService {
                 "Files uploaded successfully",
                 null
         );
+    }
+
+    public ResponseEntity<ResponseStructure<Page<FileResponse>>>
+    getUserFiles(
+            int page,
+            int size
+    ) {
+
+        log.info("Fetching user files");
+
+        User user = SecurityUtil.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("uploadedAt").descending()
+        );
+
+        Page<UserFile> files =
+                fileRepository
+                        .findByUserIdAndIsDeletedFalse(
+                                user.getId(),
+                                pageable
+                        );
+
+        Page<FileResponse> dtoPage =
+                files.map(file -> FileResponse.builder()
+
+                        .id(file.getId())
+
+                        .name(file.getName())
+
+                        .size(file.getSize())
+
+                        .mimeType(file.getMimeType())
+
+                        .type(file.getType())
+
+                        .previewPath(file.getPreviewPath())
+
+                        .isStarred(file.getIsStarred())
+
+                        .uploadedAt(file.getUploadedAt())
+
+                        .build()
+                );
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Files fetched successfully",
+                dtoPage
+        );
+    }
+
+    public ResponseEntity<Resource> downloadFiles(List<Long> fileIds) throws IOException {
+
+        log.info("Download request for {} file(s)", fileIds.size());
+
+        User user = SecurityUtil.getCurrentUser();
+
+        if (fileIds == null || fileIds.isEmpty()) {
+            throw new InvalidFileException("No files selected");
+        }
+
+        log.info("Searching for fileIds: {}", fileIds);
+        log.info("Current user id: {}", user.getId());
+
+        // Fetch all files in one query instead of N+1
+        List<UserFile> files = fileRepository
+                .findAllByIdInAndUserIdAndIsDeletedFalse(fileIds, user.getId());
+
+        log.info("Files found: {}", files.size());
+
+        if (files.isEmpty()) {
+            throw new FileNotFoundException("No valid files found");
+        }
+
+        // SINGLE FILE DOWNLOAD
+        if (files.size() == 1) {
+
+            UserFile file = files.get(0);
+
+            Path filePath = Paths.get(file.getPath()).toAbsolutePath().normalize();
+            validateDownloadPath(filePath);
+
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists()) {
+                throw new FileNotFoundException("File not found on server");
+            }
+
+            updateDownloadAnalytics(file);
+            fileRepository.save(file);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(file.getMimeType()))
+                    .contentLength(file.getSize())
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + file.getName() + "\"")
+                    .body(resource);
+        }
+
+        // MULTI FILE ZIP DOWNLOAD
+        Path zipPath = Files.createTempFile("downloads_", ".zip");
+
+        try {
+            List<UserFile> downloadedFiles = new ArrayList<>();
+            Set<String> usedNames = new HashSet<>();
+
+            try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+
+                for (UserFile file : files) {
+
+                    Path filePath = Paths.get(file.getPath()).toAbsolutePath().normalize();
+                    validateDownloadPath(filePath);
+
+                    if (!Files.exists(filePath)) {
+                        log.warn("File missing on disk, skipping: {}", file.getId());
+                        continue;
+                    }
+
+                    // Deduplicate entry names
+                    String entryName = file.getName();
+                    int counter = 1;
+                    while (!usedNames.add(entryName)) {
+                        entryName = counter++ + "_" + file.getName();
+                    }
+
+                    zipOut.putNextEntry(new ZipEntry(entryName));
+                    Files.copy(filePath, zipOut);
+                    zipOut.closeEntry();
+
+                    updateDownloadAnalytics(file);
+                    downloadedFiles.add(file); // only track files actually zipped
+                }
+            }
+
+            if (downloadedFiles.isEmpty()) {
+                throw new FileNotFoundException("None of the selected files were found on server");
+            }
+
+            fileRepository.saveAll(downloadedFiles);
+
+            // Read into memory and delete temp file
+            byte[] zipBytes = Files.readAllBytes(zipPath);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(zipBytes.length)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"downloads.zip\"")
+                    .body(new ByteArrayResource(zipBytes));
+
+        } finally {
+            Files.deleteIfExists(zipPath); // always clean up temp file
+        }
+    }
+
+    private void updateDownloadAnalytics(UserFile file) {
+        file.setDownloadCount(file.getDownloadCount() + 1);
+        file.setMonthlyDownloadCount(file.getMonthlyDownloadCount() + 1);
+        file.setLastDownloadedAt(LocalDateTime.now());
+    }
+
+    private void validateDownloadPath(Path filePath) {
+
+        Path allowedDirectory = Paths.get(uploadDir)
+                .toAbsolutePath()
+                .normalize();
+
+        Path normalizedFilePath = filePath
+                .toAbsolutePath()
+                .normalize();
+
+        if (!normalizedFilePath.startsWith(allowedDirectory)) {
+
+            throw new SecurityException(
+                    "Access denied: invalid file path"
+            );
+        }
     }
 
     private void initializeUserStorage(User user) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rapidrise.filesharingapp.enums.FileType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -87,6 +88,18 @@ public class UserFile {
     @Builder.Default
     @Column(nullable = false)
     private Boolean encrypted = false;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    @Builder.Default
+    private Long downloadCount = 0L;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    @Builder.Default
+    private Long monthlyDownloadCount = 0L;
+
+    private LocalDateTime lastDownloadedAt;
 
     // File owner
     @ManyToOne(fetch = FetchType.LAZY)

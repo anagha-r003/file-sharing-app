@@ -71,6 +71,8 @@ public interface FileRepository extends JpaRepository<UserFile,Long> {
             LocalDateTime time
     );
 
+    List<UserFile> findAllByIdInAndUserIdAndIsDeletedFalse(List<Long> ids, Long userId);
+
     // Storage statistics
     @Query("""
 SELECT 
