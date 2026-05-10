@@ -136,4 +136,38 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<ResponseStructure<String>>
+    handleInvalidFileException(
+            InvalidFileException ex) {
+        return ResponseBuilder.build(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ResponseStructure<String>>
+    handleFileStorageException(
+            FileStorageException ex) {
+        return ResponseBuilder.build(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ex.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(StorageLimitExceededException.class)
+    public ResponseEntity<ResponseStructure<String>>
+    handleStorageLimitExceededException(
+            StorageLimitExceededException ex
+    ) {
+        return ResponseBuilder.build(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                ex.getMessage(),
+                null
+        );
+    }
 }
