@@ -75,6 +75,10 @@ public interface FileRepository extends JpaRepository<UserFile,Long> {
 
     List<UserFile> findAllByIdInAndUserIdAndIsDeletedFalse(List<Long> ids, Long userId);
 
+    List<UserFile> findAllByUserIdAndIsDeletedTrue(
+            Long userId
+    );
+
     // Storage statistics
     @Query("""
 SELECT 
@@ -143,4 +147,6 @@ AND f.isDeleted = false
     );
 
     List<UserFile> findAllByIdInAndUserIdAndIsDeletedTrue(ArrayList<Long> longs, Long id);
+
+
 }
