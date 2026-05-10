@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,8 +22,9 @@ public interface FileRepository extends JpaRepository<UserFile,Long> {
     );
 
     // Recycle bin files
-    List<UserFile> findByUserIdAndIsDeletedTrue(
-            Long userId
+    Page<UserFile> findByUserIdAndIsDeletedTrue(
+            Long userId,
+            Pageable pageable
     );
 
     // Starred files
@@ -139,4 +141,6 @@ AND f.isDeleted = false
     List<Object[]> getStorageStats(
             @Param("userId") Long userId
     );
+
+    List<UserFile> findAllByIdInAndUserIdAndIsDeletedTrue(ArrayList<Long> longs, Long id);
 }

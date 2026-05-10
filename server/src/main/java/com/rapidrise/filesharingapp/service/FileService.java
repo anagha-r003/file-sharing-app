@@ -8,6 +8,8 @@ import com.rapidrise.filesharingapp.enums.FileType;
 import com.rapidrise.filesharingapp.exception.FileStorageException;
 import com.rapidrise.filesharingapp.exception.InvalidFileException;
 import com.rapidrise.filesharingapp.exception.StorageLimitExceededException;
+import com.rapidrise.filesharingapp.exception.FileNotFoundException;
+
 import com.rapidrise.filesharingapp.repository.FileRepository;
 import com.rapidrise.filesharingapp.repository.UserRepository;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
@@ -32,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -378,6 +380,53 @@ public class FileService {
         } finally {
             Files.deleteIfExists(zipPath); // always clean up temp file
         }
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseStructure<String>> deleteFile(
+            List<Long> fileIds
+    ) {
+
+        log.info("Delete request for fileIds: {}", fileIds);
+
+        if (fileIds == null || fileIds.isEmpty()) {
+            throw new InvalidFileException(
+                    "No files selected"
+            );
+        }
+
+        User user = SecurityUtil.getCurrentUser();
+
+        Set<Long> uniqueIds = new HashSet<>(fileIds);
+
+        List<UserFile> files =
+                fileRepository.findAllByIdInAndUserIdAndIsDeletedFalse(
+                        new ArrayList<>(uniqueIds),
+                        user.getId()
+                );
+
+        if (files.size() != uniqueIds.size()) {
+
+            throw new FileNotFoundException(
+                    "One or more files not found"
+            );
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        for (UserFile file : files) {
+
+            file.setIsDeleted(true);
+            file.setDeletedAt(now);
+        }
+
+        fileRepository.saveAll(files);
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Files moved to Recycle Bin",
+                null
+        );
     }
 
     private void updateDownloadAnalytics(UserFile file) {

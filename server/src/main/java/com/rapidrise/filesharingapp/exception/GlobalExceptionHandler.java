@@ -170,4 +170,17 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(FileNotFoundException.class)
+    public ResponseEntity<ResponseStructure<String>>
+    handleFileNotFoundException(
+            FileNotFoundException ex
+    ) {
+
+        return ResponseBuilder.build(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                null
+        );
+    }
 }

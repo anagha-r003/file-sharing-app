@@ -63,6 +63,19 @@ public class FileController {
                 fileIds
         );
     }
+
+    @DeleteMapping
+    public ResponseEntity<ResponseStructure<String>>
+    deleteFiles(
+
+            @RequestBody
+            List<Long> fileIds
+    ) {
+
+        return fileService.deleteFile(fileIds);
+    }
+
+
 }
 
 
