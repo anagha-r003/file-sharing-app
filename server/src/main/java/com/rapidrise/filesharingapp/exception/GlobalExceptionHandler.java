@@ -183,4 +183,28 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<ResponseStructure<String>> handleUnauthorizedAccess(
+            UnauthorizedAccessException ex
+    ) {
+        return ResponseBuilder.build(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                null
+        );
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ResponseStructure<String>>
+    handleBadRequestException(
+            BadRequestException ex
+    ) {
+
+        return ResponseBuilder.build(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                null
+        );
+    }
 }

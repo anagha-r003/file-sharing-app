@@ -28,4 +28,6 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
             Long userId,
             LocalDateTime now
     );
+
+    boolean existsByFileIdAndRecipientEmailAndActiveTrue(Long fileId, String recipientEmail);
 }
