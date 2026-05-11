@@ -14,7 +14,7 @@ public class RecycleBinStatsResponse {
     private int expiringSoon;
 
     // Total recycle bin space usage in MB
-    private long spaceUsedMB;
+    private double spaceUsedMB;
 
     // Auto-delete retention period
     private int retentionDays;
