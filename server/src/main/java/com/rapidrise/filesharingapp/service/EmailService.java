@@ -39,6 +39,31 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
+    public void sendShareLinkEmail(
+            String toEmail,
+            String senderName,
+            String shareUrl,
+            String message
+    ) {
+
+        log.info("Sending share link email to {}", toEmail);
+
+        String subject =
+                senderName + " shared a file with you";
+
+        String body =
+                senderName + " has shared a file with you.\n\n"
+                        + (message != null && !message.isBlank()
+                        ? "Message: " + message + "\n\n"
+                        : "")
+                        + "Click the link below to access the file:\n"
+                        + shareUrl + "\n\n"
+                        + "This link may expire based on the sender's settings.";
+
+        sendEmail(toEmail, subject, body);
+    }
+
+
     // ─── COMMON SEND METHOD ────────────────────────────────────
 
     private void sendEmail(

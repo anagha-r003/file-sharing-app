@@ -111,6 +111,7 @@ public class JwtFilter extends OncePerRequestFilter {
             sendErrorResponse(res, e.getMessage());
 
         } catch (Exception e) {
+            log.error("JWT Filter Error: {}", e.getMessage(), e); // ← add e here
             sendErrorResponse(
                     res,
                     "Authentication failed"

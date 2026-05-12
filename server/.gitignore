@@ -32,7 +32,15 @@ build/
 ### VS Code ###
 .vscode/
 
+<<<<<<< HEAD
 ### Uploads ###
 uploads/
 
 
+=======
+# Uploaded files
+uploads/
+
+# Preview thumbnails
+uploads/previews/
+>>>>>>> feature/file-management

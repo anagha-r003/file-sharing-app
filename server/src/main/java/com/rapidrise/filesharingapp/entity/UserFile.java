@@ -1,13 +1,28 @@
 package com.rapidrise.filesharingapp.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.rapidrise.filesharingapp.enums.FileType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "files")
+@Table(
+        name = "files",
+        indexes = {
+
+                @Index(name = "idx_file_user", columnList = "user_id"),
+
+                @Index(name = "idx_file_deleted", columnList = "isDeleted"),
+
+                @Index(name = "idx_file_starred", columnList = "isStarred"),
+
+                @Index(name = "idx_file_type", columnList = "type")
+        }
+)
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,6 +38,10 @@ public class UserFile {
     @Column(nullable = false)
     private String name;
 
+    // Actual stored filename on disk (UUID based)
+    @Column(nullable = false, unique = true)
+    private String storedName;
+
     // File size in bytes
     @Column(nullable = false)
     private Long size;
@@ -36,6 +55,15 @@ public class UserFile {
     @JsonIgnore
     @Column(nullable = false, unique = true)
     private String path;
+
+    // Thumbnail / preview path
+    private String previewPath;
+
+    // File category
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FileType type;
+
 
     // Soft delete flag
     @Builder.Default
@@ -56,6 +84,22 @@ public class UserFile {
 
     // Trash deletion timestamp
     private LocalDateTime deletedAt;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean encrypted = false;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    @Builder.Default
+    private Long downloadCount = 0L;
+
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    @Builder.Default
+    private Long monthlyDownloadCount = 0L;
+
+    private LocalDateTime lastDownloadedAt;
 
     // File owner
     @ManyToOne(fetch = FetchType.LAZY)
