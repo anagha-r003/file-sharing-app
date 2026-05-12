@@ -33,7 +33,6 @@ build/
 .vscode/
 
 ### Uploads ###
-server/uploads/
+uploads/
 
-### Vite ###
-client/.vite/
+
