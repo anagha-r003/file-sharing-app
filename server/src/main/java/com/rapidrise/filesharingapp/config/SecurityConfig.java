@@ -25,23 +25,34 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
 
         http
+
+                // ADD THIS
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
+                )
+
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
                 )
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**"
                         ).permitAll()
+
                         .anyRequest().authenticated()
                 )
 
                 .formLogin(form -> form.disable())
+
                 .httpBasic(basic -> basic.disable())
 
                 .addFilterBefore(
