@@ -1,4 +1,9 @@
-import { FILE_TYPE_CONFIG, DOC_STAT_EXTS, IMAGE_EXTS, VIDEO_EXTS } from "../constants/fileTypes";
+import {
+  FILE_TYPE_CONFIG,
+  DOC_STAT_EXTS,
+  IMAGE_EXTS,
+  VIDEO_EXTS,
+} from "../common/constants/fileTypes";
 
 export const getFileExt = (name) =>
   name?.split(".").pop()?.toLowerCase().trim() || "";

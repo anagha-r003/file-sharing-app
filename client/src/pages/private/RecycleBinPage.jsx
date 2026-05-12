@@ -8,22 +8,22 @@ import {
   Calendar,
 } from "lucide-react";
 
-import PageLayout from "../layouts/PageLayout";
-import DaysBar from "../components/recyclebin/DaysBar";
-import ConfirmModal from "../components/recyclebin/ConfirmModal";
+import PageLayout from "../../layout/PageLayout";
+import DaysBar from "../../components/recyclebin/DayBar";
+import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 
-import Pagination from "../common/components/ui/Pagination";
-import SearchInput from "../common/components/ui/SearchInput";
+import Pagination from "../../common/ui/Pagination";
+import { SearchInput } from "../../common/ui";
 
 import {
-  getDeletedFiles,
-  restoreFile,
-  permanentlyDeleteFile,
-  emptyRecycleBin,
-  restoreAllFiles,
-} from "../services/fileService";
+    getDeletedFiles,
+    restoreFiles,
+    permanentlyDeleteFiles,
+    emptyRecycleBin,
+    restoreAllFiles
+} from "../../services/recyclebinService";
 
-function RecycleBin() {
+function RecycleBinPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [files, setFiles] = useState([]);
@@ -49,14 +49,13 @@ function RecycleBin() {
 
     window.addEventListener("resize", handleResize);
 
-    return () =>
-      window.removeEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Filtered files
   const filtered = useMemo(() => {
     return files.filter((f) =>
-      f.name.toLowerCase().includes(search.toLowerCase())
+      f.name.toLowerCase().includes(search.toLowerCase()),
     );
   }, [files, search]);
 
@@ -68,14 +67,9 @@ function RecycleBin() {
   // Pagination logic
   const totalPages = Math.ceil(filtered.length / pageSize);
 
-  const paginated = filtered.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  );
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const expiringSoon = files.filter(
-    (f) => f.daysLeft <= 7
-  ).length;
+  const expiringSoon = files.filter((f) => f.daysLeft <= 7).length;
 
   const getFileEmoji = (type) => {
     const map = {
@@ -100,10 +94,7 @@ function RecycleBin() {
       FIG: "bg-blue-500/10 text-blue-400",
     };
 
-    return (
-      map[type?.toUpperCase()] ||
-      "bg-slate-500/10 text-slate-400"
-    );
+    return map[type?.toUpperCase()] || "bg-slate-500/10 text-slate-400";
   };
 
   const formatFiles = (data) => {
@@ -112,14 +103,11 @@ function RecycleBin() {
 
       const now = new Date();
 
-      const daysSince = Math.floor(
-        (now - deletedAt) / (1000 * 60 * 60 * 24)
-      );
+      const daysSince = Math.floor((now - deletedAt) / (1000 * 60 * 60 * 24));
 
       const daysLeft = Math.max(0, 30 - daysSince);
 
-      const fileType =
-        file.type?.toUpperCase() || "FILE";
+      const fileType = file.type?.toUpperCase() || "FILE";
 
       return {
         id: file.id,
@@ -128,19 +116,14 @@ function RecycleBin() {
         size:
           file.size < 1024 * 1024
             ? (file.size / 1024).toFixed(1) + " KB"
-            : (
-                file.size /
-                (1024 * 1024)
-              ).toFixed(2) + " MB",
+            : (file.size / (1024 * 1024)).toFixed(2) + " MB",
 
         type: fileType,
 
         deletedAgo:
           daysSince === 0
             ? "Today"
-            : `${daysSince} day${
-                daysSince > 1 ? "s" : ""
-              } ago`,
+            : `${daysSince} day${daysSince > 1 ? "s" : ""} ago`,
 
         daysLeft,
 
@@ -158,28 +141,22 @@ function RecycleBin() {
       const res = await getDeletedFiles();
 
       setFiles(formatFiles(res.data));
-
     } catch (err) {
-      console.error(
-        "Error fetching deleted files:",
-        err
-      );
-
+      console.error("Error fetching deleted files:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchDeletedFiles();
-  }, []);
+  // useEffect(() => {
+  //   fetchDeletedFiles();
+  // }, []);
 
   const restore = async (id) => {
     try {
       await restoreFile(id);
 
       await fetchDeletedFiles();
-
     } catch (err) {
       console.error("Restore failed", err);
     }
@@ -190,7 +167,6 @@ function RecycleBin() {
       await permanentlyDeleteFile(id);
 
       await fetchDeletedFiles();
-
     } catch (err) {
       console.error("Delete failed", err);
     }
@@ -213,10 +189,8 @@ function RecycleBin() {
       }
 
       await fetchDeletedFiles();
-
     } catch (err) {
       console.error("Action failed", err);
-
     } finally {
       setModal(null);
     }
@@ -265,9 +239,7 @@ function RecycleBin() {
       title="Recycle Bin"
       sidebarOpen={sidebarOpen}
       setSidebarOpen={setSidebarOpen}
-      onMenuClick={() =>
-        setSidebarOpen((prev) => !prev)
-      }
+      onMenuClick={() => setSidebarOpen((prev) => !prev)}
       contentClassName="space-y-4 md:space-y-5"
     >
       {/* Warning Banner */}
@@ -289,50 +261,37 @@ function RecycleBin() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        {stats.map(
-          ({
-            label,
-            value,
-            sub,
-            Icon,
-            ring,
-            ic,
-          }) => (
-            <div
-              key={label}
-              className="bg-[#13151a] border border-white/5 rounded-2xl p-4 md:p-5 flex flex-col gap-2.5"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
-                  {label}
-                </span>
+        {stats.map(({ label, value, sub, Icon, ring, ic }) => (
+          <div
+            key={label}
+            className="bg-[#13151a] border border-white/5 rounded-2xl p-4 md:p-5 flex flex-col gap-2.5"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+                {label}
+              </span>
 
-                <div
-                  className={`w-8 h-8 rounded-lg ${ring} flex items-center justify-center`}
-                >
-                  <Icon size={15} className={ic} />
-                </div>
-              </div>
-
-              <div className="text-2xl md:text-3xl font-bold text-white">
-                {value}
-              </div>
-
-              <div className="text-xs text-slate-600">
-                {sub}
+              <div
+                className={`w-8 h-8 rounded-lg ${ring} flex items-center justify-center`}
+              >
+                <Icon size={15} className={ic} />
               </div>
             </div>
-          )
-        )}
+
+            <div className="text-2xl md:text-3xl font-bold text-white">
+              {value}
+            </div>
+
+            <div className="text-xs text-slate-600">{sub}</div>
+          </div>
+        ))}
       </div>
 
       {/* Search + Actions */}
       <div className="bg-[#13151a] border border-white/5 rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <SearchInput
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           onClear={() => setSearch("")}
           placeholder="Search deleted files..."
           className="flex-1"
@@ -340,9 +299,7 @@ function RecycleBin() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() =>
-              setModal({ type: "restoreAll" })
-            }
+            onClick={() => setModal({ type: "restoreAll" })}
             disabled={files.length === 0}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl text-sm font-medium transition disabled:opacity-40"
           >
@@ -351,9 +308,7 @@ function RecycleBin() {
           </button>
 
           <button
-            onClick={() =>
-              setModal({ type: "emptyBin" })
-            }
+            onClick={() => setModal({ type: "emptyBin" })}
             disabled={files.length === 0}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium transition disabled:opacity-40"
           >
@@ -372,9 +327,7 @@ function RecycleBin() {
           <div>Type</div>
           <div>Deleted</div>
           <div>Days Left</div>
-          <div className="text-right">
-            Actions
-          </div>
+          <div className="text-right">Actions</div>
         </div>
 
         {/* Loading */}
@@ -387,10 +340,7 @@ function RecycleBin() {
         {/* Empty State */}
         {!loading && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-600">
-            <Trash2
-              size={40}
-              className="opacity-20"
-            />
+            <Trash2 size={40} className="opacity-20" />
 
             <p className="text-sm">
               {search
@@ -431,9 +381,7 @@ function RecycleBin() {
                   </div>
                 </div>
 
-                <div className="text-sm text-slate-500">
-                  {file.size}
-                </div>
+                <div className="text-sm text-slate-500">{file.size}</div>
 
                 <div>
                   <span className="text-[10px] font-semibold tracking-wider text-slate-500 bg-white/5 border border-white/10 rounded-md px-2 py-1">
@@ -441,19 +389,13 @@ function RecycleBin() {
                   </span>
                 </div>
 
-                <div className="text-sm text-slate-500">
-                  {file.deletedAgo}
-                </div>
+                <div className="text-sm text-slate-500">{file.deletedAgo}</div>
 
-                <DaysBar
-                  daysLeft={file.daysLeft}
-                />
+                <DaysBar daysLeft={file.daysLeft} />
 
                 <div className="flex items-center gap-2 justify-end">
                   <button
-                    onClick={() =>
-                      restore(file.id)
-                    }
+                    onClick={() => restore(file.id)}
                     className="w-8 h-8 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 flex items-center justify-center transition"
                   >
                     <RotateCcw size={13} />
@@ -491,13 +433,9 @@ function RecycleBin() {
                       {file.type}
                     </span>
 
-                    <span className="text-xs text-slate-600">
-                      {file.size}
-                    </span>
+                    <span className="text-xs text-slate-600">{file.size}</span>
 
-                    <DaysBar
-                      daysLeft={file.daysLeft}
-                    />
+                    <DaysBar daysLeft={file.daysLeft} />
                   </div>
 
                   <p className="text-xs text-slate-600 mt-0.5">
@@ -507,9 +445,7 @@ function RecycleBin() {
 
                 <div className="flex flex-col gap-1.5">
                   <button
-                    onClick={() =>
-                      restore(file.id)
-                    }
+                    onClick={() => restore(file.id)}
                     className="w-8 h-8 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 flex items-center justify-center transition"
                   >
                     <RotateCcw size={13} />
@@ -552,8 +488,8 @@ function RecycleBin() {
             modal.type === "delete"
               ? "Permanently delete this file? This cannot be undone."
               : modal.type === "emptyBin"
-              ? "Empty the entire Recycle Bin?"
-              : "Restore all files back to your vault?"
+                ? "Empty the entire Recycle Bin?"
+                : "Restore all files back to your vault?"
           }
           onConfirm={handleConfirm}
           onCancel={() => setModal(null)}
@@ -562,4 +498,4 @@ function RecycleBin() {
     </PageLayout>
   );
 }
-export default RecycleBin;
+export default RecycleBinPage;

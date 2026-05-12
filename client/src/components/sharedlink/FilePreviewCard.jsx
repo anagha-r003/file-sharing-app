@@ -1,14 +1,8 @@
 import { useState } from "react";
-import FileActions from "./Fileactions";
+import FileActions from "./FileActions";
 import { FileIcon } from "lucide-react";
 import { ClockIcon } from "lucide-react";
 import { SearchIcon } from "lucide-react";
-// ADD these instead
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
-
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 /**
  * FilePreviewCard
  * Props:
@@ -82,16 +76,12 @@ export default function FilePreviewCard({
 
         {/* PDF Preview */}
         {isPdf && (
-          <div className="overflow-hidden">
-            <Document file={previewUrl}>
-              <Page
-                pageNumber={1}
-                width={420}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
-            </Document>
-          </div>
+          <iframe
+            src={previewUrl}
+            title={fileName}
+            className="w-full h-full"
+            frameBorder="0"
+          />
         )}
 
         {/* Image Preview */}

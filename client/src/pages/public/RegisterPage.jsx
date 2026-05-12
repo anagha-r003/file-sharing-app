@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { registerUser } from "../services/authService";
+import { registerUser } from "../../services/authService";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 

@@ -1,4 +1,4 @@
-import { getFileMeta, formatSize } from "../../../common/utils/fileUtils";
+import { getFileMeta, formatSize } from "../../utils/fileUtils";
 
 function FileTableGridView({
   paginated,

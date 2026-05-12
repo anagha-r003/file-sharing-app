@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import "../App.css";
+import "../../App.css";
 
-import TopBar from "../components/sharedlink/TopBar";
-import SharedByChip from "../components/sharedlink/SharedbyChip";
-import FilePreviewCard from "../components/sharedlink/FilePreviewCard";
-import PageFooter from "../components/sharedlink/PageFooter";
-import Toast from "../components/sharedlink/Toast ";
-import LinkExpired from "../components/sharedlink/LinkExpired";
+import TopBar from "../../components/sharedlink/TopBar";
+import SharedByChip from "../../components/sharedlink/SharedByChip";
+import FilePreviewCard from "../../components/sharedlink/FilePreviewCard";
+import PageFooter from "../../components/sharedlink/PageFooter";
+import Toast from "../../components/sharedlink/Toast";
+import LinkExpired from "../../components/sharedlink/LinkExpired";
 
 // ─── Demo data (replace with real props / API data) ───────────────────────────
 // const FILE = {
@@ -39,24 +39,28 @@ export default function SharedLinkPreviewPage() {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchSharedFile();
+    if (!token) {
+      return;
     }
+
+    const fetchSharedFile = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/share/${token}`,
+        );
+
+        setFileData(response.data.data);
+      } catch (error) {
+        console.error(error);
+
+        showToast("Failed to load shared file");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSharedFile();
   }, [token]);
-
-  const fetchSharedFile = async () => {
-    try {
-      const response = await axios.get(`http://localhost:8080/share/${token}`);
-
-      setFileData(response.data.data);
-    } catch (error) {
-      console.error(error);
-
-      showToast("Failed to load shared file");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

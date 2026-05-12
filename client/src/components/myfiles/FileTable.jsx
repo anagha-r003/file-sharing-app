@@ -5,16 +5,16 @@ import {
   viewFile,
   starFile,
   unstarFile,
-} from "../../../services/fileService";
-import ShareModal from "./ShareModal";
+} from "../../services/fileService";
+import ShareModal from "./ShareModal/ShareModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import FileTableStats from "./FileTableStats";
 import FileTableToolbar from "./FileTableToolbar";
 import FileTableListView from "./FileTableListView";
 import FileTableGridView from "./FileTableGridView";
 import Pagination from "../../common/ui/Pagination";
-import { getFileStats } from "../../../common/utils/fileUtils";
-import { PAGE_SIZE_OPTIONS } from "../../../common/constants/fileTypes";
+import { getFileStats } from "../../utils/fileUtils";
+import { PAGE_SIZE_OPTIONS } from "../../common/constants/fileTypes";
 
 function FileTable({ files, onRefresh }) {
   const [shareFile, setShareFile] = useState(null);

@@ -1,4 +1,4 @@
-import { PAGE_SIZE_OPTIONS } from "../../../common/constants/fileTypes";
+import { PAGE_SIZE_OPTIONS } from "../../common/constants/fileTypes";
 
 function FileTableToolbar({
   search,
@@ -71,7 +71,9 @@ function FileTableToolbar({
               title="Delete selected"
               className="p-2 rounded-lg text-red-400 bg-red-400/10 hover:bg-red-400/20 border border-red-400/20 transition disabled:opacity-50"
             >
-              <span className="material-symbols-outlined text-base">delete</span>
+              <span className="material-symbols-outlined text-base">
+                delete
+              </span>
             </button>
             <button
               onClick={onClearSelection}

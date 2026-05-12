@@ -1,10 +1,10 @@
-import  { useState, useEffect } from "react";
-import SummaryCards from "../components/dashboard/SummaryCards";
-import QuickUploadCard from "../components/dashboard/QuickUploadCard";
-import RecentActivity from "../components/dashboard/RecentActivity";
-import StorageHealth from "../components/dashboard/StorageHealth";
-import PageLayout from "../layouts/PageLayout";
-import { useAuth } from "../context/AuthContext";
+import { useState, useEffect } from "react";
+import SummaryCards from "../../components/dashboard/SummaryCards";
+import QuickUploadCard from "../../components/dashboard/QuickUploadCard";
+import RecentActivity from "../../components/dashboard/RecentActivity";
+import StorageHealth from "../../components/dashboard/StorageHealth";
+import PageLayout from "../../layout/PageLayout";
+import { useAuth } from "../../context/AuthContext";
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -22,8 +22,7 @@ const DashboardPage = () => {
 
     window.addEventListener("resize", handleResize);
 
-    return () =>
-      window.removeEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
@@ -31,20 +30,17 @@ const DashboardPage = () => {
       title="Dashboard"
       sidebarOpen={sidebarOpen}
       setSidebarOpen={setSidebarOpen}
-      onMenuClick={() =>
-        setSidebarOpen((prev) => !prev)
-      }
+      onMenuClick={() => setSidebarOpen((prev) => !prev)}
       contentClassName="lg:p-8 space-y-6 md:space-y-8"
     >
       <header>
         <h2 className="text-2xl md:text-3xl font-bold text-white font-display tracking-tight">
-          Welcome back,{" "}
-          {user?.firstName || user?.name || "User"}
+          Welcome back, {user?.firstName || user?.name || "User"}
         </h2>
 
         <p className="text-slate-500 text-sm md:text-base mt-1">
-          Your enterprise environment is currently
-          operating within optimal parameters.
+          Your enterprise environment is currently operating within optimal
+          parameters.
         </p>
       </header>
 

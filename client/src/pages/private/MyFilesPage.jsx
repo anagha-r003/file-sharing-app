@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import FileTable from "../components/features/myfiles/FileTable";
-import { getFiles } from "../services/fileService";
-import { getFolders } from "../services/folderService";
+import FileTable from "../../components/myfiles/FileTable";
+import { getFiles } from "../../services/fileService";
+import { getFolders } from "../../services/folderService";
 import { useLocation } from "react-router-dom";
-import PageLayout from "../layouts/PageLayout";
+import PageLayout from "../../layout/PageLayout";
 
 function MyFilesPage() {
   const [files, setFiles] = useState([]);
@@ -17,33 +17,21 @@ function MyFilesPage() {
     setLoading(true);
 
     try {
-      const [filesRes, foldersRes] =
-        await Promise.all([
-          getFiles(),
-          getFolders(),
-        ]);
+      const [filesRes, foldersRes] = await Promise.all([
+        getFiles(),
+        getFolders(),
+      ]);
 
       console.log("Files response:", filesRes);
       console.log("Folders response:", foldersRes);
 
-      setFiles(
-        Array.isArray(filesRes)
-          ? filesRes
-          : filesRes.data || []
-      );
+      setFiles(Array.isArray(filesRes) ? filesRes : filesRes.data || []);
 
       setFolders(
-        Array.isArray(foldersRes)
-          ? foldersRes
-          : foldersRes.data || []
+        Array.isArray(foldersRes) ? foldersRes : foldersRes.data || [],
       );
-
     } catch (err) {
-      console.error(
-        "Failed to fetch data:",
-        err
-      );
-
+      console.error("Failed to fetch data:", err);
     } finally {
       setLoading(false);
     }
@@ -52,23 +40,14 @@ function MyFilesPage() {
   // Responsive sidebar
   useEffect(() => {
     const handleResize = () => {
-      setSidebarOpen(
-        window.innerWidth >= 1024
-      );
+      setSidebarOpen(window.innerWidth >= 1024);
     };
 
     handleResize();
 
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
+    window.addEventListener("resize", handleResize);
 
-    return () =>
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Fetch data
@@ -81,20 +60,12 @@ function MyFilesPage() {
       title="My Files"
       sidebarOpen={sidebarOpen}
       setSidebarOpen={setSidebarOpen}
-      onMenuClick={() =>
-        setSidebarOpen((prev) => !prev)
-      }
+      onMenuClick={() => setSidebarOpen((prev) => !prev)}
     >
       {loading ? (
-        <div className="p-16 text-center text-slate-500">
-          Loading files...
-        </div>
+        <div className="p-16 text-center text-slate-500">Loading files...</div>
       ) : (
-        <FileTable
-          files={files}
-          folders={folders}
-          onRefresh={fetchData}
-        />
+        <FileTable files={files} folders={folders} onRefresh={fetchData} />
       )}
     </PageLayout>
   );

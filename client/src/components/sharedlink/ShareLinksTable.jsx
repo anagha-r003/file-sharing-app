@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { revokeShareLink } from "../../services/shareService";
-import Pagination from "../common/Pagination";
+import Pagination from "../../common/ui/Pagination";
 // Import your component here
-import SearchInput from "../common/SearchInput";
+import { SearchInput } from "../../common/ui";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";

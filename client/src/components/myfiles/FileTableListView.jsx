@@ -1,4 +1,4 @@
-import { getFileMeta, formatSize, formatDate } from "../../../common/utils/fileUtils";
+import { getFileMeta, formatSize, formatDate } from "../../utils/fileUtils";
 
 const CB =
   "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition";
