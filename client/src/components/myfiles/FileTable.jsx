@@ -210,6 +210,8 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
             onToggleStar={handleToggleStar}
             allPageSelected={allPageSelected}
             toggleSelectAll={toggleSelectAll}
+            onShare={(file) => setShareFile(file)}
+            onDelete={(file) => setDeleteTarget(file)}
           />
         )}
 

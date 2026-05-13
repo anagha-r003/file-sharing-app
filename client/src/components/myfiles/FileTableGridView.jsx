@@ -1,5 +1,42 @@
 import { getFileMeta, formatSize } from "../../utils/fileUtils";
 
+function Checkbox({ checked, onChange }) {
+  return (
+    <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="sr-only"
+      />
+      <div
+        className={`w-4 h-4 rounded border transition flex items-center justify-center flex-shrink-0 ${
+          checked
+            ? "bg-violet-600 border-violet-600"
+            : "border-slate-500 bg-black/40"
+        }`}
+      >
+        {checked && (
+          <svg
+            className="w-2.5 h-2.5 text-white"
+            viewBox="0 0 10 8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1 4L3.5 6.5L9 1"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </div>
+    </label>
+  );
+}
+
 function FileTableGridView({
   paginated,
   search,
@@ -8,9 +45,6 @@ function FileTableGridView({
   onCheckboxChange,
   onToggleStar,
 }) {
-  const CB =
-    "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition";
-
   return (
     <div className="p-4 md:p-6">
       {paginated.length > 0 && (
@@ -35,29 +69,34 @@ function FileTableGridView({
                 >
                   {/* Checkbox — top left, hover only */}
                   <div
-                    className="absolute top-2 left-2 z-10"
+                    className={`absolute top-2 left-2 z-10 transition-opacity ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={isSelected}
                       onChange={(e) => onCheckboxChange(file.id, e)}
-                      className={`${CB} ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                     />
                   </div>
 
-                  {/* Star — top right */}
+                  {/* Star — top right, hover only unless starred */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       onToggleStar(file);
                     }}
-                    className={`absolute top-2 right-2 z-10 p-1 rounded-lg bg-black/40 transition ${file.isStarred ? "opacity-100 text-yellow-400" : "opacity-0 group-hover:opacity-100 text-white hover:text-yellow-400"}`}
+                    className={`absolute top-2 right-2 z-10 p-1 rounded-lg bg-black/40 transition-all ${
+                      file.isStarred
+                        ? "opacity-100 text-yellow-400"
+                        : "opacity-0 group-hover:opacity-100 text-white hover:text-yellow-400"
+                    }`}
                     title={file.isStarred ? "Unstar" : "Star"}
                   >
-                    <span className="material-symbols-outlined text-base">
-                      {file.isStarred ? "star" : "star_outline"}
+                    <span
+                      className="material-symbols-outlined text-base"
+                      style={{ fontVariationSettings: file.isStarred ? "'FILL' 1" : "'FILL' 0" }}
+                    >
+                      star
                     </span>
                   </button>
 
