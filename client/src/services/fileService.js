@@ -106,3 +106,5 @@ export const unstarFile = async (fileId) => {
   const response = await api.post(`/files/${fileId}/unstar`);
   return response.data;
 };
+
+

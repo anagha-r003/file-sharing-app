@@ -8,20 +8,17 @@ import { useAuth } from "../../context/AuthContext";
 
 const DashboardPage = () => {
   const { user } = useAuth();
-
-  // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Responsive sidebar behavior
+  const handleUploadSuccess = () => {
+    setRefreshKey((prev) => prev + 1); // triggers re-fetch
+  };
+
   useEffect(() => {
-    const handleResize = () => {
-      setSidebarOpen(window.innerWidth >= 1024);
-    };
-
+    const handleResize = () => setSidebarOpen(window.innerWidth >= 1024);
     handleResize();
-
     window.addEventListener("resize", handleResize);
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -37,23 +34,21 @@ const DashboardPage = () => {
         <h2 className="text-2xl md:text-3xl font-bold text-white font-display tracking-tight">
           Welcome back, {user?.firstName || user?.name || "User"}
         </h2>
-
         <p className="text-slate-500 text-sm md:text-base mt-1">
           Your enterprise environment is currently operating within optimal
           parameters.
         </p>
       </header>
 
-      <SummaryCards />
+      <SummaryCards refreshKey={refreshKey} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
-          <QuickUploadCard />
+          <QuickUploadCard onUploadComplete={handleUploadSuccess} />
           <RecentActivity />
         </div>
-
         <div className="lg:col-span-1">
-          <StorageHealth />
+          <StorageHealth refreshKey={refreshKey} />
         </div>
       </div>
     </PageLayout>

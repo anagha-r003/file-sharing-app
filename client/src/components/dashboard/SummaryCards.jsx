@@ -1,25 +1,36 @@
-function SummaryCards() {
+import { useState, useEffect } from "react";
+import { getDashboardStats } from "../../services/dashboardService";
+
+function SummaryCards({ refreshKey }) {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    getDashboardStats()
+      .then(setStats)
+      .catch(console.error);
+  }, [refreshKey]);
+
   const cards = [
     {
       label: "TOTAL ASSETS",
-      value: 0,
+      value: stats?.totalAssets ?? 0,
       sub: "Your uploaded files",
       icon: "inventory_2",
       color: "text-emerald-400",
     },
     {
       label: "ACTIVE SHARES",
-      value: 0,
+      value: stats?.activeShares ?? 0,
       sub: "Currently active links",
       icon: "hub",
       color: "text-orange-400",
     },
     {
-      label: "TOTAL ACCESSES",
-      value: 0,
-      sub: "All-time link opens",
-      icon: "visibility",
-      color: "text-violet-400",
+      label: "TOTAL DOWNLOADS",
+      value: stats?.totalDownloads ?? 0,
+      sub: "All-time file downloads",
+      icon: "download",
+      color: "text-blue-400",
     },
   ];
 

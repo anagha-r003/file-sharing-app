@@ -59,7 +59,7 @@ function buildArcs(categories, totalMB) {
 //const ARCS = buildArcs();
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function StorageHealth() {
+export default function StorageHealth({refreshKey}) {
   const [storageData, setStorageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,8 +70,9 @@ export default function StorageHealth() {
         setLoading(true); // step A: start loading
 
         const result = await getStorageStats(); // step B: call your service
-        setStorageData(result.data); // step C: store the nested data
+        setStorageData(result); // step C: store the nested data
       } catch (err) {
+        console.log("Storage error:", err); 
         setError(err.message); // step D: if anything fails, store the error
       } finally {
         setLoading(false); // step E: always stop loading, success or fail
@@ -79,7 +80,7 @@ export default function StorageHealth() {
     };
 
     fetchStorage();
-  }, []); // ← empty array = run only once on mount
+  }, [refreshKey]); // ← include refreshKey in dependency array
 
   // Still waiting for API response
   if (loading) {
