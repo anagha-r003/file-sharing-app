@@ -45,6 +45,8 @@ public class ShareService {
     private final ShareLinkRepository shareLinkRepository;
     private final FileRepository fileRepository;
     private final EmailService emailService;
+    private final ActivityLogService activityLogService;
+
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -108,6 +110,11 @@ public class ShareService {
         // 3. Bulk save all links at once
         shareLinkRepository.saveAll(shareLinks);
 
+        for (int i = 0; i < shareLinks.size(); i++) {
+            activityLogService.log(user, "SHARE", file.getName(),
+                    "with " + shareLinks.get(i).getRecipientEmail());
+        }
+
         // 4. Send emails after saving — failures won't rollback saved links
         for (int i = 0; i < shareLinks.size(); i++) {
             String recipientEmail = shareLinks.get(i).getRecipientEmail();
@@ -150,6 +157,10 @@ public class ShareService {
                 getValidShareLink(token);
 
         shareLinkRepository.save(shareLink);
+
+        User owner = shareLink.getCreatedBy();
+        activityLogService.log(owner, "ACCESS", shareLink.getFile().getName(),
+                shareLink.getRecipientEmail() + " accessed");
 
         ShareLinkResponse response =
                 ShareLinkResponse.builder()

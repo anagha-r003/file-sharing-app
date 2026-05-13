@@ -63,6 +63,7 @@ public class FileService {
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
     private final FilePreviewService filePreviewService;
+    private final ActivityLogService activityLogService;
 
 
 
@@ -207,6 +208,11 @@ public class FileService {
 
         fileRepository.saveAll(savedFiles);
 
+        for (UserFile saved : savedFiles) {
+            activityLogService.log(user, "UPLOAD", saved.getName(),
+                    "by " + user.getFirstName());
+        }
+
         user.setStorageUsed(
                 user.getStorageUsed() + totalUploadedSize
         );
@@ -316,6 +322,7 @@ public class FileService {
             }
 
             updateDownloadAnalytics(file);
+            activityLogService.log(user, "DOWNLOAD", file.getName(), "via secure link");
             fileRepository.save(file);
 
             return ResponseEntity.ok()
