@@ -301,6 +301,13 @@ public class FileService {
         List<UserFile> files = fileRepository
                 .findAllByIdInAndUserIdAndIsDeletedFalse(fileIds, user.getId());
 
+        log.info("Requested fileIds: {}", fileIds);
+
+        log.info("Files fetched from DB: {}",
+                files.stream().map(UserFile::getId).toList());
+
+        log.info("Fetched files count: {}", files.size());
+
         log.info("Files found: {}", files.size());
 
         if (files.isEmpty()) {
