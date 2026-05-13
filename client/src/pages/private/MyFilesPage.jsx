@@ -1,37 +1,31 @@
 import { useEffect, useState } from "react";
 import FileTable from "../../components/myfiles/FileTable";
 import { getFiles } from "../../services/fileService";
-import { getFolders } from "../../services/folderService";
 import { useLocation } from "react-router-dom";
 import PageLayout from "../../layout/PageLayout";
 
 function MyFilesPage() {
-  const [files, setFiles] = useState([]);
-  const [folders, setFolders] = useState([]);
+  const [files, setFiles] = useState(null);
+
   const [loading, setLoading] = useState(true);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [page, setPage] = useState(0);
+
+  const [pageSize, setPageSize] = useState(10);
 
   const location = useLocation();
 
-  const fetchData = async () => {
+  const fetchData = async (currentPage = page, currentSize = pageSize) => {
     setLoading(true);
 
     try {
-      const [filesRes, foldersRes] = await Promise.all([
-        getFiles(),
-        getFolders(),
-      ]);
+      const filesRes = await getFiles(currentPage, currentSize);
 
-      console.log("Files response:", filesRes);
-      console.log("Folders response:", foldersRes);
-
-      setFiles(Array.isArray(filesRes) ? filesRes : filesRes.data || []);
-
-      setFolders(
-        Array.isArray(foldersRes) ? foldersRes : foldersRes.data || [],
-      );
+      setFiles(filesRes);
     } catch (err) {
-      console.error("Failed to fetch data:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -50,10 +44,10 @@ function MyFilesPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fetch data
+  // Fetch data when page changes
   useEffect(() => {
-    fetchData();
-  }, [location.pathname]);
+    fetchData(page, pageSize);
+  }, [page, pageSize]);
 
   return (
     <PageLayout
@@ -65,7 +59,14 @@ function MyFilesPage() {
       {loading ? (
         <div className="p-16 text-center text-slate-500">Loading files...</div>
       ) : (
-        <FileTable files={files} folders={folders} onRefresh={fetchData} />
+        <FileTable
+          files={files}
+          page={page}
+          setPage={setPage}
+          pageSize={pageSize}
+          setPageSize={setPageSize}
+          onRefresh={() => fetchData(page, pageSize)}
+        />
       )}
     </PageLayout>
   );

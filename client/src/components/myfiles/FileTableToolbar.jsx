@@ -5,19 +5,20 @@ function FileTableToolbar({
   onSearchChange,
   onSearchClear,
   selectedCount,
+
   pageSize,
   onPageSizeChange,
+
   view,
   onViewChange,
+
   onBulkDownload,
   onBulkShare,
   onBulkDelete,
   onClearSelection,
+
   bulkDeleting,
 }) {
-  const CB =
-    "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition";
-
   return (
     <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 px-4 md:px-6 py-5 border-b border-white/5">
       {/* Search */}
@@ -25,6 +26,7 @@ function FileTableToolbar({
         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-base">
           search
         </span>
+
         <input
           type="text"
           value={search}
@@ -32,6 +34,7 @@ function FileTableToolbar({
           placeholder="Search your vault..."
           className="w-full bg-[#111] border border-white/10 rounded-xl text-white text-sm py-2.5 pl-10 pr-4 outline-none focus:border-violet-500/50 transition placeholder:text-slate-600 shadow-inner"
         />
+
         {search && (
           <button
             onClick={onSearchClear}
@@ -42,13 +45,14 @@ function FileTableToolbar({
         )}
       </div>
 
-      {/* Right side: bulk toolbar OR normal controls */}
+      {/* Right Controls */}
       <div className="flex items-center justify-between xl:justify-end gap-3 w-full xl:w-auto">
         {selectedCount > 0 ? (
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-white mr-2">
               {selectedCount} selected
             </span>
+
             <button
               onClick={onBulkDownload}
               title="Download selected"
@@ -58,6 +62,7 @@ function FileTableToolbar({
                 download
               </span>
             </button>
+
             <button
               onClick={onBulkShare}
               title="Share selected"
@@ -65,6 +70,7 @@ function FileTableToolbar({
             >
               <span className="material-symbols-outlined text-base">share</span>
             </button>
+
             <button
               onClick={onBulkDelete}
               disabled={bulkDeleting}
@@ -75,6 +81,7 @@ function FileTableToolbar({
                 delete
               </span>
             </button>
+
             <button
               onClick={onClearSelection}
               title="Clear selection"
@@ -85,8 +92,10 @@ function FileTableToolbar({
           </div>
         ) : (
           <>
+            {/* Page Size */}
             <div className="flex items-center gap-2 text-[13px] text-slate-400 font-medium">
               <span className="hidden sm:inline">Show</span>
+
               <select
                 value={pageSize}
                 onChange={onPageSizeChange}
@@ -99,17 +108,29 @@ function FileTableToolbar({
                 ))}
               </select>
             </div>
+
             <div className="h-6 w-[1px] bg-white/10 mx-1 hidden sm:block" />
+
+            {/* View Toggle */}
             <div className="flex items-center gap-1 bg-black/40 border border-white/5 rounded-xl p-1">
               <button
                 onClick={() => onViewChange("list")}
-                className={`p-2 rounded-lg transition-all ${view === "list" ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20" : "text-slate-500 hover:text-slate-200"}`}
+                className={`p-2 rounded-lg transition-all ${
+                  view === "list"
+                    ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20"
+                    : "text-slate-500 hover:text-slate-200"
+                }`}
               >
                 <span className="material-symbols-outlined text-lg">list</span>
               </button>
+
               <button
                 onClick={() => onViewChange("grid")}
-                className={`p-2 rounded-lg transition-all ${view === "grid" ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20" : "text-slate-500 hover:text-slate-200"}`}
+                className={`p-2 rounded-lg transition-all ${
+                  view === "grid"
+                    ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20"
+                    : "text-slate-500 hover:text-slate-200"
+                }`}
               >
                 <span className="material-symbols-outlined text-lg">
                   grid_view

@@ -32,7 +32,8 @@ export const getFiles = async (page = 0, size = 10) => {
     },
   });
 
-  return response.data;
+   console.log(response.data.data);
+  return response.data.data;
 };
 
 export const downloadFiles = async (fileIds) => {

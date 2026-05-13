@@ -6,6 +6,7 @@ import {
   starFile,
   unstarFile,
 } from "../../services/fileService";
+
 import ShareModal from "./ShareModal/ShareModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import FileTableStats from "./FileTableStats";
@@ -13,90 +14,122 @@ import FileTableToolbar from "./FileTableToolbar";
 import FileTableListView from "./FileTableListView";
 import FileTableGridView from "./FileTableGridView";
 import Pagination from "../../common/ui/Pagination";
-import { getFileStats } from "../../utils/fileUtils";
-import { PAGE_SIZE_OPTIONS } from "../../common/constants/fileTypes";
 
-function FileTable({ files, onRefresh }) {
+import { getFileStats } from "../../utils/fileUtils";
+
+function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
   const [shareFile, setShareFile] = useState(null);
+
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+
   const [deleteTarget, setDeleteTarget] = useState(null);
+
   const [view, setView] = useState("list");
+
   const [selectedIds, setSelectedIds] = useState([]);
+
   const [hoveredId, setHoveredId] = useState(null);
+
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Filtering
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return files;
-    return files.filter((f) => f.name?.toLowerCase().includes(q));
+
+    const content = files?.content || [];
+
+    if (!q) return content;
+
+    return content.filter((f) => f.name?.toLowerCase().includes(q));
   }, [files, search]);
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const pageIds = paginated.map((f) => f.id);
+  // Backend pagination
+  const paginated = filtered;
+
+  const totalPages = files?.totalPages || 1;
+
+  const totalItems = files?.totalElements || 0;
+
+  const currentPage = (files?.pageable?.pageNumber ?? 0) + 1;
+
+  const pageIds = paginated?.map((f) => f.id) || [];
 
   // Selection state
   const allPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
   const somePageSelected = pageIds.some((id) => selectedIds.includes(id));
 
   // Statistics
-  const stats = useMemo(() => getFileStats(files), [files]);
+  const stats = useMemo(() => getFileStats(files?.content || []), [files]);
 
-  // Handlers
+  // Search handlers
   const handleSearch = (e) => {
     setSearch(e.target.value);
-    setPage(1);
   };
 
   const handleSearchClear = () => {
     setSearch("");
-    setPage(1);
   };
 
+  // Page size handler
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+
+    setPage(0);
+  };
+
+  // File view
   const handleView = async (file) => {
     try {
       const url = await viewFile(file.id);
+
       window.open(url, "_blank");
     } catch (err) {
       console.error("View failed", err);
     }
   };
 
+  // Delete confirm
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+
     setDeleteTarget(null);
+
     try {
       await deleteFile([deleteTarget.id]);
+
       onRefresh();
     } catch (err) {
       console.error("Delete failed:", err);
     }
   };
 
+  // Star toggle
   const handleToggleStar = async (file) => {
     try {
       if (file.isStarred) await unstarFile(file.id);
       else await starFile(file.id);
+
       onRefresh();
     } catch (err) {
       console.error("Star/unstar failed", err);
     }
   };
 
+  // Single selection
   const toggleSelect = (id, e) => {
     e.stopPropagation();
+
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
+  // Select all
   const toggleSelectAll = () => {
     const allSelected = pageIds.every((id) => selectedIds.includes(id));
+
     if (allSelected) {
       setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
     } else {
@@ -106,23 +139,31 @@ function FileTable({ files, onRefresh }) {
 
   const clearSelection = () => setSelectedIds([]);
 
+  // Bulk download
   const handleBulkDownload = () => {
     selectedIds.forEach((id) => {
-      const file = files.find((f) => f.id === id);
+      const file = files?.content?.find((f) => f.id === id);
+
       if (file) downloadFile(file.id, file.name);
     });
   };
 
+  // Bulk share
   const handleBulkShare = () => {
-    const file = files.find((f) => f.id === selectedIds[0]);
+    const file = files?.content?.find((f) => f.id === selectedIds[0]);
+
     if (file) setShareFile(file);
   };
 
+  // Bulk delete
   const handleBulkDelete = async () => {
     setBulkDeleting(true);
+
     try {
       await deleteFile(selectedIds);
+
       clearSelection();
+
       onRefresh();
     } catch (err) {
       console.error("Bulk delete failed:", err);
@@ -131,17 +172,12 @@ function FileTable({ files, onRefresh }) {
     }
   };
 
-  const handlePageSizeChange = (e) => {
-    setPageSize(Number(e.target.value));
-    setPage(1);
-  };
-
   return (
     <>
-      {/* Stats Cards */}
+      {/* Stats */}
       <FileTableStats stats={stats} />
 
-      {/* Main Table Container */}
+      {/* Main container */}
       <div className="custom-card rounded-2xl flex flex-col">
         {/* Toolbar */}
         <FileTableToolbar
@@ -172,6 +208,8 @@ function FileTable({ files, onRefresh }) {
             onFileClick={handleView}
             onCheckboxChange={toggleSelect}
             onToggleStar={handleToggleStar}
+            allPageSelected={allPageSelected}
+            toggleSelectAll={toggleSelectAll}
           />
         )}
 
@@ -189,17 +227,17 @@ function FileTable({ files, onRefresh }) {
 
         {/* Pagination */}
         <Pagination
-          page={page}
+          page={currentPage}
           totalPages={totalPages}
           pageSize={pageSize}
-          totalItems={filtered.length}
+          totalItems={totalItems}
           itemLabel="files"
           searchQuery={search}
-          onPageChange={setPage}
+          onPageChange={(newPage) => setPage(newPage - 1)}
         />
       </div>
 
-      {/* Modals */}
+      {/* Delete Modal */}
       {deleteTarget && (
         <DeleteConfirmModal
           fileName={deleteTarget.name}
@@ -207,6 +245,8 @@ function FileTable({ files, onRefresh }) {
           onCancel={() => setDeleteTarget(null)}
         />
       )}
+
+      {/* Share Modal */}
       {shareFile && (
         <ShareModal file={shareFile} onClose={() => setShareFile(null)} />
       )}
