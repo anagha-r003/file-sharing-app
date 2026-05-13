@@ -11,7 +11,7 @@ const DashboardPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleUploadSuccess = () => {
+  const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1); // triggers re-fetch
   };
 
@@ -44,8 +44,8 @@ const DashboardPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
-          <QuickUploadCard onUploadComplete={handleUploadSuccess} />
-          <RecentActivity />
+          <QuickUploadCard onUploadComplete={handleRefresh} />
+          <RecentActivity refreshKey={refreshKey} />
         </div>
         <div className="lg:col-span-1">
           <StorageHealth refreshKey={refreshKey} />
