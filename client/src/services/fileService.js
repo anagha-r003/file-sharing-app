@@ -32,7 +32,7 @@ export const getFiles = async (page = 0, size = 10) => {
     },
   });
 
-   console.log(response.data.data);
+  console.log(response.data.data);
   return response.data.data;
 };
 
@@ -41,13 +41,21 @@ export const downloadFiles = async (fileIds) => {
     responseType: "blob",
   });
 
+  // Extract filename from backend header
+  const disposition = response.headers["content-disposition"];
+
+  let filename = "download";
+
+  if (disposition && disposition.includes("filename=")) {
+    filename = disposition.split("filename=")[1].replace(/"/g, "");
+  }
+
   const url = window.URL.createObjectURL(new Blob([response.data]));
 
   const link = document.createElement("a");
 
   link.href = url;
-
-  link.setAttribute("download", "downloads.zip");
+  link.setAttribute("download", filename);
 
   document.body.appendChild(link);
 
@@ -106,5 +114,3 @@ export const unstarFile = async (fileId) => {
   const response = await api.post(`/files/${fileId}/unstar`);
   return response.data;
 };
-
-

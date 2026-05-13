@@ -1,5 +1,5 @@
 import { getFileMeta, formatSize, formatDate } from "../../utils/fileUtils";
-import { downloadFile } from "../../services/fileService";
+import { downloadFiles } from "../../services/fileService";
 
 const CB =
   "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition relative";
@@ -7,7 +7,9 @@ const CB =
 // Custom checkbox with visible checkmark using a wrapper approach
 function Checkbox({ checked, onChange, className = "" }) {
   return (
-    <label className={`relative inline-flex items-center cursor-pointer ${className}`}>
+    <label
+      className={`relative inline-flex items-center cursor-pointer ${className}`}
+    >
       <input
         type="checkbox"
         checked={checked}
@@ -57,9 +59,14 @@ function FileTableListView({
   onShare,
   onDelete,
 }) {
-  const handleDownload = (e, file) => {
+  const handleDownload = async (e, file) => {
     e.stopPropagation();
-    downloadFile(file.id, file.name);
+
+    try {
+      await downloadFiles([file.id]);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
   };
 
   return (
@@ -130,7 +137,7 @@ function FileTableListView({
                       className="py-3 pl-6 pr-2 w-10"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {(isHovered || isSelected) ? (
+                      {isHovered || isSelected ? (
                         <Checkbox
                           checked={isSelected}
                           onChange={(e) => onCheckboxChange(file.id, e)}
@@ -158,22 +165,26 @@ function FileTableListView({
                             </span>
                             <span className="text-slate-500 text-xs">You</span>
                           </div>
-                          {/* Star — shows on hover, always visible if starred */}
+                          {/* Star — inline with filename */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               onToggleStar(file);
                             }}
                             title={file.isStarred ? "Unstar" : "Star"}
-                            className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-all duration-150 ${
+                            className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-all ${
                               file.isStarred
-                                ? "opacity-100 text-yellow-400"
-                                : "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-yellow-400"
+                                ? "text-yellow-400"
+                                : "text-slate-700 hover:text-yellow-400"
                             }`}
                           >
                             <span
                               className="material-symbols-outlined text-[16px]"
-                              style={{ fontVariationSettings: file.isStarred ? "'FILL' 1" : "'FILL' 0" }}
+                              style={{
+                                fontVariationSettings: file.isStarred
+                                  ? "'FILL' 1"
+                                  : "'FILL' 0",
+                              }}
                             >
                               star
                             </span>
@@ -338,7 +349,11 @@ function FileTableListView({
                   >
                     <span
                       className="material-symbols-outlined text-[18px]"
-                      style={{ fontVariationSettings: file.isStarred ? "'FILL' 1" : "'FILL' 0" }}
+                      style={{
+                        fontVariationSettings: file.isStarred
+                          ? "'FILL' 1"
+                          : "'FILL' 0",
+                      }}
                     >
                       star
                     </span>
@@ -347,7 +362,9 @@ function FileTableListView({
                     onClick={(e) => handleDownload(e, file)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 transition"
                   >
-                    <span className="material-symbols-outlined text-[16px]">download</span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      download
+                    </span>
                   </button>
                   <button
                     onClick={(e) => {
@@ -357,7 +374,9 @@ function FileTableListView({
                     }}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-violet-400 hover:bg-violet-400/10 transition"
                   >
-                    <span className="material-symbols-outlined text-[16px]">share</span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      share
+                    </span>
                   </button>
                   <button
                     onClick={(e) => {
@@ -367,7 +386,9 @@ function FileTableListView({
                     }}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition"
                   >
-                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      delete
+                    </span>
                   </button>
                 </div>
               </div>

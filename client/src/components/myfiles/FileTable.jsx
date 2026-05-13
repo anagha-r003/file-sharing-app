@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import {
   deleteFile,
-  downloadFile,
+  downloadFiles,
   viewFile,
   starFile,
   unstarFile,
@@ -31,6 +31,8 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
   const [hoveredId, setHoveredId] = useState(null);
 
   const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   // Filtering
   const filtered = useMemo(() => {
@@ -105,6 +107,24 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
     }
   };
 
+  // Bulk delete confirm
+  const confirmBulkDelete = async () => {
+    setShowBulkDeleteModal(false);
+    setBulkDeleting(true);
+
+    try {
+      await deleteFile(selectedIds);
+
+      clearSelection();
+
+      onRefresh();
+    } catch (err) {
+      console.error("Bulk delete failed:", err);
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   // Star toggle
   const handleToggleStar = async (file) => {
     try {
@@ -140,12 +160,15 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
   const clearSelection = () => setSelectedIds([]);
 
   // Bulk download
-  const handleBulkDownload = () => {
-    selectedIds.forEach((id) => {
-      const file = files?.content?.find((f) => f.id === id);
+  const handleBulkDownload = async () => {
+    if (selectedIds.length === 0) return;
+    console.log("Initiating bulk download for file IDs:", selectedIds);
 
-      if (file) downloadFile(file.id, file.name);
-    });
+    try {
+      await downloadFiles(selectedIds);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
   };
 
   // Bulk share
@@ -156,20 +179,9 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
   };
 
   // Bulk delete
-  const handleBulkDelete = async () => {
-    setBulkDeleting(true);
-
-    try {
-      await deleteFile(selectedIds);
-
-      clearSelection();
-
-      onRefresh();
-    } catch (err) {
-      console.error("Bulk delete failed:", err);
-    } finally {
-      setBulkDeleting(false);
-    }
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setShowBulkDeleteModal(true);
   };
 
   return (
@@ -245,6 +257,15 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
           fileName={deleteTarget.name}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {/* Bulk Delete Modal */}
+      {showBulkDeleteModal && (
+        <DeleteConfirmModal
+          fileName={`${selectedIds.length} selected files`}
+          onConfirm={confirmBulkDelete}
+          onCancel={() => setShowBulkDeleteModal(false)}
         />
       )}
 
