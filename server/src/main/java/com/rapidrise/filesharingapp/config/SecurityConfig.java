@@ -4,6 +4,7 @@ import com.rapidrise.filesharingapp.jwt.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -43,10 +44,24 @@ public class SecurityConfig {
                         )
                 )
 
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.disable())
+                )
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**"
                         ).permitAll()
+                        .requestMatchers(
+                                "/share/view/**",
+                                "/share/download/**"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/share/*"
+                        ).permitAll()
+
 
                         .anyRequest().authenticated()
                 )

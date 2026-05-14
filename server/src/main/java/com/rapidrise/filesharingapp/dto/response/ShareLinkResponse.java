@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Builder
 public class ShareLinkResponse {
 
+    private Long id;
+
     private String shareUrl;
 
     private String recipientEmail;
@@ -18,6 +20,8 @@ public class ShareLinkResponse {
     private LocalDateTime expiresAt;
 
     private Integer downloadCount;
+
+    private boolean active;
 
     private Boolean accessed;
 

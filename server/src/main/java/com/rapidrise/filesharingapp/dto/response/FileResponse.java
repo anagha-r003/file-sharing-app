@@ -25,4 +25,6 @@ public class FileResponse {
     private Boolean isStarred;
 
     private LocalDateTime uploadedAt;
+
+    private LocalDateTime deletedAt;
 }

@@ -252,9 +252,11 @@ public class ShareService {
 
         Page<ShareLinkResponse> response = sharedFiles.map(shareLink ->
                 ShareLinkResponse.builder()
+                        .id(shareLink.getId())
                         .shareUrl(frontendUrl + "/public/share/" + shareLink.getToken())
                         .recipientEmail(shareLink.getRecipientEmail())
                         .fileName(shareLink.getFile().getName())
+                        .active(shareLink.getActive())
                         .expiresAt(shareLink.getExpiresAt())
                         .downloadCount(shareLink.getDownloadCount())
                         .build()

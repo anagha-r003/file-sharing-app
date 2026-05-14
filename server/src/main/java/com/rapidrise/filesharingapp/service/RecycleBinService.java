@@ -78,6 +78,7 @@ public class RecycleBinService {
                                 .previewPath(file.getPreviewPath())
                                 .isStarred(file.getIsStarred())
                                 .uploadedAt(file.getUploadedAt())
+                                .deletedAt(file.getDeletedAt())
                                 .build()
                 );
 
