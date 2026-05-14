@@ -1,21 +1,7 @@
 import { useState } from "react";
 import FileActions from "./FileActions";
-import { FileIcon } from "lucide-react";
-import { ClockIcon } from "lucide-react";
-import { SearchIcon } from "lucide-react";
-/**
- * FilePreviewCard
- * Props:
- *   fileName   {string}
- *   fileType   {string}  – e.g. "PDF"
- *   fileSize   {string}  – e.g. "2.4 MB"
- *   pageCount  {number}  – e.g. 14
- *   sharedDate {string}  – e.g. "Apr 28, 2026"
- *   expiryDate {string}  – e.g. "May 15, 2026"
- *   onDownload {function}
- *   onPreview  {function}
- *   onCopy     {function}
- */
+import { FileIcon, ClockIcon, SearchIcon } from "lucide-react";
+
 export default function FilePreviewCard({
   fileName = "",
   fileType = "",
@@ -29,18 +15,28 @@ export default function FilePreviewCard({
   onCopy,
 }) {
   const [hovered, setHovered] = useState(false);
-
   const lowerType = fileType?.toLowerCase();
-
   const isPdf = lowerType === "pdf";
-
   const isImage = ["png", "jpg", "jpeg", "webp", "gif"].includes(lowerType);
-
   const isVideo = ["mp4", "webm", "ogg"].includes(lowerType);
+
+  // Format expiry date nicely
+  const formatDate = (dateStr) => {
+    if (!dateStr) return dateStr;
+    try {
+      return new Date(dateStr).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <div
-      className="animate-fade-up-2 w-full rounded-2xl overflow-hidden"
+      className="w-full rounded-2xl overflow-hidden"
       style={{
         maxWidth: 680,
         background: "rgba(19,19,31,1)",
@@ -51,9 +47,9 @@ export default function FilePreviewCard({
     >
       {/* ── Preview thumbnail ── */}
       <div
-        className="relative flex flex-col items-center justify-center cursor-pointer grid-bg overflow-hidden"
+        className="relative flex flex-col items-center justify-center cursor-pointer overflow-hidden"
         style={{
-          height: 300,
+          height: "clamp(200px, 40vw, 300px)",
           background: "rgba(26,26,46,1)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
@@ -63,18 +59,16 @@ export default function FilePreviewCard({
       >
         {/* File-type badge */}
         <span
-          className="absolute top-4 right-4 mono text-xs px-2 py-0.5 rounded z-10"
+          className="absolute top-3 right-3 text-xs px-2 py-0.5 rounded z-10 font-mono uppercase tracking-wider"
           style={{
             background: "rgba(248,65,65,0.12)",
             border: "1px solid rgba(248,65,65,0.28)",
             color: "#f87171",
-            letterSpacing: "0.06em",
           }}
         >
           {fileType}
         </span>
 
-        {/* PDF Preview */}
         {isPdf && (
           <iframe
             src={previewUrl}
@@ -83,8 +77,6 @@ export default function FilePreviewCard({
             frameBorder="0"
           />
         )}
-
-        {/* Image Preview */}
         {isImage && (
           <img
             src={previewUrl}
@@ -92,8 +84,6 @@ export default function FilePreviewCard({
             className="w-full h-full object-cover"
           />
         )}
-
-        {/* Video Preview */}
         {isVideo && (
           <video
             src={previewUrl}
@@ -101,16 +91,14 @@ export default function FilePreviewCard({
             controls
           />
         )}
-
-        {/* Fallback */}
         {!isPdf && !isImage && !isVideo && (
           <div className="flex flex-col items-center gap-4 text-slate-400">
-            <FileIcon size={72} />
-            <p className="mono text-sm">Preview not available</p>
+            <FileIcon size={56} />
+            <p className="font-mono text-sm">Preview not available</p>
           </div>
         )}
 
-        {/* Hover Overlay */}
+        {/* Hover overlay */}
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{
@@ -119,8 +107,8 @@ export default function FilePreviewCard({
           }}
         >
           {hovered && (
-            <div className="flex items-center gap-2 mono text-xs text-white">
-              <SearchIcon size={18} />
+            <div className="flex items-center gap-2 font-mono text-xs text-white">
+              <SearchIcon size={16} />
               Open full preview
             </div>
           )}
@@ -129,50 +117,58 @@ export default function FilePreviewCard({
 
       {/* ── File metadata ── */}
       <div
-        className="flex items-start justify-between gap-4 px-7 py-6"
+        className="px-5 py-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 min-w-0">
+          {/* File name */}
           <h1
-            className="text-lg font-bold tracking-tight"
+            className="text-base sm:text-lg font-bold leading-snug break-words"
             style={{ color: "#f0eeff", letterSpacing: "-0.02em" }}
           >
             {fileName}
           </h1>
 
-          <div
-            className="flex items-center gap-3 mono text-xs flex-wrap"
-            style={{ color: "#7b7a99" }}
-          >
-            {/* Type badge */}
+          {/* Tags row */}
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs"
+            style={{ color: "#7b7a99" }}>
             <span
               className="flex items-center gap-1 px-2 py-0.5 rounded"
               style={{
                 background: "rgba(248,65,65,0.1)",
                 border: "1px solid rgba(248,65,65,0.2)",
                 color: "#f87171",
-                letterSpacing: "0.06em",
               }}
             >
-              <FileIcon />
+              <FileIcon size={11} />
               {fileType}
             </span>
 
-            <span>{fileSize}</span>
-            <span className="w-1 h-1 rounded-full bg-current opacity-40" />
-            <span>{pageCount} pages</span>
-            <span className="w-1 h-1 rounded-full bg-current opacity-40" />
-            <span>Shared {sharedDate}</span>
+            {fileSize && <span>{fileSize}</span>}
+
+            {pageCount > 0 && (
+              <>
+                <span className="w-1 h-1 rounded-full bg-current opacity-40" />
+                <span>{pageCount} pages</span>
+              </>
+            )}
+
+            {sharedDate && (
+              <>
+                <span className="w-1 h-1 rounded-full bg-current opacity-40" />
+                <span>Shared {sharedDate}</span>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Expiry */}
+        {/* Expiry — moves below on mobile */}
         <div
-          className="flex items-center gap-1.5 mono text-xs flex-shrink-0 pt-1"
+          className="flex items-center gap-1.5 font-mono text-xs flex-shrink-0 sm:pt-1"
           style={{ color: "#7b7a99" }}
         >
-          <ClockIcon />
-          {expiryDate}
+          <ClockIcon size={13} />
+          <span>{formatDate(expiryDate)}</span>
         </div>
       </div>
 

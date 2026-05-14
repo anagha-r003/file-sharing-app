@@ -16,11 +16,11 @@ import Pagination from "../../common/ui/Pagination";
 import { SearchInput } from "../../common/ui";
 
 import {
-    getDeletedFiles,
-    restoreFiles,
-    permanentlyDeleteFiles,
-    emptyRecycleBin,
-    restoreAllFiles
+  getDeletedFiles,
+  restoreFiles,
+  permanentlyDeleteFiles,
+  emptyRecycleBin,
+  restoreAllFiles,
 } from "../../services/recyclebinService";
 
 function RecycleBinPage() {
@@ -99,6 +99,7 @@ function RecycleBinPage() {
 
   const formatFiles = (data) => {
     return data.map((file) => {
+      console.log("file:", file);
       const deletedAt = new Date(file.deletedAt);
 
       const now = new Date();
@@ -139,8 +140,9 @@ function RecycleBinPage() {
 
     try {
       const res = await getDeletedFiles();
+      console.log(res);
 
-      setFiles(formatFiles(res.data));
+      setFiles(formatFiles(res.data.content));
     } catch (err) {
       console.error("Error fetching deleted files:", err);
     } finally {
@@ -148,9 +150,9 @@ function RecycleBinPage() {
     }
   };
 
-  // useEffect(() => {
-  //   fetchDeletedFiles();
-  // }, []);
+  useEffect(() => {
+    fetchDeletedFiles();
+  }, []);
 
   const restore = async (id) => {
     try {

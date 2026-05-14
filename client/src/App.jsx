@@ -22,6 +22,8 @@ function App() {
             path="/public/share/:token"
             element={<SharedLinkPreviewPage />}
           />
+
+          {/* Protected routes */}
           <Route
             path="/dashboard"
             element={
@@ -30,15 +32,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Protected routes */}
-          {/* <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          /> */}
           <Route
             path="/my-files"
             element={

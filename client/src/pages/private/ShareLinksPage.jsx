@@ -13,6 +13,7 @@ function SharedLinksPage() {
   const [toast, setToast] = useState({
     visible: false,
     message: "",
+    type: "success",
   });
 
   useEffect(() => {
@@ -22,44 +23,33 @@ function SharedLinksPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-//   useEffect(() => {
-//     fetchSharedLinks();
-//   }, []);
+  useEffect(() => {
+    fetchSharedLinks();
+  }, []);
 
-  const showToast = (message) => {
-    setToast({
-      visible: true,
-      message,
-    });
-
-    setTimeout(() => {
-      setToast((prev) => ({
-        ...prev,
-        visible: false,
-      }));
-    }, 3000);
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
   };
 
   const fetchSharedLinks = async () => {
     try {
       setLoading(true);
-
       const response = await getMySharedFiles();
 
-      const formattedData = response.data.map((item) => ({
+      // response.data is the ResponseStructure wrapper
+      // response.data.data is the Page object
+      const pageData = response.data;
+      const items = pageData.content ?? [];
+
+      const formattedData = items.map((item) => ({
         id: item.id,
-
-        fileName: item.file?.name || "Unknown File",
-
+        fileName: item.fileName, // already mapped in service layer
         recipientEmail: item.recipientEmail,
-
         expiryDate: item.expiresAt,
-
         active: item.active,
-
-        viewCount: item.accessed ? 1 : 0,
-
-        shareUrl: `http://localhost:5173/public/share/${item.token}`,
+        downloadCount: item.downloadCount,
+        shareUrl: item.shareUrl, // backend builds this
       }));
 
       setSharedLinks(formattedData);
@@ -107,7 +97,7 @@ function SharedLinksPage() {
           </div>
         </main>
       </div>
-      <Toast message={toast.message} visible={toast.visible} />
+     <Toast message={toast.message} visible={toast.visible} type={toast.type} />
     </div>
   );
 }

@@ -1,25 +1,82 @@
+/**
+ * FileActions
+ * Props:
+ *   onDownload {function}
+ *   onPreview  {function}
+ *   onCopy     {function}
+ */
 export default function FileActions({ onDownload, onPreview, onCopy }) {
   return (
-    <div className="flex flex-col gap-3 p-5 md:p-6">
+    <div className="px-7 py-5 flex items-center gap-3">
+      {/* Primary — Download */}
       <button
-        type="button"
         onClick={onDownload}
-        className="w-full rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-500"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+        style={{
+          background: "linear-gradient(135deg, #7c5cfc, #a855f7)",
+          color: "#fff",
+          boxShadow: "0 4px 20px rgba(124,92,252,0.35)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = "0 6px 28px rgba(124,92,252,0.55)";
+          e.currentTarget.style.transform = "translateY(-1px)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = "0 4px 20px rgba(124,92,252,0.35)";
+          e.currentTarget.style.transform = "translateY(0)";
+        }}
       >
-        Download file
+        <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+          download
+        </span>
+        Download
       </button>
+
+      {/* Secondary — Open preview */}
       <button
-        type="button"
         onClick={onPreview}
-        className="w-full rounded-xl bg-slate-800 px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-slate-700"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          color: "#c4b5fd",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.09)";
+          e.currentTarget.style.borderColor = "rgba(168,139,250,0.35)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+        }}
       >
+        <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+          open_in_new
+        </span>
         Open preview
       </button>
+
+      {/* Ghost — Copy link */}
       <button
-        type="button"
         onClick={onCopy}
-        className="w-full rounded-xl bg-slate-900/80 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ml-auto"
+        style={{
+          background: "transparent",
+          border: "1px solid rgba(255,255,255,0.07)",
+          color: "#7b7a99",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = "#f0eeff";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = "#7b7a99";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+        }}
       >
+        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+          content_copy
+        </span>
         Copy link
       </button>
     </div>

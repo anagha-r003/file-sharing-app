@@ -10,50 +10,38 @@ import PageFooter from "../../components/sharedlink/PageFooter";
 import Toast from "../../components/sharedlink/Toast";
 import LinkExpired from "../../components/sharedlink/LinkExpired";
 
-// ─── Demo data (replace with real props / API data) ───────────────────────────
-// const FILE = {
-//   fileName: "Project_Proposal.pdf",
-//   fileType: "PDF",
-//   fileSize: "2.4 MB",
-//   pageCount: 14,
-//   sharedDate: "Apr 28, 2026",
-//   expiryDate: "May 15, 2026",
-// };
-
-// const SENDER = {
-//   name: "Jerry",
-//   email: "jerry@vaultlink.io",
-//   initials: "J",
-// };
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function SharedLinkPreviewPage() {
-  const [toast, setToast] = useState({ visible: false, message: "" });
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
   const { token } = useParams();
   const [fileData, setFileData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const showToast = (message) => {
-    setToast({ visible: true, message });
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
     setTimeout(() => setToast((p) => ({ ...p, visible: false })), 3000);
   };
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     const fetchSharedFile = async () => {
       try {
         const response = await axios.get(
           `http://localhost:8080/share/${token}`,
         );
-
         setFileData(response.data.data);
       } catch (error) {
-        console.error(error);
-
-        showToast("Failed to load shared file");
+        console.log("FULL ERROR:", error);
+        console.log("BACKEND RESPONSE:", error.response?.data);
+        console.log("STATUS:", error.response?.status);
+        showToast(
+          error.response?.data?.message || "Failed to load shared file",
+          "error",
+        );
       } finally {
         setLoading(false);
       }
@@ -64,7 +52,7 @@ export default function SharedLinkPreviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d0d14] text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0d14] text-white text-sm">
         Loading shared file...
       </div>
     );
@@ -108,39 +96,43 @@ export default function SharedLinkPreviewPage() {
       >
         <TopBar expiryDate={fileData.expiresAt} isActive />
 
-        <main className="relative z-10 flex-1 flex flex-col items-center px-6 py-14 gap-7">
+        <main className="relative z-10 flex-1 flex flex-col items-center px-4 sm:px-6 py-8 sm:py-14 gap-5 sm:gap-7">
           <SharedByChip
             name={"Shared User"}
             email={fileData.recipientEmail}
             initials={fileData.recipientEmail?.charAt(0).toUpperCase()}
           />
 
-          <FilePreviewCard
-            fileName={fileData.fileName}
-            fileType={fileData.fileName?.split(".").pop()}
-            expiryDate={fileData.expiresAt}
-            previewUrl={fileData.viewUrl}
-            onDownload={() => {
-              window.open(fileData.downloadUrl, "_blank");
-
-              showToast("Download started!");
-            }}
-            onPreview={() => {
-              window.open(fileData.viewUrl, "_blank");
-
-              showToast("Opening preview...");
-            }}
-            onCopy={() => {
-              navigator.clipboard.writeText(window.location.href);
-
-              showToast("Link copied!");
-            }}
-          />
+          {/* Card fills width on mobile, capped on desktop */}
+          <div className="w-full" style={{ maxWidth: 680 }}>
+            <FilePreviewCard
+              fileName={fileData.fileName}
+              fileType={fileData.fileName?.split(".").pop()}
+              expiryDate={fileData.expiresAt}
+              previewUrl={fileData.viewUrl}
+              onDownload={() => {
+                window.open(fileData.downloadUrl, "_blank");
+                showToast("Download started!");
+              }}
+              onPreview={() => {
+                window.open(fileData.viewUrl, "_blank");
+                showToast("Opening preview...");
+              }}
+              onCopy={() => {
+                navigator.clipboard.writeText(window.location.href);
+                showToast("Link copied!");
+              }}
+            />
+          </div>
         </main>
 
         <PageFooter />
 
-        <Toast message={toast.message} visible={toast.visible} />
+        <Toast
+          message={toast.message}
+          visible={toast.visible}
+          type={toast.type}
+        />
       </div>
     </>
   );
