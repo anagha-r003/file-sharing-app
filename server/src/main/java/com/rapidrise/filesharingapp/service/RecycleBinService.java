@@ -246,7 +246,12 @@ public class RecycleBinService {
         userRepository.save(user);
 
         // Delete DB records
-        fileRepository.deleteAll(files);
+        fileRepository.permanentlyDeleteFiles(
+                new ArrayList<>(uniqueIds),
+                user.getId()
+        );
+
+        fileRepository.flush();
 
         log.info(
                 "{} file(s) permanently deleted",
