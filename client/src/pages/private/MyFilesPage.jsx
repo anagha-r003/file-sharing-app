@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import FileTable from "../../components/myfiles/FileTable";
 import { getFiles } from "../../services/fileService";
-import { useLocation } from "react-router-dom";
 import PageLayout from "../../layout/PageLayout";
 
 function MyFilesPage() {
@@ -15,7 +14,6 @@ function MyFilesPage() {
 
   const [pageSize, setPageSize] = useState(10);
 
-  const location = useLocation();
 
   const fetchData = async (currentPage = page, currentSize = pageSize) => {
     setLoading(true);
@@ -30,6 +28,7 @@ function MyFilesPage() {
       setLoading(false);
     }
   };
+  
 
   // Responsive sidebar
   useEffect(() => {
