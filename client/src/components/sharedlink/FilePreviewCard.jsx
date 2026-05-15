@@ -71,7 +71,7 @@ export default function FilePreviewCard({
 
         {isPdf && (
           <iframe
-            src={previewUrl}
+            src={`${previewUrl}#toolbar=0`}
             title={fileName}
             className="w-full h-full"
             frameBorder="0"
@@ -130,8 +130,10 @@ export default function FilePreviewCard({
           </h1>
 
           {/* Tags row */}
-          <div className="flex flex-wrap items-center gap-2 font-mono text-xs"
-            style={{ color: "#7b7a99" }}>
+          <div
+            className="flex flex-wrap items-center gap-2 font-mono text-xs"
+            style={{ color: "#7b7a99" }}
+          >
             <span
               className="flex items-center gap-1 px-2 py-0.5 rounded"
               style={{

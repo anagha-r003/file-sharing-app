@@ -1,8 +1,12 @@
 import { getFileMeta, formatSize } from "../../utils/fileUtils";
+import { useAuthPreview } from "../../hooks/useAuthPreview";
 
 function Checkbox({ checked, onChange }) {
   return (
-    <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+    <label
+      className="relative inline-flex items-center cursor-pointer"
+      onClick={(e) => e.stopPropagation()}
+    >
       <input
         type="checkbox"
         checked={checked}
@@ -34,6 +38,34 @@ function Checkbox({ checked, onChange }) {
         )}
       </div>
     </label>
+  );
+}
+
+// Create a small wrapper component per file card
+function FilePreviewImage({ file, icon, color }) {
+  const blobUrl = useAuthPreview(file.id, true);
+
+  if (!blobUrl) {
+    // Show icon fallback while loading or on error
+    return (
+      <div
+        className={`w-full h-24 md:h-32 flex items-center justify-center ${color}`}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: 36 }}>
+          {icon}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-24 md:h-32 bg-slate-900 overflow-hidden">
+      <img
+        src={blobUrl}
+        alt={file.name}
+        className="w-full h-full object-cover"
+      />
+    </div>
   );
 }
 
@@ -94,7 +126,11 @@ function FileTableGridView({
                   >
                     <span
                       className="material-symbols-outlined text-base"
-                      style={{ fontVariationSettings: file.isStarred ? "'FILL' 1" : "'FILL' 0" }}
+                      style={{
+                        fontVariationSettings: file.isStarred
+                          ? "'FILL' 1"
+                          : "'FILL' 0",
+                      }}
                     >
                       star
                     </span>
@@ -102,27 +138,7 @@ function FileTableGridView({
 
                   {/* Preview / Icon */}
                   {hasPreview ? (
-                    <div className="w-full h-24 md:h-32 bg-slate-900 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={`http://localhost:8080/files/${file.id}/preview`}
-                        alt={file.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                          e.target.nextSibling.style.display = "flex";
-                        }}
-                      />
-                      <div
-                        className={`w-full h-full hidden items-center justify-center ${color}`}
-                      >
-                        <span
-                          className="material-symbols-outlined"
-                          style={{ fontSize: 36 }}
-                        >
-                          {icon}
-                        </span>
-                      </div>
-                    </div>
+                    <FilePreviewImage file={file} icon={icon} color={color} />
                   ) : (
                     <div
                       className={`w-full h-24 md:h-32 flex items-center justify-center ${color}`}
