@@ -17,7 +17,15 @@ import Pagination from "../../common/ui/Pagination";
 
 import { getFileStats } from "../../utils/fileUtils";
 
-function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
+function FileTable({
+  files,
+  page,
+  setPage,
+  pageSize,
+  setPageSize,
+  onRefresh,
+  onFileClick,
+}) {
   const [shareFile, setShareFile] = useState(null);
 
   const [search, setSearch] = useState("");
@@ -79,17 +87,6 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
     setPageSize(Number(e.target.value));
 
     setPage(0);
-  };
-
-  // File view
-  const handleView = async (file) => {
-    try {
-      const url = await viewFile(file.id);
-
-      window.open(url, "_blank");
-    } catch (err) {
-      console.error("View failed", err);
-    }
   };
 
   // Delete confirm
@@ -217,7 +214,7 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
             selectedIds={selectedIds}
             hoveredId={hoveredId}
             onHover={setHoveredId}
-            onFileClick={handleView}
+            onFileClick={onFileClick}
             onCheckboxChange={toggleSelect}
             onToggleStar={handleToggleStar}
             allPageSelected={allPageSelected}
@@ -233,7 +230,7 @@ function FileTable({ files, page, setPage, pageSize, setPageSize, onRefresh }) {
             paginated={paginated}
             search={search}
             selectedIds={selectedIds}
-            onFileClick={handleView}
+            onFileClick={onFileClick}
             onCheckboxChange={toggleSelect}
             onToggleStar={handleToggleStar}
           />

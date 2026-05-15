@@ -242,25 +242,64 @@ public class ShareService {
 
     public ResponseEntity<ResponseStructure<Page<ShareLinkResponse>>>
     getMySharedFiles(int page, int size) {
+
         log.info("Fetching shared files");
 
         User user = SecurityUtil.getCurrentUser();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
 
         Page<ShareLink> sharedFiles = shareLinkRepository
-                .findByCreatedByIdOrderByCreatedAtDesc(user.getId(), pageable);
+                .findByCreatedByIdOrderByCreatedAtDesc(
+                        user.getId(),
+                        pageable
+                );
 
-        Page<ShareLinkResponse> response = sharedFiles.map(shareLink ->
-                ShareLinkResponse.builder()
-                        .id(shareLink.getId())
-                        .shareUrl(frontendUrl + "/public/share/" + shareLink.getToken())
-                        .recipientEmail(shareLink.getRecipientEmail())
-                        .fileName(shareLink.getFile().getName())
-                        .active(shareLink.getActive())
-                        .expiresAt(shareLink.getExpiresAt())
-                        .downloadCount(shareLink.getDownloadCount())
-                        .build()
-        );
+        LocalDateTime now = LocalDateTime.now();
+
+        // Check and update expired links
+        sharedFiles.forEach(shareLink -> {
+
+            if (Boolean.TRUE.equals(shareLink.getActive())
+                    && shareLink.getExpiresAt() != null
+                    && shareLink.getExpiresAt().isBefore(now)) {
+
+                shareLink.setActive(false);
+
+                shareLinkRepository.save(shareLink);
+            }
+        });
+
+        Page<ShareLinkResponse> response =
+                sharedFiles.map(shareLink ->
+                        ShareLinkResponse.builder()
+                                .id(shareLink.getId())
+                                .shareUrl(
+                                        frontendUrl
+                                                + "/public/share/"
+                                                + shareLink.getToken()
+                                )
+                                .recipientEmail(
+                                        shareLink.getRecipientEmail()
+                                )
+                                .fileName(
+                                        shareLink.getFile().getName()
+                                )
+                                .active(
+                                        shareLink.getActive()
+                                )
+                                .expiresAt(
+                                        shareLink.getExpiresAt()
+                                )
+                                .downloadCount(
+                                        shareLink.getDownloadCount()
+                                )
+                                .build()
+                );
 
         return ResponseBuilder.build(
                 HttpStatus.OK,

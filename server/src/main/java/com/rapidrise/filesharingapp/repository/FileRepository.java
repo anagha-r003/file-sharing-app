@@ -170,5 +170,11 @@ AND f.isDeleted = true
             @Param("userId") Long userId
     );
 
+    Optional<UserFile>
+    findByIdAndUserIdAndIsDeletedFalse(
+            Long id,
+            Long userId
+    );
+
 
 }

@@ -5,10 +5,7 @@ import com.rapidrise.filesharingapp.dto.response.FileResponse;
 import com.rapidrise.filesharingapp.entity.User;
 import com.rapidrise.filesharingapp.entity.UserFile;
 import com.rapidrise.filesharingapp.enums.FileType;
-import com.rapidrise.filesharingapp.exception.FileStorageException;
-import com.rapidrise.filesharingapp.exception.InvalidFileException;
-import com.rapidrise.filesharingapp.exception.StorageLimitExceededException;
-import com.rapidrise.filesharingapp.exception.FileNotFoundException;
+import com.rapidrise.filesharingapp.exception.*;
 
 import com.rapidrise.filesharingapp.repository.FileRepository;
 import com.rapidrise.filesharingapp.repository.UserRepository;
@@ -470,6 +467,75 @@ public class FileService {
                         MediaType.IMAGE_JPEG
                 )
                 .body(resource);
+    }
+
+    public ResponseEntity<Resource> viewFile(Long fileId) throws IOException {
+        UserFile file = fileRepository.findById(fileId)
+                .orElseThrow(() -> new FileNotFoundException("File not found"));
+
+        Path path = Paths.get(file.getPath()).toAbsolutePath().normalize();
+        Resource resource = new UrlResource(path.toUri());
+
+        if (!resource.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.getMimeType()))
+                // ✅ inline = browser displays it, not downloads it
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + file.getName() + "\"")
+                .body(resource);
+    }
+
+    public ResponseEntity<ResponseStructure<String>> starFile(Long fileId) {
+
+        log.info("Star request for fileId: {}", fileId);
+
+        UserFile file = getAuthorizedFile(fileId);
+
+        file.setIsStarred(true);
+        fileRepository.save(file);
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "File marked as starred",
+                null
+        );
+    }
+
+    public ResponseEntity<ResponseStructure<String>> unstarFile(Long fileId) {
+
+        log.info("Unstar request for fileId: {}", fileId);
+
+        UserFile file = getAuthorizedFile(fileId);
+
+        file.setIsStarred(false);
+        fileRepository.save(file);
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "File removed from starred",
+                null
+        );
+    }
+
+    private UserFile getAuthorizedFile(
+            Long fileId
+    ) {
+        User user =
+                SecurityUtil.getCurrentUser();
+
+        return fileRepository
+                .findByIdAndUserIdAndIsDeletedFalse(
+                        fileId,
+                        user.getId()
+                )
+                .orElseThrow(() ->
+                        new UnauthorizedAccessException(
+                                "Unauthorized or file not found"
+                        )
+                );
     }
 
     private void updateDownloadAnalytics(UserFile file) {

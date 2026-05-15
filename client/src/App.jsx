@@ -9,6 +9,7 @@ import MyFilesPage from "./pages/private/MyFilesPage";
 import SharedLinkPreviewPage from "./pages/public/SharedLinkPreviewPage";
 import SharedLinksPage from "./pages/private/ShareLinksPage";
 import RecycleBinPage from "./pages/private/RecycleBinPage";
+import StarredPage from "./pages/private/StarredPage";
 
 function App() {
   return (
@@ -50,7 +51,7 @@ function App() {
             }
           />
 
-          {/* <Route
+          <Route
             path="/starred"
             element={
               <ProtectedRoute>
@@ -59,7 +60,7 @@ function App() {
             }
           />
 
-          <Route
+          {/* <Route
             path="/my-profile"
             element={
               <ProtectedRoute>

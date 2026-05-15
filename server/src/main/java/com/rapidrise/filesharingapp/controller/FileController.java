@@ -84,6 +84,26 @@ public class FileController {
     }
 
 
+    @GetMapping("/view/{id}")
+    public ResponseEntity<Resource>
+    viewFile(
+            @PathVariable Long id
+    ) throws IOException {
+        return fileService.viewFile(id);
+    }
+
+    @PutMapping("/star/{fileId}")
+    public ResponseEntity<ResponseStructure<String>> starFile(@PathVariable Long fileId) {
+        return fileService.starFile(fileId);
+    }
+
+    @PutMapping("/unstar/{fileId}")
+    public ResponseEntity<ResponseStructure<String>> unstarFile(@PathVariable Long fileId) {
+        return fileService.unstarFile(fileId);
+    }
+
+
+
 }
 
 

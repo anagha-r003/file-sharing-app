@@ -87,23 +87,23 @@ export const viewFile = async (fileId) => {
   return response.data;
 };
 
-export const downloadFile = async (fileId, fileName = "download") => {
-  const response = await api.get(`/files/${fileId}/download`, {
-    responseType: "blob",
-  });
+// export const downloadFile = async (fileId, fileName = "download") => {
+//   const response = await api.get(`/files/${fileId}/download`, {
+//     responseType: "blob",
+//   });
 
-  const url = window.URL.createObjectURL(new Blob([response.data]));
+//   const url = window.URL.createObjectURL(new Blob([response.data]));
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", fileName);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+//   const link = document.createElement("a");
+//   link.href = url;
+//   link.setAttribute("download", fileName);
+//   document.body.appendChild(link);
+//   link.click();
+//   link.remove();
+//   window.URL.revokeObjectURL(url);
 
-  return response.data;
-};
+//   return response.data;
+// };
 
 export const starFile = async (fileId) => {
   const response = await api.post(`/files/${fileId}/star`);

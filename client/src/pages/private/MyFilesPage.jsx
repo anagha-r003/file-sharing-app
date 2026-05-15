@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import FileTable from "../../components/myfiles/FileTable";
-import { getFiles } from "../../services/fileService";
+import { getFiles,downloadFiles } from "../../services/fileService";
 import PageLayout from "../../layout/PageLayout";
+import FileViewModal from "../../components/myfiles/FileViewModal";
 
 function MyFilesPage() {
   const [files, setFiles] = useState(null);
@@ -14,6 +15,7 @@ function MyFilesPage() {
 
   const [pageSize, setPageSize] = useState(10);
 
+  const [viewingFile, setViewingFile] = useState(null);
 
   const fetchData = async (currentPage = page, currentSize = pageSize) => {
     setLoading(true);
@@ -28,7 +30,6 @@ function MyFilesPage() {
       setLoading(false);
     }
   };
-  
 
   // Responsive sidebar
   useEffect(() => {
@@ -65,6 +66,15 @@ function MyFilesPage() {
           pageSize={pageSize}
           setPageSize={setPageSize}
           onRefresh={() => fetchData(page, pageSize)}
+          onFileClick={setViewingFile}
+        />
+      )}
+
+      {viewingFile && (
+        <FileViewModal
+          file={viewingFile}
+          onClose={() => setViewingFile(null)}
+          onDownload={() => downloadFiles([viewingFile.id])}
         />
       )}
     </PageLayout>

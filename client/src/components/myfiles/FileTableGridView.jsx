@@ -1,5 +1,5 @@
 import { getFileMeta, formatSize } from "../../utils/fileUtils";
-import { useAuthPreview } from "../../hooks/useAuthPreview";
+import { useAuthBlob } from "../../hooks/UseAuthBlob";
 
 function Checkbox({ checked, onChange }) {
   return (
@@ -43,7 +43,7 @@ function Checkbox({ checked, onChange }) {
 
 // Create a small wrapper component per file card
 function FilePreviewImage({ file, icon, color }) {
-  const blobUrl = useAuthPreview(file.id, true);
+ const { blobUrl } = useAuthBlob(`/files/preview/${file.id}`, true);
 
   if (!blobUrl) {
     // Show icon fallback while loading or on error
