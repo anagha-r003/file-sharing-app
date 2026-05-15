@@ -443,6 +443,35 @@ public class FileService {
         );
     }
 
+    public ResponseEntity<Resource>
+    getPreview(Long fileId)
+            throws IOException {
+
+        UserFile file =
+                fileRepository.findById(fileId)
+                        .orElseThrow();
+
+        if (file.getPreviewPath() == null) {
+            throw new RuntimeException(
+                    "Preview not available"
+            );
+        }
+
+        Path path = Paths.get(
+                uploadDir,
+                file.getPreviewPath()
+        );
+
+        Resource resource =
+                new UrlResource(path.toUri());
+
+        return ResponseEntity.ok()
+                .contentType(
+                        MediaType.IMAGE_JPEG
+                )
+                .body(resource);
+    }
+
     private void updateDownloadAnalytics(UserFile file) {
         file.setDownloadCount(file.getDownloadCount() + 1);
         file.setMonthlyDownloadCount(file.getMonthlyDownloadCount() + 1);

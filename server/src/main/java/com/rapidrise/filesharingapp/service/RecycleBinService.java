@@ -17,6 +17,7 @@ import com.rapidrise.filesharingapp.util.ResponseBuilder;
 import com.rapidrise.filesharingapp.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -42,6 +44,9 @@ public class RecycleBinService {
     private final ShareLinkRepository shareLinkRepository;
     private final UserRepository userRepository;
     private final ShareHistoryRepository shareHistoryRepository;
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
 
     public ResponseEntity<ResponseStructure<Page<FileResponse>>>
@@ -216,15 +221,44 @@ public class RecycleBinService {
             shareLinkRepository.deleteAll(shares);
 
             // Delete actual file
-            Files.deleteIfExists(
-                    Paths.get(file.getPath())
-            );
+//            Files.deleteIfExists(
+//                    Paths.get(file.getPath())
+//            );
+
+            Path filePath = Paths.get(file.getPath());
+
+            log.info("Deleting file: {}", filePath.toAbsolutePath());
+
+            boolean deleted = Files.deleteIfExists(filePath);
+
+            log.info("Deleted: {}", deleted);
 
             // Delete preview if exists
+//            if (file.getPreviewPath() != null) {
+//
+//                Files.deleteIfExists(
+//                        Paths.get(file.getPreviewPath())
+//                );
+//            }
+
             if (file.getPreviewPath() != null) {
 
-                Files.deleteIfExists(
-                        Paths.get(file.getPreviewPath())
+                Path previewPath = Paths.get(
+                        uploadDir,
+                        file.getPreviewPath()
+                ).normalize();
+
+                log.info(
+                        "Deleting preview: {}",
+                        previewPath.toAbsolutePath()
+                );
+
+                boolean previewDeleted =
+                        Files.deleteIfExists(previewPath);
+
+                log.info(
+                        "Preview deleted: {}",
+                        previewDeleted
                 );
             }
 

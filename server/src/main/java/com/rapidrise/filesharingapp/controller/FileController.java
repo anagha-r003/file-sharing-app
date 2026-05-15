@@ -75,6 +75,14 @@ public class FileController {
         return fileService.deleteFile(fileIds);
     }
 
+    @GetMapping("/preview/{id}")
+    public ResponseEntity<Resource>
+    getPreview(
+            @PathVariable Long id
+    ) throws IOException{
+        return fileService.getPreview(id);
+    }
+
 
 }
 
