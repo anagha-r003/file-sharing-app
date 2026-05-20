@@ -77,6 +77,7 @@ function LoginPage() {
             <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
               Password
             </label>
+
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -87,6 +88,7 @@ function LoginPage() {
                 required
                 className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
               />
+
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -94,6 +96,16 @@ function LoginPage() {
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
+            </div>
+
+           
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-cyan-400 hover:text-[#98a9ff] transition-colors"
+              >
+                Forgot password?
+              </Link>
             </div>
           </div>
 

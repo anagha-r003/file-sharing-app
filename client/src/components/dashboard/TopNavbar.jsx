@@ -5,6 +5,7 @@ import ProfileDropdown from "./ProfileDropdown"; // Import the dropdown componen
 
 function TopNavbar({ title, onMenuClick }) {
   const { user } = useAuth();
+  console.log("USER IN NAVBAR:", user);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -19,8 +20,12 @@ function TopNavbar({ title, onMenuClick }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const initials = user?.name
-    ? user.name
+  const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim();
+
+  const displayName = user?.firstName || "User";
+
+  const initials = fullName
+    ? fullName
         .split(" ")
         .map((n) => n[0])
         .join("")
@@ -61,7 +66,7 @@ function TopNavbar({ title, onMenuClick }) {
               {initials}
             </div>
             <span className="text-white text-sm font-medium hidden md:block">
-              {user?.name || "User"}
+              {displayName}
             </span>
             <ChevronDown
               size={14}

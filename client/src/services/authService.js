@@ -1,5 +1,4 @@
 import api from "./api";
-import axios from "axios";
 
 export const registerUser = async (userData) => {
   const response = await api.post(
@@ -36,12 +35,12 @@ export const logoutUser = async () => {
   }
 };
 
-export const getStats = async () => {
-  const response = await api.get("/dashboard/stats");
+export const forgotPassword = async (emailData) => {
+  const response = await api.post("/auth/forgot-password", emailData);
   return response.data;
-};
+}
 
-export const getRecentActivity = async () => {
-  const response = await api.get("/dashboard/activity");
+export const resetPassword = async (resetData) => {
+  const response = await api.post("/auth/reset-password", resetData);
   return response.data;
-};
+}

@@ -12,6 +12,8 @@ import RecycleBinPage from "./pages/private/RecycleBinPage";
 import StarredPage from "./pages/private/StarredPage";
 import MyFoldersPage from "./pages/private/MyFoldersPage";
 import FolderDetailPage from "./pages/private/FolderDetailPage";
+import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 
 function App() {
   return (
@@ -25,6 +27,14 @@ function App() {
             path="/public/share/:token"
             element={<SharedLinkPreviewPage />}
           />
+
+          <Route 
+             path="/forgot-password" 
+             element={<ForgotPasswordPage />} />
+
+          <Route 
+             path="/reset-password" 
+             element={<ResetPasswordPage />} />
 
           {/* Protected routes */}
           <Route
