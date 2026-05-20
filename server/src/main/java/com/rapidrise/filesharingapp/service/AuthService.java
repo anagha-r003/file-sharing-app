@@ -16,13 +16,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.rapidrise.filesharingapp.dto.request.RegisterRequest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 
@@ -114,6 +117,8 @@ public class AuthService {
         cookie.setSecure(false); // set true in production
         cookie.setPath("/");
         cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+
+
         httpResponse.addCookie(cookie);
 
         log.info("Login successful for email: {}", request.getEmail());
@@ -133,20 +138,18 @@ public class AuthService {
         );
     }
 
-    public ResponseEntity<ResponseStructure<RefreshTokenResponse>> refreshToken(HttpServletRequest request ) {
-
+    @Transactional
+    public ResponseEntity<ResponseStructure<RefreshTokenResponse>> refreshToken(HttpServletRequest request) {
         String refreshToken = extractRefreshToken(request);
-        // Find token in DB
-        RefreshToken storedToken = refreshTokenRepository
-                .findByToken(refreshToken)
-                .orElseThrow(() ->
-                        new InvalidTokenException("Invalid refresh token"));
 
-        // Grace period — allow 30 seconds after revocation
-        if (storedToken.getRevoked() &&
-                storedToken.getExpiryDate()
-                        .isBefore(LocalDateTime.now().minusSeconds(30))) {
-            throw new InvalidTokenException("Refresh token revoked");
+        // Find and LOCK the token row so concurrent requests wait
+        RefreshToken storedToken = refreshTokenRepository
+                .findByTokenWithLock(refreshToken)  // ← pessimistic lock
+                .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
+
+        // If already revoked by a concurrent request, reject immediately
+        if (storedToken.getRevoked()) {
+            throw new InvalidTokenException("Refresh token already used");
         }
 
         // Check token validity
@@ -155,14 +158,16 @@ public class AuthService {
         }
 
         String email = jwtService.extractUsername(refreshToken);
+
+        // Revoke old token FIRST
+        storedToken.setRevoked(true);
+        refreshTokenRepository.saveAndFlush(storedToken); // ← flush immediately
+
+        // Generate new tokens
         String newAccessToken = jwtService.generateAccessToken(email);
         String newRefreshToken = jwtService.generateRefreshToken(email);
 
-        // Revoke old token
-        storedToken.setRevoked(true);
-        refreshTokenRepository.save(storedToken);
-
-        // Save new token
+        // Save new refresh token
         RefreshToken newToken = RefreshToken.builder()
                 .token(newRefreshToken)
                 .email(email)
@@ -170,19 +175,26 @@ public class AuthService {
                 .revoked(false)
                 .deviceId(storedToken.getDeviceId())
                 .build();
+
         refreshTokenRepository.save(newToken);
 
         log.info("Refresh token rotated for email: {}", email);
 
-        RefreshTokenResponse response=RefreshTokenResponse.builder()
+        RefreshTokenResponse response = RefreshTokenResponse.builder()
                 .accessToken(newAccessToken)
                 .build();
 
-        return ResponseBuilder.build(
-                HttpStatus.OK,
-                "Token refershed",
-                response
-        );
+        // Set new refresh token in cookie
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
+                .httpOnly(true)
+                .secure(false) // true in production
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(ResponseBuilder.buildBody(HttpStatus.OK, "Token refreshed", response));
     }
 
     @Transactional
@@ -210,6 +222,8 @@ public class AuthService {
         cookie.setSecure(false); // set true in production
         cookie.setPath("/");
         cookie.setMaxAge(0); // deletes the cookie
+
+       
         httpResponse.addCookie(cookie);
 
         return ResponseBuilder.build(

@@ -101,6 +101,11 @@ public class UserFile {
 
     private LocalDateTime lastDownloadedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    @JsonIgnore
+    private Folder folder;
+
     // File owner
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

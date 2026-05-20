@@ -1,8 +1,12 @@
 package com.rapidrise.filesharingapp.repository;
 
 import com.rapidrise.filesharingapp.entity.RefreshToken;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -16,4 +20,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>
     @Transactional
     @Modifying
     void deleteAllByExpiryDateBefore(LocalDateTime date);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM RefreshToken r WHERE r.token = :token")
+    Optional<RefreshToken> findByTokenWithLock(@Param("token") String token);
 }

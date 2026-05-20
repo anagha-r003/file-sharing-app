@@ -92,12 +92,12 @@ public class FileController {
         return fileService.viewFile(id);
     }
 
-    @PutMapping("/star/{fileId}")
+    @PatchMapping("/star/{fileId}")
     public ResponseEntity<ResponseStructure<String>> starFile(@PathVariable Long fileId) {
         return fileService.starFile(fileId);
     }
 
-    @PutMapping("/unstar/{fileId}")
+    @PatchMapping("/unstar/{fileId}")
     public ResponseEntity<ResponseStructure<String>> unstarFile(@PathVariable Long fileId) {
         return fileService.unstarFile(fileId);
     }

@@ -207,4 +207,39 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(
+            FolderNotFoundException.class
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    handleFolderNotFoundException(
+
+            FolderNotFoundException ex
+    ) {
+
+        return ResponseBuilder.build(
+                HttpStatus.NOT_FOUND,
+
+                ex.getMessage(),
+
+                null
+        );
+    }
+
+    @ExceptionHandler(
+            FileAlreadyAddedException.class
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    handleFileAlreadyAddedException(
+            FileAlreadyAddedException ex
+    ) {
+
+        return ResponseBuilder.build(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                null
+        );
+    }
 }
