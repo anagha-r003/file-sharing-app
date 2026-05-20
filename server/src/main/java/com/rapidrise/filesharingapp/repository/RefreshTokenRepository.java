@@ -24,4 +24,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM RefreshToken r WHERE r.token = :token")
     Optional<RefreshToken> findByTokenWithLock(@Param("token") String token);
+
+    // RefreshTokenRepository.java
+    @Modifying
+    @Query("UPDATE RefreshToken r SET r.revoked = true WHERE r.email = :email AND r.deviceId = :deviceId AND r.revoked = false")
+    void revokeAllByEmailAndDeviceId(@Param("email") String email, @Param("deviceId") String deviceId);
 }

@@ -21,6 +21,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.time.LocalDateTime;
@@ -36,6 +37,8 @@ public class CreatePasswordResetService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
+
+    @Transactional
     public ResponseEntity<ResponseStructure<String>> forgotPassword(
             ForgotPasswordRequest request
     ) {
@@ -99,6 +102,8 @@ public class CreatePasswordResetService {
 
     // ─── RESET PASSWORD ────────────────────────────────────────
 
+
+    @Transactional
     public ResponseEntity<ResponseStructure<String>> resetPassword(
             ResetPasswordRequest request
     ) {

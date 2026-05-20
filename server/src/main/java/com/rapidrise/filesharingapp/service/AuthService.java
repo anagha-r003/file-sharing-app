@@ -75,6 +75,7 @@ public class AuthService {
         );
     }
 
+    @Transactional
     public ResponseEntity<ResponseStructure<LoginResponse>> login(
             LoginRequest request,
             HttpServletResponse httpResponse,
@@ -100,6 +101,8 @@ public class AuthService {
         // Generate tokens
         String accessToken = jwtService.generateAccessToken(user.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+
+        refreshTokenRepository.revokeAllByEmailAndDeviceId(user.getEmail(), deviceId);
 
         // Save refresh token to DB
         RefreshToken refreshTokenEntity = RefreshToken.builder()
