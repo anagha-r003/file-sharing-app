@@ -5,6 +5,9 @@ import com.rapidrise.filesharingapp.entity.UserFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 
 import java.time.LocalDateTime;
@@ -30,4 +33,8 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
     );
 
     boolean existsByFileIdAndRecipientEmailAndActiveTrue(Long fileId, String recipientEmail);
+
+    @Modifying
+    @Query("DELETE FROM ShareLink s WHERE s.file.id IN :fileIds")
+    void deleteAllByFileIdIn(@Param("fileIds") List<Long> fileIds);
 }
