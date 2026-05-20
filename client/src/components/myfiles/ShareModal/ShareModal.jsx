@@ -11,7 +11,8 @@ function ShareModal({ file, onClose }) {
   const [emails, setEmails] = useState([]);
   const [message, setMessage] = useState("");
   const [link, setLink] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: "" });
 
@@ -43,7 +44,7 @@ function ShareModal({ file, onClose }) {
   };
 
   const handleGenerateLink = async () => {
-    setLoading(true);
+    setIsGenerating(true);
     try {
       const requestBody = {
         fileId: file.id,
@@ -62,7 +63,7 @@ function ShareModal({ file, onClose }) {
       showToast("Failed to create sharelink");
       return null;
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -76,20 +77,27 @@ function ShareModal({ file, onClose }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
   const handleSend = async () => {
     if (emails.length === 0) {
       showToast("Add atleast one email");
       return;
     }
 
-    const finalLink = await handleGenerateLink();
-    if (!finalLink) return;
+    setIsSending(true);
 
-    showToast("Share link created and emails sent!");
-    setTimeout(() => {
-      onClose();
-    }, 1500);
+    try {
+      const finalLink = await handleGenerateLink();
+
+      if (!finalLink) return;
+
+      showToast("Share link created and emails sent!");
+
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -133,7 +141,9 @@ function ShareModal({ file, onClose }) {
           <ShareModalActions
             link={link}
             emails={emails}
-            loading={loading}
+            loading={isGenerating || isSending}
+            isGenerating={isGenerating}
+            isSending={isSending}
             onGenerateLink={handleGenerateLink}
             onClose={onClose}
             onSend={handleSend}

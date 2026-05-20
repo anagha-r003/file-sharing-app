@@ -1,28 +1,46 @@
 import api from "./api";
 
-export const uploadFolder = async (files, onProgress) => {
-  const formData = new FormData();
-
-  Array.from(files).forEach((file) => {
-    formData.append("files", file);
-  });
-
-  const response = await api.post("/folders/upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    onUploadProgress: (e) => {
-      if (onProgress) {
-        const percent = Math.round((e.loaded * 100) / e.total);
-        onProgress(percent);
-      }
-    },
-  });
+export const createFolder = async (folderData) => {
+  const response = await api.post("/folders", folderData);
 
   return response.data;
 };
 
 export const getFolders = async () => {
   const response = await api.get("/folders");
+
+  return response.data;
+};
+
+export const addFilesToFolder =
+  async (
+    folderId,
+    fileIds
+  ) => {
+
+    const response =
+      await api.patch(
+        `/folders/files?folderId=${folderId}`,
+        fileIds
+      );
+
+    return response.data;
+  };
+
+export const deleteFolder = async (folderId) => {
+  const response = await api.delete(`/folders/${folderId}`);
+
+  return response.data;
+};
+
+export const removeFileFromFolder = async (folderId, fileId) => {
+  const response = await api.delete(`/folders/${folderId}/files/${fileId}`);
+
+  return response.data;
+};
+
+export const getFolderById = async (folderId) => {
+  const response = await api.get(`/folders/${folderId}`);
+
   return response.data;
 };

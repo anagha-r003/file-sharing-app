@@ -5,16 +5,15 @@ import {
   useEffect,
   useState,
 } from "react";
+import { logoutUser } from "../services/authService";
 import api from "../services/api";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
 
@@ -30,7 +29,6 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-
   const login = useCallback((loginResponseData) => {
     const { accessToken, ...userData } = loginResponseData;
 
@@ -39,34 +37,32 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }, []);
 
-  
   // ─────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
-      
-      await api.post("/auth/logout");
-    } catch {
-      // Network error or already invalidated — still clear local state
-      // so the user is not stuck in a broken auth state on the client
+      await logoutUser();
+    } catch (err) {
+      console.error("Logout failed", err);
     } finally {
       localStorage.removeItem("accessToken");
+
       localStorage.removeItem("user");
+
       setUser(null);
     }
   }, []);
 
-  
   // ─────────────────────────────────────────────
   const isAuthenticated = user !== null;
 
   return (
     <AuthContext.Provider
       value={{
-        user,           // { email, firstName, lastName } or null
-        login,          // (loginResponseData) => void
-        logout,         // async () => void
-        loading,        // true while checking localStorage on mount
-        isAuthenticated,// boolean — use this in ProtectedRoute
+        user, // { email, firstName, lastName } or null
+        login, // (loginResponseData) => void
+        logout, // async () => void
+        loading, // true while checking localStorage on mount
+        isAuthenticated, // boolean — use this in ProtectedRoute
       }}
     >
       {children}
@@ -78,7 +74,9 @@ export function useAuth() {
   const context = useContext(AuthContext);
 
   if (context === null) {
-    throw new Error("useAuth() must be used inside <AuthProvider>. Wrap your app in AuthProvider.");
+    throw new Error(
+      "useAuth() must be used inside <AuthProvider>. Wrap your app in AuthProvider.",
+    );
   }
 
   return context;

@@ -4,6 +4,8 @@ function ShareModalActions({
   link,
   emails,
   loading,
+  isGenerating,
+  isSending,
   onGenerateLink,
   onClose,
   onSend,
@@ -18,7 +20,11 @@ function ShareModalActions({
           className="flex items-center gap-2 text-slate-400 hover:text-white text-sm font-medium transition disabled:opacity-50"
         >
           <span className="material-symbols-outlined text-lg">link</span>
-          {loading ? "Generating..." : link ? "Update Link" : "Create Link"}
+          {isGenerating
+            ? "Generating..."
+            : link
+              ? "Update Link"
+              : "Create Link"}
         </button>
 
         <div className="flex items-center gap-3">
@@ -30,10 +36,10 @@ function ShareModalActions({
           </button>
           <button
             onClick={onSend}
-            disabled={emails.length === 0}
+            disabled={emails.length === 0 || isSending || isGenerating}
             className="px-6 py-2.5 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-500 text-white transition shadow-lg shadow-violet-600/20 disabled:opacity-30 disabled:grayscale"
           >
-            Send
+            {isSending ? "Sending..." : "Send"}
           </button>
         </div>
 

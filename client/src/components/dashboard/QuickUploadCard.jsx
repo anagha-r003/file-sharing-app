@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { uploadFile } from "../../services/fileService";
-import { uploadFolder } from "../../services/folderService";
+
 
 function QuickUploadCard({ onUploadComplete }) {
   const fileInputRef = useRef();
-  const folderInputRef = useRef();
+  // const folderInputRef = useRef();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState([]);
@@ -34,31 +34,31 @@ function QuickUploadCard({ onUploadComplete }) {
     if (onUploadComplete) onUploadComplete();
   };
 
-  const uploadFolderFiles = async (fileList) => {
-    const files = Array.from(fileList);
-    if (files.length === 0) return;
-
-    setUploading(true);
-    setResults([]);
-
-    try {
-      await uploadFolder(fileList, (pct) => setProgress(pct));
-      const newResults = files.map((f) => ({ name: f.name, ok: true }));
-      setResults(newResults);
-    } catch (err) {
-      const message = err.response?.data?.message || "Folder upload failed";
-      const newResults = files.map((f) => ({
-        name: f.name,
-        ok: false,
-        message,
-      }));
-      setResults(newResults);
-    }
-
-    setProgress(0);
-    setUploading(false);
-    if (onUploadComplete) onUploadComplete();
-  };
+  // const uploadFolderFiles = async (fileList) => {
+  //   const files = Array.from(fileList);
+  //   if (files.length === 0) return;
+  //
+  //   setUploading(true);
+  //   setResults([]);
+  //
+  //   try {
+  //     await uploadFolder(fileList, (pct) => setProgress(pct));
+  //     const newResults = files.map((f) => ({ name: f.name, ok: true }));
+  //     setResults(newResults);
+  //   } catch (err) {
+  //     const message = err.response?.data?.message || "Folder upload failed";
+  //     const newResults = files.map((f) => ({
+  //       name: f.name,
+  //       ok: false,
+  //       message,
+  //     }));
+  //     setResults(newResults);
+  //   }
+  //
+  //   setProgress(0);
+  //   setUploading(false);
+  //   if (onUploadComplete) onUploadComplete();
+  // };
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -123,7 +123,7 @@ function QuickUploadCard({ onUploadComplete }) {
                 Upload Files
               </button>
 
-              <button
+              {/* <button
                 onClick={() => folderInputRef.current.click()}
                 disabled={uploading}
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -132,7 +132,7 @@ function QuickUploadCard({ onUploadComplete }) {
                   drive_folder_upload
                 </span>
                 Upload Folder
-              </button>
+              </button> */}
             </div>
 
             <p className="text-slate-500 text-xs mt-4 uppercase tracking-widest text-center">
@@ -150,7 +150,7 @@ function QuickUploadCard({ onUploadComplete }) {
           }
           className="hidden"
         />
-        <input
+        {/* <input
           type="file"
           multiple
           webkitdirectory="true"
@@ -159,7 +159,7 @@ function QuickUploadCard({ onUploadComplete }) {
             e.target.files.length > 0 && uploadFolderFiles(e.target.files)
           }
           className="hidden"
-        />
+        /> */}
       </div>
 
       {/* Results */}

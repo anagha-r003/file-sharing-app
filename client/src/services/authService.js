@@ -4,7 +4,7 @@ import axios from "axios";
 export const registerUser = async (userData) => {
   const response = await axios.post(
     "http://localhost:8080/auth/register",
-    userData
+    userData,
   );
 
   return response.data;
@@ -16,7 +16,7 @@ export const loginUser = async (loginData) => {
     loginData,
     {
       withCredentials: true,
-    }
+    },
   );
 
   return response.data;
@@ -29,13 +29,11 @@ export const logoutUser = async () => {
       {},
       {
         withCredentials: true,
-      }
+      },
     );
   } catch (error) {
     console.error(error);
-  } finally {
-    localStorage.removeItem("accessToken");
-  }
+  } 
 };
 
 export const getStats = async () => {

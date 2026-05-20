@@ -14,6 +14,7 @@ import FileTableToolbar from "./FileTableToolbar";
 import FileTableListView from "./FileTableListView";
 import FileTableGridView from "./FileTableGridView";
 import Pagination from "../../common/ui/Pagination";
+import AddToFolderModal from "../myfolders/AddToFolderModal";
 
 import { getFileStats } from "../../utils/fileUtils";
 
@@ -25,6 +26,7 @@ function FileTable({
   setPageSize,
   onRefresh,
   onFileClick,
+  showStats = true,
 }) {
   const [shareFile, setShareFile] = useState(null);
 
@@ -41,6 +43,8 @@ function FileTable({
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+
+  const [folderFiles, setFolderFiles] = useState([]);
 
   // Filtering
   const filtered = useMemo(() => {
@@ -181,10 +185,20 @@ function FileTable({
     setShowBulkDeleteModal(true);
   };
 
+  const handleBulkFolder = () => {
+    if (selectedIds.length === 0) return;
+
+    const selectedFiles = files?.content?.filter((file) =>
+      selectedIds.includes(file.id),
+    );
+
+    setFolderFiles(selectedFiles || []);
+  };
+
   return (
     <>
       {/* Stats */}
-      <FileTableStats stats={stats} />
+      {showStats && <FileTableStats stats={stats} />}
 
       {/* Main container */}
       <div className="custom-card rounded-2xl flex flex-col">
@@ -201,6 +215,7 @@ function FileTable({
           onBulkDownload={handleBulkDownload}
           onBulkShare={handleBulkShare}
           onBulkDelete={handleBulkDelete}
+          onFolder={handleBulkFolder}
           onClearSelection={clearSelection}
           bulkDeleting={bulkDeleting}
         />
@@ -221,6 +236,7 @@ function FileTable({
             toggleSelectAll={toggleSelectAll}
             onShare={(file) => setShareFile(file)}
             onDelete={(file) => setDeleteTarget(file)}
+            onFolder={(file) => setFolderFiles([file])}
           />
         )}
 
@@ -269,6 +285,15 @@ function FileTable({
       {/* Share Modal */}
       {shareFile && (
         <ShareModal file={shareFile} onClose={() => setShareFile(null)} />
+      )}
+      {folderFiles.length > 0 && (
+        <AddToFolderModal
+          files={folderFiles}
+          onClose={() => {
+            setFolderFiles([]);
+            clearSelection();
+          }}
+        />
       )}
     </>
   );

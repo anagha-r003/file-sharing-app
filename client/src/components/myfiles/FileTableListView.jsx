@@ -58,6 +58,7 @@ function FileTableListView({
   toggleSelectAll,
   onShare,
   onDelete,
+  onFolder,
 }) {
   const handleDownload = async (e, file) => {
     e.stopPropagation();
@@ -237,7 +238,7 @@ function FileTableListView({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (onShare) onShare(file);
+                            if (onFolder) onFolder(file);
                           }}
                           title="Add to folder"
                           className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 bg-white/5 hover:bg-violet-500/20 hover:text-violet-400 border border-white/5 hover:border-violet-500/30 transition"

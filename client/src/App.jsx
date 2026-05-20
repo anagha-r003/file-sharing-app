@@ -10,6 +10,8 @@ import SharedLinkPreviewPage from "./pages/public/SharedLinkPreviewPage";
 import SharedLinksPage from "./pages/private/ShareLinksPage";
 import RecycleBinPage from "./pages/private/RecycleBinPage";
 import StarredPage from "./pages/private/StarredPage";
+import MyFoldersPage from "./pages/private/MyFoldersPage";
+import FolderDetailPage from "./pages/private/FolderDetailPage";
 
 function App() {
   return (
@@ -60,14 +62,23 @@ function App() {
             }
           />
 
-          {/* <Route
-            path="/my-profile"
+          <Route
+            path="/my-folders"
             element={
               <ProtectedRoute>
-                <MyProfile />
+                <MyFoldersPage />
               </ProtectedRoute>
             }
-          /> */}
+          />
+
+          { <Route
+            path="/my-folders/:id"
+            element={
+              <ProtectedRoute>
+                <FolderDetailPage />
+              </ProtectedRoute>
+            }
+          /> }
 
           <Route
             path="/recycle-bin"

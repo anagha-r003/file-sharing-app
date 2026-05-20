@@ -106,11 +106,13 @@ export const viewFile = async (fileId) => {
 // };
 
 export const starFile = async (fileId) => {
-  const response = await api.post(`/files/${fileId}/star`);
+  const response = await api.patch(`/files/star/${fileId}`);
+
   return response.data;
 };
 
 export const unstarFile = async (fileId) => {
-  const response = await api.post(`/files/${fileId}/unstar`);
+  const response = await api.patch(`/files/unstar/${fileId}`);
+
   return response.data;
 };

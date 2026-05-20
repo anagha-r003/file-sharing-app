@@ -13,7 +13,7 @@ function FileTableToolbar({
   onViewChange,
 
   onBulkDownload,
-  onBulkShare,
+  onFolder,
   onBulkDelete,
   onClearSelection,
 
@@ -45,7 +45,7 @@ function FileTableToolbar({
             </button>
 
             <button
-              onClick={onBulkShare}
+              onClick={onFolder}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-200 text-sm font-medium transition"
             >
               <span className="material-symbols-outlined text-base">create_new_folder</span>

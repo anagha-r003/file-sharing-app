@@ -86,6 +86,7 @@ function StarredPage() {
                 pageSize={pageSize}
                 setPageSize={setPageSize}
                 onRefresh={() => fetchStarredData()}
+                showStats={false}
               />
             ) : (
               /* Empty State */

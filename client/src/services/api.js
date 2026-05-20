@@ -1,36 +1,32 @@
 import axios from "axios";
 
+let refreshPromise = null;
 
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach((promise) => {
-    if (error) {
-      promise.reject(error);
-    } else {
-      promise.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
-
+// ─────────────────────────────────────────────
+// Device ID
+// ─────────────────────────────────────────────
 const getOrCreateDeviceId = () => {
   let deviceId = localStorage.getItem("deviceId");
+
   if (!deviceId) {
     deviceId = crypto.randomUUID();
     localStorage.setItem("deviceId", deviceId);
   }
+
   return deviceId;
 };
 
+// ─────────────────────────────────────────────
+// Axios instance
+// ─────────────────────────────────────────────
 const api = axios.create({
   baseURL: "http://localhost:8080",
-  withCredentials: true, // sends refreshToken cookie automatically on every request
+  withCredentials: true,
 });
 
-
+// ─────────────────────────────────────────────
+// Request interceptor
+// ─────────────────────────────────────────────
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("accessToken");
 
@@ -38,74 +34,71 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // Always send device ID so backend can track sessions per device
   config.headers["X-Device-Id"] = getOrCreateDeviceId();
 
   return config;
 });
 
+// ─────────────────────────────────────────────
+// Response interceptor
+// ─────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const original = error.config;
 
-    // Only handle 401 and only retry once per request (_retry flag)
-    if (error.response?.status === 401 && !original._retry) {
+    // No config → reject
+    if (!original) {
+      return Promise.reject(error);
+    }
 
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          original.headers.Authorization = `Bearer ${token}`;
-          return api(original);
-        }).catch((err) => {
-          return Promise.reject(err);
-        });
+    // Skip refresh logic for auth endpoints
+    const isAuthRoute =
+      original.url?.includes("/auth/login") ||
+      original.url?.includes("/auth/logout") ||
+      original.url?.includes("/auth/refresh");
+
+    // Only refresh for protected APIs
+    if (error.response?.status === 401 && !original._retry && !isAuthRoute) {
+      original._retry = true;
+
+      // If no refresh in flight, start one — otherwise all requests share the existing promise
+      if (!refreshPromise) {
+        refreshPromise = axios
+          .post(
+            "http://localhost:8080/auth/refresh",
+            {},
+            { withCredentials: true },
+          )
+          .then((res) => {
+            const newAccessToken = res.data.data.accessToken;
+            localStorage.setItem("accessToken", newAccessToken);
+            return newAccessToken;
+          })
+          .catch((err) => {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("user");
+            window.location.href = "/login";
+            return Promise.reject(err);
+          })
+          .finally(() => {
+            refreshPromise = null; // reset so next expiry starts fresh
+          });
       }
 
-      // ── REFRESH PATH ─────────────────────────────────────────────────
-      // We are the first 401. Take the lock and do the refresh.
-      // ─────────────────────────────────────────────────────────────────
-      original._retry = true;
-      isRefreshing = true;
-
       try {
-        
-        const res = await axios.post(
-          "http://localhost:8080/auth/refresh",
-          {},
-          { withCredentials: true }
-        );
-
-        // Backend returns: { data: { accessToken: "..." } }
-        const newAccessToken = res.data.data.accessToken;
-
-        localStorage.setItem("accessToken", newAccessToken);
-
-        // Unblock all queued requests with the new token
-        processQueue(null, newAccessToken);
-
-        // Replay the original request that triggered the 401
+        // All concurrent 401s await the same promise — only 1 HTTP call fires
+        const newAccessToken = await refreshPromise;
         original.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(original);
-
-      } catch (refreshError) {
-        // Refresh itself failed (token expired or revoked on backend).
-        // Reject everything in the queue and force logout.
-        processQueue(refreshError, null);
-        localStorage.clear();
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-
-      } finally {
-        // Always release the lock, even if refresh threw
-        isRefreshing = false;
+      } catch (err) {
+        return Promise.reject(err);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

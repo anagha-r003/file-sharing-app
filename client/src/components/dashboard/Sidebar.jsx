@@ -1,26 +1,26 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { logoutUser } from "../../services/authService";
+import { useState } from "react";
+import ConfirmModal from "../recyclebin/ConfirmModal";
 
 const navItems = [
   { label: "Dashboard", icon: "grid_view", path: "/dashboard" },
   { label: "My Files", icon: "description", path: "/my-files" },
-  { label: "My Folders", icon: "folder", path: "/my-folders" },
+  { label: "File Collections", icon: "folder", path: "/my-folders" },
   { label: "Shared Links", icon: "share", path: "/shared-links" },
   { label: "Analytics", icon: "bar_chart", path: "/analytics" },
   { label: "Starred", icon: "star", path: "/starred" },
   { label: "Recycle Bin", icon: "delete", path: "/recycle-bin" },
-  //{ label: "Security Logs", icon: "security", path: "/security" },
   { label: "Settings", icon: "settings", path: "/settings" },
 ];
 
 function Sidebar({ isOpen, setIsOpen }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = async () => {
-    await logoutUser();
-    logout();
+    await logout();
     navigate("/login");
   };
 
@@ -98,7 +98,7 @@ function Sidebar({ isOpen, setIsOpen }) {
             {isOpen && <span>Support</span>}
           </button>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             title={!isOpen ? "Log Out" : undefined}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-400/10 transition w-full whitespace-nowrap ${
               isOpen ? "" : "lg:justify-center"
@@ -111,6 +111,19 @@ function Sidebar({ isOpen, setIsOpen }) {
           </button>
         </div>
       </aside>
+
+      {/* Logout Confirmation Modal */}
+
+      {showLogoutModal && (
+        <ConfirmModal
+          message="Are you sure you want to log out? You'll need to sign in again to access your vault."
+          onConfirm={async () => {
+            setShowLogoutModal(false);
+            await handleLogout();
+          }}
+          onCancel={() => setShowLogoutModal(false)}
+        />
+      )}
     </>
   );
 }
