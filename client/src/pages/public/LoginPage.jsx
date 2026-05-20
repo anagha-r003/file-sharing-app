@@ -28,20 +28,7 @@ function LoginPage() {
       // Debug: log response to see exact field names from your backend
       console.log("Login response:", response);
 
-      // Adjust these field names to match your backend's actual response
-      const { accessToken, refreshToken } = response.data;
-      const user = {
-        name: response.data.firstName,
-        email: response.data.email,
-      };
-
-      if (!accessToken) {
-        setError("Login failed: no token received. Check backend response.");
-        return;
-      }
-
-      // Save to context (which also saves to localStorage)
-      login(user, accessToken, refreshToken);
+      login(response.data);
       navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);

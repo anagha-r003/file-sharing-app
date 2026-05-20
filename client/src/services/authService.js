@@ -2,7 +2,7 @@ import api from "./api";
 import axios from "axios";
 
 export const registerUser = async (userData) => {
-  const response = await axios.post(
+  const response = await api.post(
     "http://localhost:8080/auth/register",
     userData,
   );
@@ -11,7 +11,7 @@ export const registerUser = async (userData) => {
 };
 
 export const loginUser = async (loginData) => {
-  const response = await axios.post(
+  const response = await api.post(
     "http://localhost:8080/auth/login",
     loginData,
     {
@@ -33,7 +33,7 @@ export const logoutUser = async () => {
     );
   } catch (error) {
     console.error(error);
-  } 
+  }
 };
 
 export const getStats = async () => {

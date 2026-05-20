@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { logoutUser } from "../services/authService";
-import api from "../services/api";
+
 
 export const AuthContext = createContext(null);
 

@@ -66,8 +66,6 @@ export default function StorageHealth({ refreshKey }) {
 
   useEffect(() => {
     const fetchStorage = async () => {
-      console.log("Fetching storage data with refreshKey:", refreshKey);
-      if (refreshKey === 0) return;
       try {
         setLoading(true); // step A: start loading
 
