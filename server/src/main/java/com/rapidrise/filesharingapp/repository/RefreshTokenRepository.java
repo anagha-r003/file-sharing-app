@@ -1,6 +1,7 @@
 package com.rapidrise.filesharingapp.repository;
 
 import com.rapidrise.filesharingapp.entity.RefreshToken;
+import com.rapidrise.filesharingapp.entity.User;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -29,4 +30,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken,Long>
     @Modifying
     @Query("UPDATE RefreshToken r SET r.revoked = true WHERE r.email = :email AND r.deviceId = :deviceId AND r.revoked = false")
     void revokeAllByEmailAndDeviceId(@Param("email") String email, @Param("deviceId") String deviceId);
+
+    void deleteAllByEmail(String email);
 }
