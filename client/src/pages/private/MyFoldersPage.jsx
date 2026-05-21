@@ -98,7 +98,7 @@ function MyFoldersPage() {
 
   return (
     <PageLayout
-      title="File Collections"
+      title="My Collections"
       sidebarOpen={sidebarOpen}
       setSidebarOpen={setSidebarOpen}
       onMenuClick={() => setSidebarOpen((prev) => !prev)}

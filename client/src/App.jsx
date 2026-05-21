@@ -15,6 +15,7 @@ import FolderDetailPage from "./pages/private/FolderDetailPage";
 import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 import ProfilePage from "./pages/private/ProfilePage";
+import SupportPage from "./pages/private/SupportPage";
 
 function App() {
   return (
@@ -103,6 +104,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/support"
+            element={
+              <ProtectedRoute>
+                <SupportPage />
               </ProtectedRoute>
             }
           />

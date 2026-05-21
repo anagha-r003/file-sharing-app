@@ -20,14 +20,33 @@ public class ShareController {
 
     private final ShareService shareService;
 
-    @PostMapping
+    @PostMapping("/generate")
     public ResponseEntity<
-            ResponseStructure<List<ShareLinkResponse>>>
-    createShareLink(
-            @RequestBody CreateShareLinkRequest request
+            ResponseStructure<
+                    List<ShareLinkResponse>>>
+    generateShareLink(
+            @RequestBody
+            CreateShareLinkRequest request
     ) {
 
-        return shareService.createShareLink(request);
+        return shareService
+                .generateShareLink(
+                        request
+                );
+    }
+
+    @PostMapping("/send")
+    public ResponseEntity<
+            ResponseStructure<String>>
+    sendShareEmail(
+            @RequestBody
+            CreateShareLinkRequest request
+    ) {
+
+        return shareService
+                .sendShareEmail(
+                        request
+                );
     }
 
     @GetMapping("/{token}")

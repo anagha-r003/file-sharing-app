@@ -1,29 +1,18 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useState } from "react";
-import ConfirmModal from "../recyclebin/ConfirmModal";
 
 const navItems = [
   { label: "Dashboard", icon: "grid_view", path: "/dashboard" },
   { label: "My Files", icon: "description", path: "/my-files" },
-  { label: "File Collections", icon: "folder", path: "/my-folders" },
+  { label: "My Collections", icon: "folder", path: "/my-folders" },
   { label: "Shared Links", icon: "share", path: "/shared-links" },
   { label: "Analytics", icon: "bar_chart", path: "/analytics" },
   { label: "Starred", icon: "star", path: "/starred" },
   { label: "Recycle Bin", icon: "delete", path: "/recycle-bin" },
-  { label: "Settings", icon: "settings", path: "/settings" },
 ];
 
 function Sidebar({ isOpen, setIsOpen }) {
-  const { logout } = useAuth();
   const navigate = useNavigate();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
-
   return (
     <>
       {/* Mobile overlay — only shown when sidebar is open on small screens */}
@@ -62,7 +51,6 @@ function Sidebar({ isOpen, setIsOpen }) {
               key={item.path}
               to={item.path}
               onClick={() => {
-                // close sidebar on mobile after navigation
                 if (window.innerWidth < 1024) setIsOpen(false);
               }}
               title={!isOpen ? item.label : undefined}
@@ -87,6 +75,7 @@ function Sidebar({ isOpen, setIsOpen }) {
         {/* Bottom actions */}
         <div className="px-2 pb-6 space-y-1 overflow-hidden">
           <button
+            onClick={() => navigate("/support")}
             title={!isOpen ? "Support" : undefined}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition w-full whitespace-nowrap ${
               isOpen ? "" : "lg:justify-center"
@@ -97,33 +86,8 @@ function Sidebar({ isOpen, setIsOpen }) {
             </span>
             {isOpen && <span>Support</span>}
           </button>
-          <button
-            onClick={() => setShowLogoutModal(true)}
-            title={!isOpen ? "Log Out" : undefined}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-400/10 transition w-full whitespace-nowrap ${
-              isOpen ? "" : "lg:justify-center"
-            }`}
-          >
-            <span className="material-symbols-outlined text-xl flex-shrink-0">
-              logout
-            </span>
-            {isOpen && <span>Log Out</span>}
-          </button>
         </div>
       </aside>
-
-      {/* Logout Confirmation Modal */}
-
-      {showLogoutModal && (
-        <ConfirmModal
-          message="Are you sure you want to log out? You'll need to sign in again to access your vault."
-          onConfirm={async () => {
-            setShowLogoutModal(false);
-            await handleLogout();
-          }}
-          onCancel={() => setShowLogoutModal(false)}
-        />
-      )}
     </>
   );
 }

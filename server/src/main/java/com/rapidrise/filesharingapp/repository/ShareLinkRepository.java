@@ -37,4 +37,16 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
     @Modifying
     @Query("DELETE FROM ShareLink s WHERE s.file.id IN :fileIds")
     void deleteAllByFileIdIn(@Param("fileIds") List<Long> fileIds);
+
+    Optional<ShareLink>
+    findTopByFileIdAndRecipientEmailOrderByCreatedAtDesc(
+            Long fileId,
+            String recipientEmail
+    );
+
+    Optional<ShareLink>
+    findTopByFileIdAndRecipientEmailAndActiveTrueOrderByCreatedAtDesc(
+            Long fileId,
+            String recipientEmail
+    );
 }

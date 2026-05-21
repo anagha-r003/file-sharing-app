@@ -55,84 +55,142 @@ public class ShareService {
     private String frontendUrl;
 
     @Transactional
-    public ResponseEntity<ResponseStructure<List<ShareLinkResponse>>>
-    createShareLink(CreateShareLinkRequest request) {
-        log.info("Share link creation request received for fileId: {}", request.getFileId());
+    public ResponseEntity<
+            ResponseStructure<
+                    List<ShareLinkResponse>>>
+    generateShareLink(
+            CreateShareLinkRequest request
+    ) {
 
-        // 1. Validate expiry date
+        log.info(
+                "Share link creation request received for fileId: {}",
+                request.getFileId()
+        );
+
         if (request.getExpiresAt() == null ||
-                request.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("Expiry date must be a future date");
+                request.getExpiresAt()
+                        .isBefore(
+                                LocalDateTime.now()
+                        )) {
+
+            throw new BadRequestException(
+                    "Expiry date must be a future date"
+            );
         }
 
-        User user = SecurityUtil.getCurrentUser();
-        UserFile file = getAuthorizedFile(request.getFileId(), user.getId());
+        User user =
+                SecurityUtil.getCurrentUser();
 
-        List<ShareLink> shareLinks = new ArrayList<>();
-        List<ShareLinkResponse> responseList = new ArrayList<>();
+        UserFile file =
+                getAuthorizedFile(
+                        request.getFileId(),
+                        user.getId()
+                );
 
-        for (String recipientEmail : request.getRecipientEmails()) {
+        List<ShareLink> shareLinks =
+                new ArrayList<>();
 
-            // 2. Skip duplicate active share links
-            boolean alreadyShared = shareLinkRepository
-                    .existsByFileIdAndRecipientEmailAndActiveTrue(
-                            file.getId(), recipientEmail);
-            if (alreadyShared) {
-                log.warn("Active share link already exists for {} on file {}",
-                        recipientEmail, file.getId());
-                continue;
+        List<ShareLinkResponse>
+                responseList =
+                new ArrayList<>();
+
+        for (String recipientEmail :
+                request.getRecipientEmails()) {
+
+            boolean alreadyShared =
+                    shareLinkRepository
+                            .existsByFileIdAndRecipientEmailAndActiveTrue(
+                                    file.getId(),
+                                    recipientEmail
+                            );
+
+            ShareLink existingShareLink =
+                    shareLinkRepository
+                            .findTopByFileIdAndRecipientEmailAndActiveTrueOrderByCreatedAtDesc(
+                                    file.getId(),
+                                    recipientEmail
+                            )
+                            .orElse(null);
+
+          // deactivate previous active link
+            if (existingShareLink != null) {
+
+                existingShareLink.setActive(false);
+
+                shareLinkRepository
+                        .save(existingShareLink);
             }
 
-            String token = UUID.randomUUID().toString();
-            String shareUrl = frontendUrl + "/public/share/" + token;
+            String token =
+                    UUID.randomUUID()
+                            .toString();
 
-            ShareLink shareLink = ShareLink.builder()
-                    .token(token)
-                    .recipientEmail(recipientEmail)
-                    .message(request.getMessage())
-                    .expiresAt(request.getExpiresAt())
-                    .active(true)
-                    .downloadCount(0)
-                    .file(file)
-                    .createdBy(user)
-                    .build();
+            String shareUrl =
+                    frontendUrl
+                            + "/public/share/"
+                            + token;
+
+            ShareLink shareLink =
+                    ShareLink.builder()
+                            .token(token)
+                            .recipientEmail(
+                                    recipientEmail
+                            )
+                            .message(
+                                    request.getMessage()
+                            )
+                            .expiresAt(
+                                    request
+                                            .getExpiresAt()
+                            )
+
+                            .active(true)
+                            .downloadCount(0)
+                            .file(file)
+                            .createdBy(user)
+                            .build();
 
             shareLinks.add(shareLink);
 
-            responseList.add(ShareLinkResponse.builder()
-                    .shareUrl(shareUrl)
-                    .recipientEmail(recipientEmail)
-                    .fileName(file.getName())
-                    .expiresAt(request.getExpiresAt())
-                    .build());
+            responseList.add(
+                    ShareLinkResponse
+                            .builder()
+                            .shareUrl(
+                                    shareUrl
+                            )
+                            .recipientEmail(
+                                    recipientEmail
+                            )
+                            .fileName(
+                                    file.getName()
+                            )
+                            .expiresAt(
+                                    request
+                                            .getExpiresAt()
+                            )
+                            .build()
+            );
         }
 
-        // 3. Bulk save all links at once
-        shareLinkRepository.saveAll(shareLinks);
+        shareLinkRepository
+                .saveAll(shareLinks);
 
-        for (int i = 0; i < shareLinks.size(); i++) {
-            activityLogService.log(user, "SHARE", file.getName(),
-                    "with " + shareLinks.get(i).getRecipientEmail());
-        }
+        for (int i = 0;
+             i < shareLinks.size();
+             i++) {
 
-        // 4. Send emails after saving — failures won't rollback saved links
-        for (int i = 0; i < shareLinks.size(); i++) {
-            String recipientEmail = shareLinks.get(i).getRecipientEmail();
-            String shareUrl = responseList.get(i).getShareUrl();
-            try {
-                emailService.sendShareLinkEmail(
-                        recipientEmail,
-                        user.getFirstName(),
-                        shareUrl,
-                        request.getMessage()
-                );
-            } catch (Exception e) {
-                log.error("Failed to send email to {}: {}", recipientEmail, e.getMessage());
-                // link is saved, email can be retried later
-            }
+            activityLogService.log(
+                    user,
+                    "SHARE",
+                    file.getName(),
+                    "with "
+                            + shareLinks.get(i)
+                            .getRecipientEmail()
+            );
         }
 
         if (responseList.isEmpty()) {
+
             return ResponseBuilder.build(
                     HttpStatus.OK,
                     "All recipients already have active share links",
@@ -142,8 +200,75 @@ public class ShareService {
 
         return ResponseBuilder.build(
                 HttpStatus.OK,
-                "File shared successfully",
+                "Share link generated successfully",
                 responseList
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<
+            ResponseStructure<String>>
+    sendShareEmail(
+            CreateShareLinkRequest request
+    ) {
+
+        log.info(
+                "Sending share email for fileId: {}",
+                request.getFileId()
+        );
+
+        User user =
+                SecurityUtil.getCurrentUser();
+
+        UserFile file =
+                getAuthorizedFile(
+                        request.getFileId(),
+                        user.getId()
+                );
+
+        for (String recipientEmail :
+                request.getRecipientEmails()) {
+
+            ShareLink shareLink =
+                    shareLinkRepository
+                            .findTopByFileIdAndRecipientEmailOrderByCreatedAtDesc(
+                                    file.getId(),
+                                    recipientEmail
+                            )
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Share link not found"
+                                    ));
+
+            String shareUrl =
+                    frontendUrl
+                            + "/public/share/"
+                            + shareLink.getToken();
+
+            try {
+
+                emailService
+                        .sendShareLinkEmail(
+                                recipientEmail,
+                                user.getFirstName(),
+                                shareUrl,
+                                request.getMessage()
+                        );
+
+            } catch (Exception e) {
+
+                log.error(
+                        "Failed to send email to {}: {}",
+                        recipientEmail,
+                        e.getMessage()
+                );
+            }
+        }
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Email sent successfully",
+                null
         );
     }
 
@@ -182,6 +307,21 @@ public class ShareService {
                         .viewUrl(baseUrl + "/share/view/" + shareLink.getToken())
 
                         .downloadUrl(baseUrl + "/share/download/" + shareLink.getToken())
+                        .sharedByName(
+                                shareLink
+                                        .getCreatedBy()
+                                        .getFirstName()
+                                        + " "
+                                        + shareLink
+                                        .getCreatedBy()
+                                        .getLastName()
+                        )
+
+                        .sharedByEmail(
+                                shareLink
+                                        .getCreatedBy()
+                                        .getEmail()
+                        )
 
                         .build();
 

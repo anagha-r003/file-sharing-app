@@ -28,4 +28,8 @@ public class ShareLinkResponse {
     private String viewUrl;
 
     private String downloadUrl;
+
+    private String sharedByName;
+
+    private String sharedByEmail;
 }

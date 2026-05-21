@@ -1,5 +1,7 @@
 package com.rapidrise.filesharingapp.dto.request;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,7 +12,14 @@ public class CreateShareLinkRequest {
 
     private Long fileId;
 
-    private List<String> recipientEmails;
+    @NotEmpty
+    private List<
+            @Email(
+                    message =
+                            "Invalid email"
+            )
+                    String>
+            recipientEmails;
 
     private String message;
 

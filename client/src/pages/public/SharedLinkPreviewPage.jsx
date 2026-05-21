@@ -33,6 +33,7 @@ export default function SharedLinkPreviewPage() {
         const response = await axios.get(
           `http://localhost:8080/share/${token}`,
         );
+        console.log(response.data.data);
         setFileData(response.data.data);
       } catch (error) {
         console.log("FULL ERROR:", error);
@@ -98,9 +99,13 @@ export default function SharedLinkPreviewPage() {
 
         <main className="relative z-10 flex-1 flex flex-col items-center px-4 sm:px-6 py-8 sm:py-14 gap-5 sm:gap-7">
           <SharedByChip
-            name={"Shared User"}
-            email={fileData.recipientEmail}
-            initials={fileData.recipientEmail?.charAt(0).toUpperCase()}
+            name={fileData?.sharedByName}
+            email={fileData?.sharedByEmail}
+            initials={fileData?.sharedByName
+              ?.split(" ")
+              ?.map((n) => n[0])
+              ?.join("")
+              ?.toUpperCase()}
           />
 
           {/* Card fills width on mobile, capped on desktop */}

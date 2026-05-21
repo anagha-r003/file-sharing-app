@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { createShareLink } from "../../../services/shareService";
+import {
+  generateShareLink,
+  sendShareLink,
+} from "../../../services/shareService";
 import ShareModalHeader from "./ShareModalHeader";
 import EmailInput from "./EmailInput";
 import AccessSettings from "./AccessSettings";
@@ -14,7 +17,11 @@ function ShareModal({ file, onClose }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [toast, setToast] = useState({ visible: false, message: "" });
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -23,18 +30,45 @@ function ShareModal({ file, onClose }) {
   );
   const [access, setAccess] = useState("anyone");
 
-  const showToast = (message) => {
-    setToast({ visible: true, message });
-    setTimeout(() => setToast((p) => ({ ...p, visible: false })), 3000);
+  const showToast = (message, type = "success") => {
+    setToast({
+      visible: true,
+      message,
+      type,
+    });
+
+    setTimeout(
+      () =>
+        setToast((p) => ({
+          ...p,
+          visible: false,
+        })),
+      3000,
+    );
   };
 
   const handleEmailKeyDown = (e) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
+
       const val = email.trim().replace(",", "");
-      if (val && !emails.includes(val)) {
+
+      // Email regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!val) return;
+
+      // Validate email
+      if (!emailRegex.test(val)) {
+        showToast("Enter a valid email", "error");
+        return;
+      }
+
+      // Prevent duplicates
+      if (!emails.includes(val)) {
         setEmails((prev) => [...prev, val]);
       }
+
       setEmail("");
     }
   };
@@ -54,13 +88,13 @@ function ShareModal({ file, onClose }) {
         accessType: access === "anyone" ? "ANYONE" : "RESTRICTED",
       };
 
-      const response = await createShareLink(requestBody);
+      const response = await generateShareLink(requestBody);
       const generatedLink = response?.data?.[0]?.shareUrl;
       setLink(generatedLink);
       return generatedLink;
     } catch (err) {
       console.error(err);
-      showToast("Failed to create sharelink");
+      showToast("Failed to create sharelink", "error");
       return null;
     } finally {
       setIsGenerating(false);
@@ -77,24 +111,45 @@ function ShareModal({ file, onClose }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
   const handleSend = async () => {
     if (emails.length === 0) {
-      showToast("Add atleast one email");
+      showToast("Add atleast one email", "error");
       return;
     }
 
     setIsSending(true);
 
     try {
-      const finalLink = await handleGenerateLink();
+      let finalLink = link;
+
+      // Generate only if link not exists
+      if (!finalLink) {
+        finalLink = await handleGenerateLink();
+      }
 
       if (!finalLink) return;
 
-      showToast("Share link created and emails sent!");
+      const requestBody = {
+        fileId: file.id,
+        recipientEmails: emails,
+        message,
+        expiresAt: expiryDate,
+        accessType: access === "anyone" ? "ANYONE" : "RESTRICTED",
+      };
+
+      // NEW API CALL
+      await sendShareLink(requestBody);
+
+      showToast("Emails sent successfully!");
 
       setTimeout(() => {
         onClose();
       }, 1500);
+    } catch (err) {
+      console.error(err);
+
+      showToast("Failed to send email", "error");
     } finally {
       setIsSending(false);
     }

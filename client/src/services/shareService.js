@@ -1,16 +1,28 @@
 import api from "./api";
 
 // Create share links
-export const createShareLink = async (
+export const generateShareLink = async (
   shareData
 ) => {
   const response = await api.post(
-    "/share",
+    "/share/generate",
     shareData
   );
 
   return response.data;
 };
+
+export const sendShareLink = async (
+  shareData
+) => {
+  const response = await api.post(
+    "/share/send",
+    shareData
+  );
+
+  return response.data;
+};
+
 
 // Resolve share link
 export const resolveShareLink = async (
