@@ -63,7 +63,7 @@ function TextInput({
   );
 }
 
-function PasswordInput({ value, onChange, placeholder, }) {
+function PasswordInput({ value, onChange, placeholder }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -404,6 +404,7 @@ export default function ProfilePage() {
                 <PasswordInput
                   value={currentPass}
                   onChange={(e) => setCurrentPass(e.target.value)}
+                  autoComplete="new-password"
                   placeholder="••••••••"
                 />
               </div>

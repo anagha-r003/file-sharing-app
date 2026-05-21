@@ -7,7 +7,6 @@ import {
 } from "react";
 import { logoutUser } from "../services/authService";
 
-
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -52,6 +51,19 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const updateUser = useCallback((updatedData) => {
+    setUser((prevUser) => {
+      const updatedUser = {
+        ...prevUser,
+        ...updatedData,
+      };
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return updatedUser;
+    });
+  }, []);
+
   // ─────────────────────────────────────────────
   const isAuthenticated = user !== null;
 
@@ -63,6 +75,7 @@ export function AuthProvider({ children }) {
         logout, // async () => void
         loading, // true while checking localStorage on mount
         isAuthenticated, // boolean — use this in ProtectedRoute
+        updateUser, // (updatedData) => void
       }}
     >
       {children}

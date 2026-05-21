@@ -14,6 +14,7 @@ import MyFoldersPage from "./pages/private/MyFoldersPage";
 import FolderDetailPage from "./pages/private/FolderDetailPage";
 import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
+import ProfilePage from "./pages/private/ProfilePage";
 
 function App() {
   return (
@@ -28,13 +29,9 @@ function App() {
             element={<SharedLinkPreviewPage />}
           />
 
-          <Route 
-             path="/forgot-password" 
-             element={<ForgotPasswordPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          <Route 
-             path="/reset-password" 
-             element={<ResetPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Protected routes */}
           <Route
@@ -81,20 +78,31 @@ function App() {
             }
           />
 
-          { <Route
-            path="/my-folders/:id"
-            element={
-              <ProtectedRoute>
-                <FolderDetailPage />
-              </ProtectedRoute>
-            }
-          /> }
+          {
+            <Route
+              path="/my-folders/:id"
+              element={
+                <ProtectedRoute>
+                  <FolderDetailPage />
+                </ProtectedRoute>
+              }
+            />
+          }
 
           <Route
             path="/recycle-bin"
             element={
               <ProtectedRoute>
                 <RecycleBinPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
