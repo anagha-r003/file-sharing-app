@@ -9,7 +9,6 @@ import FilePreviewCard from "../../components/sharedlink/FilePreviewCard";
 import PageFooter from "../../components/sharedlink/PageFooter";
 import Toast from "../../components/sharedlink/Toast";
 import LinkExpired from "../../components/sharedlink/LinkExpired";
-import EmailModal from "../../components/restrictedshare/EmailModal";
 import OtpModal from "../../components/restrictedshare/OtpModal";
 
 export default function SharedLinkPreviewPage() {
@@ -23,7 +22,6 @@ export default function SharedLinkPreviewPage() {
   });
 
   // Modal states
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [accessGranted, setAccessGranted] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
@@ -34,10 +32,11 @@ export default function SharedLinkPreviewPage() {
   const [otpResending, setOtpResending] = useState(false);
 
   // For passing to OtpModal
-  const [enteredEmail, setEnteredEmail] = useState("");
   const [otpError, setOtpError] = useState("");
 
   const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
+
+
 
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
@@ -53,9 +52,9 @@ export default function SharedLinkPreviewPage() {
         const data = response.data.data;
         setFileData(data);
 
-        // If restricted, open email modal immediately
+        // If restricted, open OTP modal immediately
         if (data.requiresOtp) {
-          setEmailModalOpen(true);
+          setOtpModalOpen(true);
         } else {
           setAccessGranted(true); // public — no gate
         }
@@ -71,20 +70,18 @@ export default function SharedLinkPreviewPage() {
     fetchSharedFile();
   }, [token]);
 
-  // Step 2 — user submits email → request OTP
-  const handleEmailSubmit = async (email) => {
+  // Step 2 — send OTP for restricted access
+  const handleSendOtp = async () => {
     setOtpSending(true);
     try {
       await api.post("/share/request-otp", {
         token,
-        email,
       });
-      setEnteredEmail(email);
-      setEmailModalOpen(false);
-      setOtpModalOpen(true);
       showToast("OTP sent to your email!");
+      return true;
     } catch (error) {
       showToast(error.response?.data?.message || "Failed to send OTP", "error");
+      return false;
     } finally {
       setOtpSending(false);
     }
@@ -97,7 +94,6 @@ export default function SharedLinkPreviewPage() {
     try {
       const response = await api.post("/share/verify-otp", {
         token,
-        email: enteredEmail,
         otp,
       });
       const { accessToken: shareAccessToken } = response.data.data;
@@ -126,7 +122,6 @@ export default function SharedLinkPreviewPage() {
     try {
       await api.post("/share/request-otp", {
         token,
-        email: enteredEmail,
       });
       showToast("New OTP sent!");
     } catch (error) {
@@ -154,21 +149,16 @@ export default function SharedLinkPreviewPage() {
   return (
     <>
       {/* Modals */}
-      <EmailModal
-        isOpen={emailModalOpen}
-        onClose={() => setEmailModalOpen(false)}
-        onSubmit={handleEmailSubmit}
-        isLoading={otpSending}
-        fileName={fileData.fileName}
-      />
       <OtpModal
         isOpen={otpModalOpen}
         onClose={() => setOtpModalOpen(false)}
+        onSend={handleSendOtp}
         onSubmit={handleOtpSubmit}
         onResend={handleResend}
+        isSending={otpSending}
         isLoading={otpVerifying}
         isResending={otpResending}
-        email={enteredEmail}
+        email={fileData?.recipientEmail || fileData?.sharedByEmail}
         error={otpError}
       />
 
