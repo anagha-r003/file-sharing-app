@@ -10,10 +10,6 @@ public class VerifyShareOtpRequest {
     @NotBlank
     private String token;
 
-    @Email
-    @NotBlank
-    private String email;
-
     @NotBlank
     private String otp;
 }

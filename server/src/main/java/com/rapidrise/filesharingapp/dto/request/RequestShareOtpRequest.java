@@ -10,9 +10,7 @@ public class RequestShareOtpRequest {
     @NotBlank
     private String token;
 
-    @Email
-    @NotBlank
-    private String email;
+
 
 
 }

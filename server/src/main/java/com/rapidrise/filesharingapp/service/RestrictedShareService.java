@@ -54,6 +54,8 @@ public class RestrictedShareService {
                                 new BadRequestException(
                                         "Invalid share link"
                                 ));
+        String recipientEmail =
+                shareLink.getRecipientEmail();
 
         // must be restricted
         if (shareLink.getShareType()
@@ -64,17 +66,6 @@ public class RestrictedShareService {
             );
         }
 
-        // validate email
-        if (!shareLink
-                .getRecipientEmail()
-                .equalsIgnoreCase(
-                        request.getEmail()
-                )) {
-
-            throw new BadRequestException(
-                    "Unauthorized recipient email"
-            );
-        }
 
         // expiry validation
         if (shareLink.getExpiresAt()
@@ -91,7 +82,7 @@ public class RestrictedShareService {
         otpRepository
                 .deleteAllByShareLinkIdAndEmail(
                         shareLink.getId(),
-                        request.getEmail()
+                        recipientEmail
                 );
 
         // generate OTP
@@ -115,7 +106,7 @@ public class RestrictedShareService {
                 RestrictedShareOtp
                         .builder()
                         .email(
-                                request.getEmail()
+                                recipientEmail
                         )
                         .otpHash(
                                 hashedOtp
@@ -138,7 +129,7 @@ public class RestrictedShareService {
 
         emailService
                 .sendRestrictedOtpEmail(
-                        request.getEmail(),
+                        recipientEmail,
                         shareLink
                                 .getFile()
                                 .getName(),
@@ -173,12 +164,14 @@ public class RestrictedShareService {
                                 new BadRequestException(
                                         "Invalid share link"
                                 ));
+        String recipientEmail =
+                shareLink.getRecipientEmail();
 
         RestrictedShareOtp storedOtp =
                 otpRepository
                         .findTopByShareLinkIdAndEmailOrderByCreatedAtDesc(
                                 shareLink.getId(),
-                                request.getEmail()
+                                recipientEmail
                         )
                         .orElseThrow(() ->
                                 new BadRequestException(
@@ -250,7 +243,7 @@ public class RestrictedShareService {
                 jwtService
                         .generateShareAccessToken(
                                 shareLink.getToken(),
-                                request.getEmail()
+                                recipientEmail
                         );
 
         ShareAccessResponse response =
