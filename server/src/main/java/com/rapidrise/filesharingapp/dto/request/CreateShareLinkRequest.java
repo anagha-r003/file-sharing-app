@@ -1,5 +1,6 @@
 package com.rapidrise.filesharingapp.dto.request;
 
+import com.rapidrise.filesharingapp.enums.ShareType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -24,4 +25,6 @@ public class CreateShareLinkRequest {
     private String message;
 
     private LocalDateTime expiresAt;
+
+    private ShareType shareType;
 }

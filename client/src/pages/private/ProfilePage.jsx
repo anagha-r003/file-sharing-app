@@ -72,6 +72,7 @@ function PasswordInput({ value, onChange, placeholder }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        autoComplete="off"
         className="w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 pr-11 py-2.5
                    text-white text-sm placeholder-[#4a4d5a] outline-none
                    focus:border-violet-600 focus:ring-2 focus:ring-violet-700/20
@@ -404,7 +405,7 @@ export default function ProfilePage() {
                 <PasswordInput
                   value={currentPass}
                   onChange={(e) => setCurrentPass(e.target.value)}
-                  autoComplete="new-password"
+                  autoComplete="off" 
                   placeholder="••••••••"
                 />
               </div>

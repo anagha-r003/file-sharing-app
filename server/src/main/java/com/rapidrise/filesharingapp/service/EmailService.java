@@ -63,6 +63,38 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
+    public void sendRestrictedOtpEmail(
+            String toEmail,
+            String fileName,
+            String otp
+    ) {
+
+        log.info(
+                "Sending restricted share OTP to {}",
+                toEmail
+        );
+
+        String subject =
+                "OTP for Secure File Access";
+
+        String body =
+                "You requested access to a secure shared file.\n\n"
+                        + "File: "
+                        + fileName
+                        + "\n\n"
+                        + "OTP: "
+                        + otp
+                        + "\n\n"
+                        + "This OTP expires in 5 minutes.\n\n"
+                        + "Do not share this OTP with anyone.";
+
+        sendEmail(
+                toEmail,
+                subject,
+                body
+        );
+    }
+
 
     // ─── COMMON SEND METHOD ────────────────────────────────────
 

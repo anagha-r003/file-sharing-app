@@ -54,7 +54,9 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 "/share/view/**",
-                                "/share/download/**"
+                                "/share/download/**",
+                                "/share/request-otp/**",
+                                "/share/verify-otp"
                         ).permitAll()
 
                         .requestMatchers(
