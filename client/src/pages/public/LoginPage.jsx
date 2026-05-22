@@ -1,505 +1,139 @@
-import { useState, useEffect } from "react";
-import { User, Lock, Info, Eye, EyeOff, Check, XCircle } from "lucide-react";
-import PageLayout from "../../layout/PageLayout";
-import { Card, Button, Badge } from "../../common/ui";
-import Toast from "../../components/sharedlink/Toast";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
+import { loginUser } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
-import {
-  updateProfile,
-  getProfile,
-  changePassword,
-} from "../../services/profileService";
-import { useNavigate } from "react-router-dom";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Password strength
-// ─────────────────────────────────────────────────────────────────────────────
-function getStrength(val) {
-  if (!val) return 0;
-  let score = 0;
-  if (val.length >= 8) score++;
-  if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
-  if (/[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) score++;
-  return score;
-}
-
-const STRENGTH_META = [
-  { label: "Weak", bar: "bg-red-500", text: "text-red-400" },
-  { label: "Fair", bar: "bg-amber-400", text: "text-amber-400" },
-  { label: "Strong", bar: "bg-emerald-500", text: "text-emerald-400" },
-];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared field components
-// ─────────────────────────────────────────────────────────────────────────────
-function FieldLabel({ children }) {
-  return (
-    <label className="text-[11px] font-semibold text-[#6b6b80] uppercase tracking-widest">
-      {children}
-    </label>
-  );
-}
-
-function TextInput({
-  value,
-  onChange,
-  placeholder,
-  disabled = false,
-  className = "",
-}) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      disabled={disabled}
-      className={`w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 py-2.5
-                  text-white text-sm placeholder-[#4a4d5a] outline-none
-                  focus:border-violet-600 focus:ring-2 focus:ring-violet-700/20
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  transition-all duration-150 ${className}`}
-    />
-  );
-}
-
-function PasswordInput({ value, onChange, placeholder, }) {
-  const [show, setShow] = useState(false);
-  return (
-    <div className="relative">
-      <input
-        type={show ? "text" : "password"}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 pr-11 py-2.5
-                   text-white text-sm placeholder-[#4a4d5a] outline-none
-                   focus:border-violet-600 focus:ring-2 focus:ring-violet-700/20
-                   transition-all duration-150"
-      />
-      <button
-        type="button"
-        onClick={() => setShow((s) => !s)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4a4d5a]
-                   hover:text-white transition-colors p-0.5"
-      >
-        {show ? <EyeOff size={15} /> : <Eye size={15} />}
-      </button>
-    </div>
-  );
-}
-
-function SectionCard({ icon, title, children }) {
-  return (
-    <Card className="bg-[#13151a] border border-[#1e2130] rounded-2xl p-6 md:p-7">
-      <div className="flex items-center gap-3 mb-6 pb-5 border-b border-[#1e2130]">
-        <div
-          className="w-8 h-8 rounded-lg bg-violet-950/60 border border-violet-800/30
-                        flex items-center justify-center text-violet-400 shrink-0"
-        >
-          {icon}
-        </div>
-        <h3 className="text-sm font-semibold text-white tracking-wide">
-          {title}
-        </h3>
-      </div>
-      {children}
-    </Card>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// useToast — manages the 3 props your Toast component expects:
-//   message, visible, type
-// ─────────────────────────────────────────────────────────────────────────────
-function useToast(duration = 3000) {
-  const [toastState, setToastState] = useState({
-    message: "",
-    visible: false,
-    type: "success",
-  });
-
-  // Keep a ref to the hide-timer so rapid calls don't stack
-  const timerRef = useState(null);
-
-  const showToast = (message, type = "success") => {
-    // Clear any running timer
-    if (timerRef[0]) clearTimeout(timerRef[0]);
-
-    // Show immediately
-    setToastState({ message, visible: true, type });
-
-    // Schedule hide — store timer id in the ref slot
-    timerRef[0] = setTimeout(() => {
-      setToastState((prev) => ({ ...prev, visible: false }));
-    }, duration);
-  };
-
-  return { toastState, showToast };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ProfilePage
-// ─────────────────────────────────────────────────────────────────────────────
-export default function ProfilePage() {
-  const { user, updateUser } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Profile form
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-
-  // Password form
-  const [currentPass, setCurrentPass] = useState("");
-  const [newPass, setNewPass] = useState("");
-  const [confirmPass, setConfirmPass] = useState("");
-
-  const [loading, setLoading] = useState(false);
-
-  // Toast — driven by your reusable component's 3 props
-  const { toastState, showToast } = useToast(3000);
-
+function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await getProfile();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-        const profileData = response.data;
-
-        setFirstName(profileData.firstName || "");
-
-        setLastName(profileData.lastName || "");
-
-        updateUser(profileData);
-      } catch (error) {
-        console.log("Profile fetch failed:", error);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
-  // Derived
-  const initials =
-    ((firstName[0] ?? "") + (lastName[0] ?? "")).toUpperCase() || "AR";
-  const displayName =
-    [firstName.trim(), lastName.trim()].filter(Boolean).join(" ") ||
-    "Ann Roberts";
-  const strength = getStrength(newPass);
-
-  // Handlers
-  const handleSaveInfo = async () => {
-    try {
-      if (!firstName.trim() || !lastName.trim()) {
-        showToast("Please enter both first and last name.", "error");
-        return;
-      }
-
-      const payload = {
-        firstName,
-        lastName,
-      };
-
-      const response = await updateProfile(payload);
-
-      updateUser(response.data);
-
-      showToast("Profile updated successfully!", "success");
-    } catch (error) {
-      console.log(error);
-
-      showToast("Profile update failed", "error");
-    }
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleResetInfo = () => {
-    setFirstName(user?.firstName || "");
-    setLastName(user?.lastName || "");
-  };
-
-  const handleSavePassword = async () => {
-    // 1. Frontend validations
-    if (currentPass === newPass) {
-      showToast(
-        "New password cannot be the same as the current password.",
-        "error",
-      );
-      return;
-    }
-    if (!currentPass || !newPass || !confirmPass) {
-      showToast("Please fill in all password fields.", "error");
-      return;
-    }
-
-    if (newPass !== confirmPass) {
-      showToast("New passwords do not match.", "error");
-      return;
-    }
-
-    if (newPass.length < 8) {
-      showToast("Password must be at least 8 characters.", "error");
-      return;
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      // 2. Call backend API
-      const payload = {
-        currentPassword: currentPass,
-        newPassword: newPass,
-        confirmPassword: confirmPass,
-      };
+      const response = await loginUser(formData);
 
-      const response = await changePassword(payload);
+      // Debug: log response to see exact field names from your backend
+      console.log("Login response:", response);
 
-      // 3. Success message
-      showToast(
-        response.message || "Password updated successfully!",
-        "success",
-      );
-
-      // 4. Clear fields
-      setCurrentPass("");
-      setNewPass("");
-      setConfirmPass("");
-
-      // 5. Clear local storage
-      localStorage.removeItem("user");
-
-      // 6. Redirect to login
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
-    } catch (error) {
-      showToast(error.message || "Failed to update password", "error");
+      login(response.data);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Login error:", err);
+      const message =
+        err.response?.data?.message || "Invalid email or password";
+      setError(message);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleResetPassword = () => {
-    setCurrentPass("");
-    setNewPass("");
-    setConfirmPass("");
   };
 
   return (
-    <>
-      <PageLayout
-        title="My Profile"
-        sidebarOpen={sidebarOpen}
-        onMenuClick={() => setSidebarOpen(true)}
-        setSidebarOpen={setSidebarOpen}
-      >
-        <div className="max-w-3xl mx-auto w-full space-y-5">
-          {/* Page heading */}
-          <div className="mb-2">
-            <h1 className="text-xl font-bold text-white mb-1">My Profile</h1>
-            <p className="text-sm text-[#6b6b80]">
-              Manage your personal information and account security.
-            </p>
+    <main className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-y-auto bg-[radial-gradient(circle_at_top_left,_#1a1a1a_0%,_#0e0e0e_100%)] text-white">
+      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(152,169,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(152,169,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+      <div className="relative z-10 w-full max-w-md p-8 rounded-xl bg-[#1a1a1a]/60 backdrop-blur-2xl border border-white/5">
+        <div className="mb-10 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#131313] rounded-xl border border-white/10 mb-6">
+            <span className="text-[#98a9ff] text-3xl">🔐</span>
           </div>
-
-          {/* Avatar banner */}
-          <div
-            className="relative bg-[#13151a] border border-[#1e2130] rounded-2xl px-6 py-5
-                          flex items-center gap-5 overflow-hidden"
-          >
-            <div
-              className="absolute -top-12 -left-12 w-48 h-48 bg-violet-700/10 rounded-full
-                            blur-3xl pointer-events-none"
-            />
-
-            <div
-              className="relative shrink-0 w-16 h-16 md:w-[72px] md:h-[72px] rounded-full
-                            bg-gradient-to-br from-violet-700 to-purple-500
-                            flex items-center justify-center text-white text-2xl font-bold
-                            shadow-[0_0_0_3px_rgba(124,58,237,0.18),0_0_22px_rgba(124,58,237,0.2)]"
-            >
-              {initials}
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <p className="text-lg font-bold text-white truncate leading-tight">
-                {displayName}
-              </p>
-              <p className="text-sm text-[#6b6b80] truncate mt-0.5">
-                {user?.email}
-              </p>
-            </div>
-
-            {/* <Badge
-              className="hidden sm:flex shrink-0 bg-violet-950/60 border border-violet-700/30
-                              text-violet-300 text-[11px] tracking-widest font-semibold px-3 py-1 rounded-full"
-            >
-              ENTERPRISE
-            </Badge> */}
-          </div>
-
-          {/* Personal Information */}
-          <SectionCard icon={<User size={16} />} title="Personal Information">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col gap-2">
-                <FieldLabel>First Name</FieldLabel>
-                <TextInput
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Enter first name"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <FieldLabel>Last Name</FieldLabel>
-                <TextInput
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Enter last name"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 mb-7">
-              <FieldLabel>Email Address</FieldLabel>
-              <div className="relative">
-                <TextInput
-                  value={user?.email || ""}
-                  disabled
-                  className="pr-10"
-                />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4a4d5a]">
-                  <Lock size={14} />
-                </span>
-              </div>
-              <p className="flex items-center gap-1.5 text-[11.5px] text-[#4a4d5a] mt-0.5">
-                <Info size={12} />
-                Email cannot be changed. Contact support if needed.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-2.5">
-              <Button
-                variant="ghost"
-                onClick={handleResetInfo}
-                className="px-5 py-2 rounded-xl text-sm font-semibold border border-[#2a2d3a]
-                           text-[#6b6b80] hover:border-[#6b6b80] hover:text-white transition-all"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSaveInfo}
-                className="px-5 py-2 rounded-xl text-sm font-semibold bg-violet-700 text-white
-                           hover:bg-violet-600 hover:-translate-y-px
-                           hover:shadow-[0_4px_14px_rgba(124,58,237,0.35)]
-                           active:translate-y-0 transition-all"
-              >
-                Save Changes
-              </Button>
-            </div>
-          </SectionCard>
-
-          {/* Change Password */}
-          <SectionCard icon={<Lock size={16} />} title="Change Password">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <div className="flex flex-col gap-2">
-                <FieldLabel>Current Password</FieldLabel>
-                <PasswordInput
-                  value={currentPass}
-                  onChange={(e) => setCurrentPass(e.target.value)}
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <FieldLabel>New Password</FieldLabel>
-                <PasswordInput
-                  value={newPass}
-                  onChange={(e) => setNewPass(e.target.value)}
-                  placeholder="••••••••"
-                />
-                <div className="flex gap-1 mt-1">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className={`flex-1 h-[3px] rounded-full transition-all duration-300
-                                  ${
-                                    newPass && i < strength
-                                      ? STRENGTH_META[strength - 1].bar
-                                      : "bg-[#2a2d3a]"
-                                  }`}
-                    />
-                  ))}
-                </div>
-                <p
-                  className={`text-[11px] h-4 transition-colors
-                               ${
-                                 newPass && strength
-                                   ? STRENGTH_META[strength - 1].text
-                                   : "text-transparent"
-                               }`}
-                >
-                  {newPass && strength
-                    ? STRENGTH_META[strength - 1].label
-                    : "·"}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <FieldLabel>Confirm Password</FieldLabel>
-                <PasswordInput
-                  value={confirmPass}
-                  onChange={(e) => setConfirmPass(e.target.value)}
-                  placeholder="••••••••"
-                />
-                {confirmPass && (
-                  <p
-                    className={`text-[11px] flex items-center gap-1 mt-0.5
-                                 ${newPass === confirmPass ? "text-emerald-400" : "text-red-400"}`}
-                  >
-                    {newPass === confirmPass ? (
-                      <Check size={15} strokeWidth={2.5} />
-                    ) : (
-                      <XCircle size={15} />
-                    )}
-                    {newPass === confirmPass
-                      ? "Passwords match"
-                      : "Passwords don't match"}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2.5">
-              <Button
-                variant="ghost"
-                onClick={handleResetPassword}
-                className="px-5 py-2 rounded-xl text-sm font-semibold border border-[#2a2d3a]
-                           text-[#6b6b80] hover:border-[#6b6b80] hover:text-white transition-all"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSavePassword}
-                className="px-5 py-2 rounded-xl text-sm font-semibold bg-violet-700 text-white
-                           hover:bg-violet-600 hover:-translate-y-px
-                           hover:shadow-[0_4px_14px_rgba(124,58,237,0.35)]
-                           active:translate-y-0 transition-all"
-              >
-                Update Password
-              </Button>
-            </div>
-          </SectionCard>
+          <h1 className="text-4xl font-extrabold tracking-tight text-white mb-3">
+            Authorize Access
+          </h1>
+          <p className="text-gray-400 text-sm font-medium tracking-wide uppercase">
+            Secure File Vault
+          </p>
         </div>
-      </PageLayout>
 
-      {/*
-        Your reusable Toast — driven by toastState from useToast().
-        Accepts: message, visible, type  (exactly the props it declares)
-      */}
-      <Toast
-        message={toastState.message}
-        visible={toastState.visible}
-        type={toastState.type}
-      />
-    </>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              Password
+            </label>
+
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+           
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-cyan-400 hover:text-[#98a9ff] transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
+
+          {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-br from-[#98a9ff] to-[#4065ff] text-white font-extrabold text-lg rounded-xl hover:shadow-[0_0_25px_rgba(152,169,255,0.4)] transition-all active:scale-95 disabled:opacity-50"
+          >
+            {loading ? "Logging in..." : "Secure Login"}
+          </button>
+        </form>
+
+        <div className="mt-10 text-center pt-6 border-t border-zinc-700/30">
+          <p className="text-gray-400 text-sm">
+            Don&apos;t have an account?{" "}
+            <Link
+              to="/register"
+              className="text-cyan-400 font-bold hover:underline"
+            >
+              Sign Up
+            </Link>
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }
+
+export default LoginPage;
