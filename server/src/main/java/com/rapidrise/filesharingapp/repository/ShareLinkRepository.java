@@ -49,4 +49,10 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
             Long fileId,
             String recipientEmail
     );
+
+    Page<ShareLink> findByRecipientEmailAndActiveTrueAndExpiresAtAfterOrderByCreatedAtDesc(
+            String recipientEmail,
+            LocalDateTime now,
+            Pageable pageable
+    );
 }

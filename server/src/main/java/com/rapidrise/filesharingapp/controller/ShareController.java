@@ -125,6 +125,25 @@ public class ShareController {
         );
     }
 
+    // Get files shared with me
+    @GetMapping("/shared-with-me")
+    public ResponseEntity<
+            ResponseStructure<Page<ShareLinkResponse>>>
+    getFilesSharedWithMe(
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+
+        return shareService.getFilesSharedWithMe(
+                page,
+                size
+        );
+    }
+
     // Revoke share link
     @PutMapping("/revoke/{shareId}")
     public ResponseEntity<

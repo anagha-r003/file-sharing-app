@@ -53,6 +53,24 @@ export const getMySharedFiles = async (
   return response.data;
 };
 
+// Get files shared with me
+export const getSharedWithMeFiles = async (
+  page = 0,
+  size = 10
+) => {
+  const response = await api.get(
+    "/share/shared-with-me",
+    {
+      params: {
+        page,
+        size,
+      },
+    }
+  );
+
+  return response.data;
+};
+
 // Revoke share link
 export const revokeShareLink = async (
   shareId

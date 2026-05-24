@@ -5,6 +5,7 @@ const navItems = [
   { label: "Dashboard", icon: "grid_view", path: "/dashboard" },
   { label: "My Files", icon: "description", path: "/my-files" },
   { label: "My Collections", icon: "folder", path: "/my-folders" },
+  { label: "Shared with Me", icon: "folder_shared", path: "/shared-with-me" },
   { label: "Shared Links", icon: "share", path: "/shared-links" },
   { label: "Analytics", icon: "bar_chart", path: "/analytics" },
   { label: "Starred", icon: "star", path: "/starred" },

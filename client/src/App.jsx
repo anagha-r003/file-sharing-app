@@ -8,6 +8,7 @@ import DashboardPage from "./pages/private/DashboardPage";
 import MyFilesPage from "./pages/private/MyFilesPage";
 import SharedLinkPreviewPage from "./pages/public/SharedLinkPreviewPage";
 import SharedLinksPage from "./pages/private/ShareLinksPage";
+import SharedWithMePage from "./pages/private/SharedWithMePage";
 import RecycleBinPage from "./pages/private/RecycleBinPage";
 import StarredPage from "./pages/private/StarredPage";
 import MyFoldersPage from "./pages/private/MyFoldersPage";
@@ -58,6 +59,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SharedLinksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shared-with-me"
+            element={
+              <ProtectedRoute>
+                <SharedWithMePage />
               </ProtectedRoute>
             }
           />

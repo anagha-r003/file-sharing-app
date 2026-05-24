@@ -29,7 +29,14 @@ function LoginPage() {
       console.log("Login response:", response);
 
       login(response.data);
-      navigate("/dashboard");
+      
+     const params = new URLSearchParams(window.location.search);
+const redirect = params.get("redirect");
+
+// If the redirect target is a share preview link, send the user to
+// "Shared with Me" first so they open the file consciously from there.
+const isShareRedirect = redirect && redirect.startsWith("/public/share/");
+navigate(isShareRedirect ? "/shared-with-me" : redirect || "/dashboard");
     } catch (err) {
       console.error("Login error:", err);
       const message =

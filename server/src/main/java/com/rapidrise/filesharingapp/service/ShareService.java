@@ -13,6 +13,7 @@ import com.rapidrise.filesharingapp.exception.UnauthorizedAccessException;
 import com.rapidrise.filesharingapp.jwt.JwtService;
 import com.rapidrise.filesharingapp.repository.FileRepository;
 import com.rapidrise.filesharingapp.repository.ShareLinkRepository;
+import com.rapidrise.filesharingapp.repository.UserRepository;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
 import com.rapidrise.filesharingapp.util.SecurityUtil;
 import jakarta.transaction.Transactional;
@@ -49,6 +50,7 @@ public class ShareService {
     private final EmailService emailService;
     private final ActivityLogService activityLogService;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
 
     @Value("${app.base-url}")
@@ -97,6 +99,8 @@ public class ShareService {
 
         for (String recipientEmail
                 : request.getRecipientEmails()) {
+
+            boolean recipientHasAccount = userRepository.findByEmail(recipientEmail).isPresent();
 
             // Find existing active share
             ShareLink existingShareLink =
@@ -151,6 +155,7 @@ public class ShareService {
                             .requiresOtp(
                                     request.getShareType()
                                             == ShareType.RESTRICTED
+                                            && !recipientHasAccount
                             )
 
                             .file(file)
@@ -194,6 +199,11 @@ public class ShareService {
                             .requiresOtp(
                                     request.getShareType()
                                             == ShareType.RESTRICTED
+                                            && !recipientHasAccount
+                            )
+
+                            .shareType(
+                                    request.getShareType().name()
                             )
 
                             .sharedByName(
@@ -234,7 +244,7 @@ public class ShareService {
                 shareLinks
         );
 
-        // Activity log
+        // Activity log and automatic notification
         for (ShareLink shareLink
                 : shareLinks) {
 
@@ -246,6 +256,22 @@ public class ShareService {
                             + shareLink
                             .getRecipientEmail()
             );
+
+            boolean recipientHasAccount = userRepository.findByEmail(shareLink.getRecipientEmail()).isPresent();
+            if (shareLink.getShareType() == ShareType.RESTRICTED && recipientHasAccount) {
+                try {
+                    String shareUrl = frontendUrl + "/public/share/" + shareLink.getToken();
+                    emailService.sendShareLinkEmail(
+                            shareLink.getRecipientEmail(),
+                            user.getFirstName(),
+                            shareUrl,
+                            shareLink.getMessage()
+                    );
+                } catch (Exception e) {
+                    log.error("Failed to send automatic direct-share notification to {}: {}", 
+                            shareLink.getRecipientEmail(), e.getMessage());
+                }
+            }
         }
 
         return ResponseBuilder.build(
@@ -377,8 +403,11 @@ public class ShareService {
                         // NEW
                         .requiresOtp(
                                 shareLink
-                                        .getShareType()
-                                        == ShareType.RESTRICTED
+                                        .getRequiresOtp()
+                        )
+                        .shareType(
+                                shareLink
+                                        .getShareType() != null ? shareLink.getShareType().name() : null
                         );
 
 
@@ -520,6 +549,12 @@ public class ShareService {
                                 .downloadCount(
                                         shareLink.getDownloadCount()
                                 )
+                                .requiresOtp(
+                                        shareLink.getRequiresOtp()
+                                )
+                                .shareType(
+                                        shareLink.getShareType() != null ? shareLink.getShareType().name() : null
+                                )
                                 .build()
                 );
 
@@ -659,8 +694,17 @@ public class ShareService {
                         accessToken
                 )) {
 
+            // Check if it is a valid regular user access token
+            if (jwtService.isTokenValid(accessToken)) {
+                String userEmail = jwtService.extractUsername(accessToken);
+                if (userEmail != null && userEmail.equalsIgnoreCase(shareLink.getRecipientEmail())) {
+                    log.info("ACCESS GRANTED via recipient user account login session");
+                    return;
+                }
+            }
+
             throw new UnauthorizedAccessException(
-                    "Invalid share access token"
+                    "Invalid share access token or user session"
             );
         }
 
@@ -739,6 +783,75 @@ public class ShareService {
         }
 
         return shareLink;
+    }
+
+
+    public ResponseEntity<ResponseStructure<Page<ShareLinkResponse>>>
+    getFilesSharedWithMe(int page, int size) {
+
+        log.info("Fetching files shared with me");
+
+        User user = SecurityUtil.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+
+        Page<ShareLink> sharedFiles = shareLinkRepository
+                .findByRecipientEmailAndActiveTrueAndExpiresAtAfterOrderByCreatedAtDesc(
+                        user.getEmail(),
+                        LocalDateTime.now(),
+                        pageable
+                );
+
+        Page<ShareLinkResponse> response =
+                sharedFiles.map(shareLink ->
+                        ShareLinkResponse.builder()
+                                .id(shareLink.getId())
+                                .shareUrl(
+                                        frontendUrl
+                                                + "/public/share/"
+                                                + shareLink.getToken()
+                                )
+                                .recipientEmail(
+                                        shareLink.getRecipientEmail()
+                                )
+                                .fileName(
+                                        shareLink.getFile().getName()
+                                )
+                                .active(
+                                        shareLink.getActive()
+                                )
+                                .expiresAt(
+                                        shareLink.getExpiresAt()
+                                )
+                                .downloadCount(
+                                        shareLink.getDownloadCount()
+                                )
+                                .sharedByName(
+                                        shareLink.getCreatedBy().getFirstName()
+                                                + " "
+                                                + shareLink.getCreatedBy().getLastName()
+                                )
+                                .sharedByEmail(
+                                        shareLink.getCreatedBy().getEmail()
+                                )
+                                .requiresOtp(
+                                        shareLink.getRequiresOtp()
+                                )
+                                .shareType(
+                                        shareLink.getShareType() != null ? shareLink.getShareType().name() : null
+                                )
+                                .build()
+                );
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Files shared with you fetched successfully",
+                response
+        );
     }
 
 
