@@ -49,6 +49,7 @@ public class ShareService {
     private final FileRepository fileRepository;
     private final EmailService emailService;
     private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
@@ -257,21 +258,36 @@ public class ShareService {
                             .getRecipientEmail()
             );
 
-            boolean recipientHasAccount = userRepository.findByEmail(shareLink.getRecipientEmail()).isPresent();
-            if (shareLink.getShareType() == ShareType.RESTRICTED && recipientHasAccount) {
-                try {
-                    String shareUrl = frontendUrl + "/public/share/" + shareLink.getToken();
-                    emailService.sendShareLinkEmail(
-                            shareLink.getRecipientEmail(),
-                            user.getFirstName(),
-                            shareUrl,
-                            shareLink.getMessage()
-                    );
-                } catch (Exception e) {
-                    log.error("Failed to send automatic direct-share notification to {}: {}", 
-                            shareLink.getRecipientEmail(), e.getMessage());
-                }
-            }
+            userRepository.findByEmail(shareLink.getRecipientEmail())
+                    .ifPresent(recipient -> {
+                        notificationService.notifyFileShared(
+                                recipient,
+                                user,
+                                file,
+                                shareLink
+                        );
+
+                        if (shareLink.getShareType() == ShareType.RESTRICTED) {
+                            try {
+                                String shareUrl =
+                                        frontendUrl
+                                                + "/public/share/"
+                                                + shareLink.getToken();
+                                emailService.sendShareLinkEmail(
+                                        shareLink.getRecipientEmail(),
+                                        user.getFirstName(),
+                                        shareUrl,
+                                        shareLink.getMessage()
+                                );
+                            } catch (Exception e) {
+                                log.error(
+                                        "Failed to send automatic direct-share notification to {}: {}",
+                                        shareLink.getRecipientEmail(),
+                                        e.getMessage()
+                                );
+                            }
+                        }
+                    });
         }
 
         return ResponseBuilder.build(
