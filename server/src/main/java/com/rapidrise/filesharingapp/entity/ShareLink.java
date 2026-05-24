@@ -40,6 +40,8 @@ public class ShareLink {
 
     private Boolean requiresOtp;
 
+    private Boolean hiddenByRecipient = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "file_id", nullable = false)
     private UserFile file;

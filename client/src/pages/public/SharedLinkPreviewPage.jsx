@@ -10,6 +10,7 @@ import PageFooter from "../../components/sharedlink/PageFooter";
 import Toast from "../../components/sharedlink/Toast";
 import LinkExpired from "../../components/sharedlink/LinkExpired";
 import OtpModal from "../../components/restrictedshare/OtpModal";
+import { maskEmail } from "../../utils/formatUtils";
 
 export default function SharedLinkPreviewPage() {
   const { token } = useParams();
@@ -289,7 +290,7 @@ export default function SharedLinkPreviewPage() {
                   <div>
                     <h3 className="text-lg font-bold text-white">Direct Account Share</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mt-2">
-                      This file is restricted to the account of <span className="text-violet-400 font-semibold">{fileData.recipientEmail}</span>. Please log in to your account to view it.
+                      This file is restricted to the account of <span className="text-violet-400 font-semibold">{maskEmail(fileData.recipientEmail)}</span>. Please log in to your account to view it.
                     </p>
                   </div>
                   <button

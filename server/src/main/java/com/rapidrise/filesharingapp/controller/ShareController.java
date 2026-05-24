@@ -144,6 +144,18 @@ public class ShareController {
         );
     }
 
+    @PutMapping("/shared-with-me/{shareId}/dismiss")
+    public ResponseEntity<
+            ResponseStructure<String>>
+    dismissFromSharedWithMe(
+
+            @PathVariable
+            Long shareId
+    ) {
+
+        return shareService.dismissFromSharedWithMe(shareId);
+    }
+
     // Revoke share link
     @PutMapping("/revoke/{shareId}")
     public ResponseEntity<

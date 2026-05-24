@@ -20,3 +20,21 @@ export const getPaginationRange = (page, totalPages, delta = 2) => {
   }
   return range;
 };
+
+// Partially mask email for public-facing restricted share messages
+export const maskEmail = (email) => {
+  if (!email || typeof email !== "string") return "";
+
+  const atIndex = email.indexOf("@");
+  if (atIndex <= 0) return email;
+
+  const local = email.slice(0, atIndex);
+  const domain = email.slice(atIndex + 1);
+  if (!domain) return email;
+
+  if (local.length === 1) return `*@${domain}`;
+  if (local.length === 2) return `${local[0]}*@${domain}`;
+
+  const hiddenCount = Math.min(local.length - 2, 6);
+  return `${local[0]}${"*".repeat(hiddenCount)}${local.slice(-1)}@${domain}`;
+};

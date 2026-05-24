@@ -800,7 +800,7 @@ public class ShareService {
         );
 
         Page<ShareLink> sharedFiles = shareLinkRepository
-                .findByRecipientEmailAndActiveTrueAndExpiresAtAfterOrderByCreatedAtDesc(
+                .findVisibleSharedWithMe(
                         user.getEmail(),
                         LocalDateTime.now(),
                         pageable
@@ -851,6 +851,40 @@ public class ShareService {
                 HttpStatus.OK,
                 "Files shared with you fetched successfully",
                 response
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseStructure<String>>
+    dismissFromSharedWithMe(Long shareId) {
+
+        log.info("Dismissing shared file from recipient list: {}", shareId);
+
+        User user = SecurityUtil.getCurrentUser();
+
+        ShareLink shareLink =
+                shareLinkRepository.findById(shareId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Share link not found"
+                                ));
+
+        if (!shareLink.getRecipientEmail()
+                .equalsIgnoreCase(user.getEmail())) {
+
+            throw new UnauthorizedAccessException(
+                    "Unauthorized access"
+            );
+        }
+
+        shareLink.setHiddenByRecipient(true);
+
+        shareLinkRepository.save(shareLink);
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Shared file removed from your list",
+                null
         );
     }
 

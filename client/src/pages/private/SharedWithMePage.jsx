@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/dashboard/Sidebar";
 import TopNavbar from "../../components/dashboard/TopNavbar";
-import { getSharedWithMeFiles, downloadSharedFile } from "../../services/shareService";
+import ConfirmModal from "../../components/recyclebin/ConfirmModal";
+import {
+  getSharedWithMeFiles,
+  dismissSharedWithMeFile,
+} from "../../services/shareService";
 import Toast from "../../components/sharedlink/Toast";
 
 function SharedWithMePage() {
@@ -11,6 +15,8 @@ function SharedWithMePage() {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [removeTarget, setRemoveTarget] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
 
   const [toast, setToast] = useState({
     visible: false,
@@ -71,17 +77,6 @@ function SharedWithMePage() {
     return null;
   };
 
-  const handleDownload = async (token, fileName) => {
-    try {
-      showToast("Starting download...");
-      await downloadSharedFile(token, fileName);
-      showToast("Download completed successfully!");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to download file", "error");
-    }
-  };
-
   const handlePreview = (file) => {
     const previewRoute = getSharePreviewRoute(file);
     if (previewRoute) {
@@ -93,20 +88,36 @@ function SharedWithMePage() {
     }
   };
 
-  const filteredFiles = files.filter((f) =>
-    f.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    f.sharedByName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    f.sharedByEmail.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getFormatBytes = (bytes, decimals = 2) => {
-    if (!bytes) return "0 Bytes";
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  const handleRemove = async (file) => {
+    try {
+      setRemovingId(file.id);
+      await dismissSharedWithMeFile(file.id);
+      setFiles((prev) => prev.filter((item) => item.id !== file.id));
+      showToast(`"${file.fileName}" removed from your list`);
+    } catch (error) {
+      console.error("Failed to remove shared file", error);
+      showToast("Failed to remove shared file", "error");
+    } finally {
+      setRemovingId(null);
+      setRemoveTarget(null);
+    }
   };
+
+  const getShareTypeLabel = (shareType) => {
+    if (shareType === "PUBLIC") return "Public";
+    if (shareType === "RESTRICTED") return "Restricted";
+    return "Unknown";
+  };
+
+  const filteredFiles = files.filter((f) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      f.fileName.toLowerCase().includes(query) ||
+      f.sharedByName.toLowerCase().includes(query) ||
+      f.sharedByEmail.toLowerCase().includes(query) ||
+      getShareTypeLabel(f.shareType).toLowerCase().includes(query)
+    );
+  });
 
   const getFormatDate = (dateString) => {
     if (!dateString) return "-";
@@ -132,15 +143,16 @@ function SharedWithMePage() {
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <div className="max-w-[1400px] mx-auto space-y-6">
-            
-            {/* Header info */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold tracking-tight text-white">Files Shared Directly with You</h2>
-                <p className="text-sm text-slate-400 mt-1">Access files shared restricted directly to your account email, without OTP verification.</p>
+                <h2 className="text-xl font-bold tracking-tight text-white">
+                  Files Shared Directly with You
+                </h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  View files shared to your account, including public and restricted links.
+                </p>
               </div>
 
-              {/* Search input */}
               <div className="relative w-full sm:max-w-xs">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">
                   search
@@ -167,15 +179,18 @@ function SharedWithMePage() {
                   folder_shared
                 </span>
                 <h3 className="text-lg font-bold text-slate-400">No shared files found</h3>
-                <p className="text-sm text-slate-500 mt-1">Files shared directly to your email will appear here.</p>
+                <p className="text-sm text-slate-500 mt-1">
+                  Files shared directly to your email will appear here.
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto rounded-2xl border border-white/5 bg-[#111115]">
-                <table className="w-full text-left border-collapse min-w-[700px]">
+                <table className="w-full text-left border-collapse min-w-[820px]">
                   <thead>
                     <tr className="border-b border-white/5 text-slate-400 text-xs font-bold uppercase tracking-wider bg-white/[0.01]">
                       <th className="px-6 py-4">File Name</th>
                       <th className="px-6 py-4">Shared By</th>
+                      <th className="px-6 py-4">Access</th>
                       <th className="px-6 py-4">Expiry Date</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
@@ -209,18 +224,46 @@ function SharedWithMePage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide ${
+                              file.shareType === "PUBLIC"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-violet-500/10 text-violet-400 border border-violet-500/20"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              {file.shareType === "PUBLIC" ? "public" : "lock"}
+                            </span>
+                            {getShareTypeLabel(file.shareType)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
                           <span className="text-slate-400">
                             {getFormatDate(file.expiresAt)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handlePreview(file)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-400 hover:text-white bg-violet-500/10 hover:bg-violet-600 border border-violet-500/10 hover:border-violet-500 transition"
-                          >
-                            <span className="material-symbols-outlined text-sm">open_in_new</span>
-                            Open File
-                          </button>
+                          <div className="inline-flex items-center gap-2">
+                            <button
+                              onClick={() => handlePreview(file)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-400 hover:text-white bg-violet-500/10 hover:bg-violet-600 border border-violet-500/10 hover:border-violet-500 transition"
+                            >
+                              <span className="material-symbols-outlined text-sm">
+                                open_in_new
+                              </span>
+                              Open File
+                            </button>
+                            <button
+                              onClick={() => setRemoveTarget(file)}
+                              disabled={removingId === file.id}
+                              title="Remove from list"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-50"
+                            >
+                              <span className="material-symbols-outlined text-base">
+                                {removingId === file.id ? "hourglass_empty" : "close"}
+                              </span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -231,6 +274,15 @@ function SharedWithMePage() {
           </div>
         </main>
       </div>
+
+      {removeTarget && (
+        <ConfirmModal
+          message={`Remove "${removeTarget.fileName}" from your Shared with Me list? The share link will still exist for the owner.`}
+          onConfirm={() => handleRemove(removeTarget)}
+          onCancel={() => setRemoveTarget(null)}
+        />
+      )}
+
       <Toast message={toast.message} visible={toast.visible} type={toast.type} />
     </div>
   );
