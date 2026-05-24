@@ -32,4 +32,6 @@ public class ShareLinkResponse {
     private String sharedByName;
 
     private String sharedByEmail;
+
+    private Boolean requiresOtp;
 }

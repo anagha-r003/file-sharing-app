@@ -41,6 +41,24 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain chain
     ) throws ServletException, IOException {
 
+        String path =
+                req.getServletPath();
+
+        if (path.startsWith("/share/view/")
+                || path.startsWith("/share/download/")
+                || path.startsWith("/share/request-otp")
+                || path.startsWith("/share/verify-otp")
+
+        ) {
+
+            chain.doFilter(
+                    req,
+                    res
+            );
+
+            return;
+        }
+
         try {
             String header = req.getHeader("Authorization");
 

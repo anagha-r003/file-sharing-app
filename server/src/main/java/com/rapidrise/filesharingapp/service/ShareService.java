@@ -6,9 +6,11 @@ import com.rapidrise.filesharingapp.dto.response.ShareLinkResponse;
 import com.rapidrise.filesharingapp.entity.ShareLink;
 import com.rapidrise.filesharingapp.entity.User;
 import com.rapidrise.filesharingapp.entity.UserFile;
+import com.rapidrise.filesharingapp.enums.ShareType;
 import com.rapidrise.filesharingapp.exception.BadRequestException;
 import com.rapidrise.filesharingapp.exception.FileNotFoundException;
 import com.rapidrise.filesharingapp.exception.UnauthorizedAccessException;
+import com.rapidrise.filesharingapp.jwt.JwtService;
 import com.rapidrise.filesharingapp.repository.FileRepository;
 import com.rapidrise.filesharingapp.repository.ShareLinkRepository;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
@@ -46,6 +48,7 @@ public class ShareService {
     private final FileRepository fileRepository;
     private final EmailService emailService;
     private final ActivityLogService activityLogService;
+    private final JwtService jwtService;
 
 
     @Value("${app.base-url}")
@@ -67,11 +70,10 @@ public class ShareService {
                 request.getFileId()
         );
 
-        if (request.getExpiresAt() == null ||
-                request.getExpiresAt()
-                        .isBefore(
-                                LocalDateTime.now()
-                        )) {
+        // Validate expiry
+        if (request.getExpiresAt() == null
+                || request.getExpiresAt()
+                .isBefore(LocalDateTime.now())) {
 
             throw new BadRequestException(
                     "Expiry date must be a future date"
@@ -90,20 +92,13 @@ public class ShareService {
         List<ShareLink> shareLinks =
                 new ArrayList<>();
 
-        List<ShareLinkResponse>
-                responseList =
+        List<ShareLinkResponse> responseList =
                 new ArrayList<>();
 
-        for (String recipientEmail :
-                request.getRecipientEmails()) {
+        for (String recipientEmail
+                : request.getRecipientEmails()) {
 
-            boolean alreadyShared =
-                    shareLinkRepository
-                            .existsByFileIdAndRecipientEmailAndActiveTrue(
-                                    file.getId(),
-                                    recipientEmail
-                            );
-
+            // Find existing active share
             ShareLink existingShareLink =
                     shareLinkRepository
                             .findTopByFileIdAndRecipientEmailAndActiveTrueOrderByCreatedAtDesc(
@@ -112,15 +107,17 @@ public class ShareService {
                             )
                             .orElse(null);
 
-          // deactivate previous active link
+            // deactivate old active link
             if (existingShareLink != null) {
 
-                existingShareLink.setActive(false);
+                existingShareLink
+                        .setActive(false);
 
                 shareLinkRepository
                         .save(existingShareLink);
             }
 
+            // Generate token
             String token =
                     UUID.randomUUID()
                             .toString();
@@ -130,6 +127,7 @@ public class ShareService {
                             + "/public/share/"
                             + token;
 
+            // Create new share link
             ShareLink shareLink =
                     ShareLink.builder()
                             .token(token)
@@ -140,61 +138,113 @@ public class ShareService {
                                     request.getMessage()
                             )
                             .expiresAt(
-                                    request
-                                            .getExpiresAt()
+                                    request.getExpiresAt()
                             )
-
                             .active(true)
                             .downloadCount(0)
+
+                            // NEW
+                            .shareType(
+                                    request.getShareType()
+                            )
+
+                            .requiresOtp(
+                                    request.getShareType()
+                                            == ShareType.RESTRICTED
+                            )
+
                             .file(file)
                             .createdBy(user)
                             .build();
 
+            // IMPORTANT FIX
             shareLinks.add(shareLink);
 
+
+
+            // Response object
             responseList.add(
-                    ShareLinkResponse
-                            .builder()
-                            .shareUrl(
-                                    shareUrl
+                    ShareLinkResponse.builder()
+
+                            .id(
+                                    shareLink.getId()
                             )
+
                             .recipientEmail(
                                     recipientEmail
                             )
+
+                            .shareUrl(
+                                    shareUrl
+                            )
+
                             .fileName(
                                     file.getName()
                             )
+
                             .expiresAt(
-                                    request
-                                            .getExpiresAt()
+                                    request.getExpiresAt()
                             )
+
+                            .active(true)
+
+                            .downloadCount(0)
+
+                            // ADD THESE
+                            .requiresOtp(
+                                    request.getShareType()
+                                            == ShareType.RESTRICTED
+                            )
+
+                            .sharedByName(
+                                    user.getFirstName()
+                                            + " "
+                                            + user.getLastName()
+                            )
+
+                            .sharedByEmail(
+                                    user.getEmail()
+                            )
+
+                            .viewUrl(
+                                    request.getShareType()
+                                            == ShareType.PUBLIC
+                                            ? baseUrl
+                                              + "/share/view/"
+                                              + token
+                                            : null
+                            )
+
+                            .downloadUrl(
+                                    request.getShareType()
+                                            == ShareType.PUBLIC
+                                            ? baseUrl
+                                              + "/share/download/"
+                                              + token
+                                            : null
+                            )
+
+                            .accessed(false)
+
                             .build()
             );
         }
 
-        shareLinkRepository
-                .saveAll(shareLinks);
+        shareLinkRepository.saveAll(
+                shareLinks
+        );
 
-        for (int i = 0;
-             i < shareLinks.size();
-             i++) {
+        // Activity log
+        for (ShareLink shareLink
+                : shareLinks) {
 
             activityLogService.log(
                     user,
                     "SHARE",
                     file.getName(),
                     "with "
-                            + shareLinks.get(i)
+                            + shareLink
                             .getRecipientEmail()
-            );
-        }
-
-        if (responseList.isEmpty()) {
-
-            return ResponseBuilder.build(
-                    HttpStatus.OK,
-                    "All recipients already have active share links",
-                    responseList
             );
         }
 
@@ -204,7 +254,6 @@ public class ShareService {
                 responseList
         );
     }
-
     @Transactional
     public ResponseEntity<
             ResponseStructure<String>>
@@ -287,26 +336,28 @@ public class ShareService {
         activityLogService.log(owner, "ACCESS", shareLink.getFile().getName(),
                 shareLink.getRecipientEmail() + " accessed");
 
-        ShareLinkResponse response =
+        ShareLinkResponse.ShareLinkResponseBuilder
+                builder =
                 ShareLinkResponse.builder()
 
                         .recipientEmail(
-                                shareLink.getRecipientEmail()
+                                shareLink
+                                        .getRecipientEmail()
                         )
 
                         .fileName(
-                                shareLink.getFile().getName()
+                                shareLink
+                                        .getFile()
+                                        .getName()
                         )
 
                         .expiresAt(
-                                shareLink.getExpiresAt()
+                                shareLink
+                                        .getExpiresAt()
                         )
 
                         .accessed(true)
 
-                        .viewUrl(baseUrl + "/share/view/" + shareLink.getToken())
-
-                        .downloadUrl(baseUrl + "/share/download/" + shareLink.getToken())
                         .sharedByName(
                                 shareLink
                                         .getCreatedBy()
@@ -323,7 +374,33 @@ public class ShareService {
                                         .getEmail()
                         )
 
-                        .build();
+                        // NEW
+                        .requiresOtp(
+                                shareLink
+                                        .getShareType()
+                                        == ShareType.RESTRICTED
+                        );
+
+
+// PUBLIC share → return URLs immediately
+        if (shareLink.getShareType()
+                == ShareType.PUBLIC) {
+
+            builder.viewUrl(
+                    baseUrl
+                            + "/share/view/"
+                            + shareLink.getToken()
+            );
+
+            builder.downloadUrl(
+                    baseUrl
+                            + "/share/download/"
+                            + shareLink.getToken()
+            );
+        }
+
+        ShareLinkResponse response =
+                builder.build();
 
         return ResponseBuilder.build(
                 HttpStatus.OK,
@@ -334,7 +411,7 @@ public class ShareService {
 
     @Transactional
     public ResponseEntity<Resource>
-    downloadSharedFile(String token)
+    downloadSharedFile(String token, String authHeader)
             throws IOException {
 
         log.info(
@@ -344,6 +421,11 @@ public class ShareService {
 
         ShareLink shareLink =
                 getValidShareLink(token);
+
+        validateRestrictedAccess(
+                shareLink,
+                authHeader
+        );
 
         shareLink.setDownloadCount(shareLink.getDownloadCount() + 1);
 
@@ -484,7 +566,7 @@ public class ShareService {
     }
 
     public ResponseEntity<Resource>
-    viewSharedFile(String token)
+    viewSharedFile(String token,String authHeader)
             throws IOException {
 
         log.info("Viewing shared file with token: {}", token);
@@ -492,9 +574,15 @@ public class ShareService {
         ShareLink shareLink =
                 getValidShareLink(token);
 
+        validateRestrictedAccess(
+                shareLink,
+                authHeader
+        );
+
         shareLinkRepository.save(shareLink);
 
         UserFile file = shareLink.getFile();
+        log.info("File path: {}", file.getPath()); // ← add this
 
         Path path = Paths.get(file.getPath());
 
@@ -523,6 +611,103 @@ public class ShareService {
                                 file.getName() + "\""
                 )
                 .body(resource);
+    }
+
+    private void validateRestrictedAccess(
+            ShareLink shareLink,
+            String authHeader
+    ) {
+
+        log.info(
+                "Auth Header: {}",
+                authHeader
+        );
+
+        if (shareLink.getShareType()
+                == ShareType.PUBLIC) {
+
+            return;
+        }
+
+        if (authHeader == null
+                || !authHeader.startsWith(
+                "Bearer "
+        )) {
+
+            throw new UnauthorizedAccessException(
+                    "Access token required"
+            );
+        }
+
+        String accessToken =
+                authHeader.substring(7);
+
+        log.info(
+                "Access token: {}",
+                accessToken
+        );
+
+        log.info(
+                "IS SHARE TOKEN = {}",
+                jwtService.isShareAccessToken(
+                        accessToken
+                )
+        );
+
+        if (!jwtService
+                .isShareAccessToken(
+                        accessToken
+                )) {
+
+            throw new UnauthorizedAccessException(
+                    "Invalid share access token"
+            );
+        }
+
+        log.info(
+                "Is token valid: {}",
+                jwtService.isTokenValid(
+                        accessToken
+                )
+        );
+
+        if (!jwtService.isTokenValid(
+                accessToken
+        )) {
+
+            throw new UnauthorizedAccessException(
+                    "Invalid access token"
+            );
+        }
+
+
+
+        String shareToken =
+                jwtService
+                        .extractShareToken(
+                                accessToken
+                        );
+
+        log.info(
+                "JWT SHARE TOKEN = {}",
+                shareToken
+        );
+
+        log.info(
+                "URL SHARE TOKEN = {}",
+                shareLink.getToken()
+        );
+
+        if (!shareToken.equals(
+                shareLink.getToken()
+        )) {
+
+            throw new UnauthorizedAccessException(
+                    "Unauthorized access"
+            );
+        }
+
+        log.info("ACCESS GRANTED");
     }
 
 

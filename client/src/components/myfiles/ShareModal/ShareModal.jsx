@@ -85,7 +85,7 @@ function ShareModal({ file, onClose }) {
         recipientEmails: emails,
         message: message,
         expiresAt: expiryDate,
-        accessType: access === "anyone" ? "ANYONE" : "RESTRICTED",
+        shareType: access === "anyone" ? "PUBLIC" : "RESTRICTED",
       };
 
       const response = await generateShareLink(requestBody);
@@ -135,7 +135,7 @@ function ShareModal({ file, onClose }) {
         recipientEmails: emails,
         message,
         expiresAt: expiryDate,
-        accessType: access === "anyone" ? "ANYONE" : "RESTRICTED",
+        shareType: access === "anyone" ? "PUBLIC" : "RESTRICTED",
       };
 
       // NEW API CALL

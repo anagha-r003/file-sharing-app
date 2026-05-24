@@ -2,7 +2,11 @@ package com.rapidrise.filesharingapp.controller;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.dto.request.CreateShareLinkRequest;
+import com.rapidrise.filesharingapp.dto.request.RequestShareOtpRequest;
+import com.rapidrise.filesharingapp.dto.request.VerifyShareOtpRequest;
+import com.rapidrise.filesharingapp.dto.response.ShareAccessResponse;
 import com.rapidrise.filesharingapp.dto.response.ShareLinkResponse;
+import com.rapidrise.filesharingapp.service.RestrictedShareService;
 import com.rapidrise.filesharingapp.service.ShareService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -19,6 +23,7 @@ import java.util.List;
 public class ShareController {
 
     private final ShareService shareService;
+    private final RestrictedShareService restrictedShareService;
 
     @PostMapping("/generate")
     public ResponseEntity<
@@ -68,11 +73,17 @@ public class ShareController {
     downloadSharedFile(
 
             @PathVariable
-            String token
+            String token,
+
+            @RequestHeader(
+                    value = "Authorization",
+                    required = false
+            )
+            String authHeader
     ) throws IOException {
 
         return shareService.downloadSharedFile(
-                token
+                token,authHeader
         );
     }
 
@@ -81,11 +92,17 @@ public class ShareController {
     viewSharedFile(
 
             @PathVariable
-            String token
+            String token,
+
+            @RequestHeader(
+                    value = "Authorization",
+                    required = false
+            )
+            String authHeader
     ) throws IOException {
 
         return shareService.viewSharedFile(
-                token
+                token,authHeader
         );
     }
 
@@ -121,6 +138,33 @@ public class ShareController {
         return shareService.revokeShareLink(
                 shareId
         );
+    }
+
+    @PostMapping("/request-otp")
+    public ResponseEntity<
+            ResponseStructure<String>>
+    requestOtp(
+
+            @RequestBody
+            RequestShareOtpRequest request
+    ) {
+
+        return restrictedShareService
+                .requestOtp(request);
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<
+            ResponseStructure<
+                    ShareAccessResponse>>
+    verifyOtp(
+
+            @RequestBody
+            VerifyShareOtpRequest request
+    ) {
+
+        return restrictedShareService
+                .verifyOtp(request);
     }
 
 

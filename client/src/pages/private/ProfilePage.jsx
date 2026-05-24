@@ -67,11 +67,14 @@ function PasswordInput({ value, onChange, placeholder }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
+      {/* Dummy hidden input tricks browser autofill away */}
+      <input type="password" style={{ display: "none" }} readOnly />
       <input
         type={show ? "text" : "password"}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        autoComplete="new-password"
         className="w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 pr-11 py-2.5
                    text-white text-sm placeholder-[#4a4d5a] outline-none
                    focus:border-violet-600 focus:ring-2 focus:ring-violet-700/20
@@ -265,12 +268,7 @@ export default function ProfilePage() {
       setConfirmPass("");
 
       // 5. Clear local storage
-      localStorage.removeItem("user");
-
-      // 6. Redirect to login
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      
     } catch (error) {
       showToast(error.message || "Failed to update password", "error");
     }
@@ -404,7 +402,7 @@ export default function ProfilePage() {
                 <PasswordInput
                   value={currentPass}
                   onChange={(e) => setCurrentPass(e.target.value)}
-                  autoComplete="new-password"
+                  autoComplete="off" 
                   placeholder="••••••••"
                 />
               </div>

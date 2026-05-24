@@ -1,5 +1,6 @@
 package com.rapidrise.filesharingapp.entity;
 
+import com.rapidrise.filesharingapp.enums.ShareType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,6 +34,11 @@ public class ShareLink {
     private LocalDateTime createdAt;
 
     private Integer downloadCount = 0;
+
+    @Enumerated(EnumType.STRING)
+    private ShareType shareType;
+
+    private Boolean requiresOtp;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "file_id", nullable = false)

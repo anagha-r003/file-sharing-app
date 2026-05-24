@@ -39,11 +39,68 @@ public class JwtService {
     public String generateRefreshToken(String email) {
         return buildToken(email, refreshExpiration, "refresh");
     }
+
+    public String generateShareAccessToken(
+            String shareToken,
+            String email
+    ) {
+
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(
+                        new Date()
+                )
+                .setExpiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + (1000 * 60 * 5)
+                        )
+                )
+
+                // custom claims
+                .claim(
+                        "type",
+                        "share_access"
+                )
+
+                .claim(
+                        "shareToken",
+                        shareToken
+                )
+
+                .signWith(key)
+                .compact();
+    }
+
     public boolean isRefreshToken(String token) {
         try {
             Claims claims = extractAllClaims(token);
             return "refresh".equals(claims.get("type"));
         } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    public boolean isShareAccessToken(
+            String token
+    ) {
+
+        try {
+
+            Claims claims =
+                    extractAllClaims(
+                            token
+                    );
+
+            return "share_access"
+                    .equals(
+                            claims.get(
+                                    "type"
+                            )
+                    );
+
+        } catch (JwtException e) {
+
             return false;
         }
     }
@@ -68,6 +125,17 @@ public class JwtService {
 
     public Date extractExpiration(String token) {
         return extractAllClaims(token).getExpiration();
+    }
+
+    public String extractShareToken(
+            String token
+    ) {
+
+        return extractAllClaims(token)
+                .get(
+                        "shareToken",
+                        String.class
+                );
     }
 
     public boolean isTokenValid(String token) {

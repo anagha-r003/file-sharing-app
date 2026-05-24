@@ -63,6 +63,60 @@ public class EmailService {
         sendEmail(toEmail, subject, body);
     }
 
+    public void sendRestrictedOtpEmail(
+            String toEmail,
+            String fileName,
+            String otp
+    ) {
+
+        log.info(
+                "Sending restricted share OTP to {}",
+                toEmail
+        );
+
+        String subject =
+                "OTP for Secure File Access";
+
+        String body =
+                "You requested access to a secure shared file.\n\n"
+                        + "File: "
+                        + fileName
+                        + "\n\n"
+                        + "OTP: "
+                        + otp
+                        + "\n\n"
+                        + "This OTP expires in 5 minutes.\n\n"
+                        + "Do not share this OTP with anyone.";
+
+        sendEmail(
+                toEmail,
+                subject,
+                body
+        );
+    }
+
+
+    // ─── SUPPORT EMAIL ─────────────────────────────────────────
+
+    public void sendSupportEmail(
+            String senderEmail,
+            String senderName,
+            String subject,
+            String message
+    ) {
+        log.info("Sending support request from {} to admin", senderEmail);
+
+        String emailSubject = "Support Request: " + subject;
+
+        String body =
+                "You have received a new support request.\n\n"
+                        + "From: " + senderName + " (" + senderEmail + ")\n"
+                        + "Subject: " + subject + "\n\n"
+                        + "Message:\n" + message;
+
+        sendEmail(fromEmail, emailSubject, body);
+    }
+
 
     // ─── COMMON SEND METHOD ────────────────────────────────────
 
