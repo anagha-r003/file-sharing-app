@@ -35,7 +35,7 @@ function FolderFileRow({ file, onRemove }) {
 
       <button
         onClick={(e) => { e.stopPropagation(); onRemove(); }}
-        title="Remove from folder"
+        title="Remove from vault"
         className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full
                    bg-white/[0.06] hover:bg-red-500/20 text-white/35 hover:text-red-400
                    border border-white/5 hover:border-red-500/20

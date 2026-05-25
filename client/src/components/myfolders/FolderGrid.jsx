@@ -27,7 +27,7 @@ function EmptyState({ search, onClear, onCreate }) {
       {search ? (
         <>
           <p className="text-slate-400 text-sm">
-            No folders matching <span className="text-white">"{search}"</span>
+            No vaults matching <span className="text-white">"{search}"</span>
           </p>
           <button
             onClick={onClear}
@@ -38,14 +38,14 @@ function EmptyState({ search, onClear, onCreate }) {
         </>
       ) : (
         <>
-          <p className="text-slate-400 text-sm">You haven't created any folders yet</p>
+          <p className="text-slate-400 text-sm">You haven't created any vaults yet</p>
           <button
             onClick={onCreate}
             className="flex items-center gap-2 px-4 py-2 bg-violet-600
                        hover:bg-violet-500 rounded-xl text-white text-sm font-semibold transition"
           >
             <span className="material-symbols-outlined text-base">create_new_folder</span>
-            New folder
+            New vault
           </button>
         </>
       )}

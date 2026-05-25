@@ -61,7 +61,7 @@ export default function AddToFolderModal({ files, onClose }) {
           <div className="flex items-start justify-between px-5 pt-[18px] pb-[14px]">
             <div>
               <h2 className="text-[15px] font-semibold text-[#e8e8f0] mb-0.5">
-                Add to folder
+                Add to vault
               </h2>
               <p className="text-[12px] text-white/30 truncate max-w-[320px]">
                 {files.length === 1
@@ -93,7 +93,7 @@ export default function AddToFolderModal({ files, onClose }) {
           <div className="px-2.5 py-1.5 flex flex-col max-h-56 overflow-y-auto">
             {loading ? (
               <p className="text-center text-white/40 py-6">
-                Loading folders...
+                Loading vaults...
               </p>
             ) : filtered.length > 0 ? (
               filtered.map((folder) => (
@@ -167,7 +167,7 @@ export default function AddToFolderModal({ files, onClose }) {
               ))
             ) : (
               <p className="text-[13px] text-white/25 text-center py-6">
-                No folders match "{query}"
+                No vaults match "{query}"
               </p>
             )}
           </div>
@@ -181,7 +181,7 @@ export default function AddToFolderModal({ files, onClose }) {
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-dashed border-white/[0.14] hover:border-white/[0.28] text-white/45 hover:text-white/70 text-[13px] transition-all"
             >
               <FolderPlus size={16} />
-              Create new folder
+              Create new vault
             </button>
           </div>
         </div>

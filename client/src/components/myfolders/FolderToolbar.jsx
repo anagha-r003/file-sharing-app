@@ -14,13 +14,13 @@ function FolderToolbar({
         value={search}
         onChange={onSearchChange}
         onClear={onSearchClear}
-        placeholder="Search folders..."
+        placeholder="Search vaults..."
         className="w-full sm:w-64 md:w-80"
       />
 
       <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
         <span className="text-sm text-slate-500">
-          {folderCount} {folderCount === 1 ? "folder" : "folders"}
+          {folderCount} {folderCount === 1 ? "vault" : "vaults"}
         </span>
         <button
           onClick={onCreate}
@@ -31,7 +31,7 @@ function FolderToolbar({
           <span className="material-symbols-outlined text-base">
             create_new_folder
           </span>
-          New folder
+          New vault
         </button>
       </div>
     </Card>

@@ -177,7 +177,6 @@ export default function FileViewModal({ file, onClose, onDownload }) {
           style={{ background: "#000" }}
         >
           <div className="flex items-center justify-center w-full h-full">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               src={blobUrl}
               controls
