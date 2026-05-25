@@ -81,6 +81,11 @@ public class FileService {
 
             "application/msword",
 
+            "application/x-tika-msoffice",
+
+            "application/x-tika-ooxml",
+
+
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 
             "application/vnd.ms-excel",
@@ -90,13 +95,19 @@ public class FileService {
             "application/zip",
             "application/x-zip-compressed",
 
+            "application/mspowerpoint",
+            "application/powerpoint",
+            "application/vnd.ms-powerpoint",
+            "application/x-mspowerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+
             "video/mp4",
             "video/webm",
             "video/x-matroska",
             "application/x-matroska",
 
-            "audio/mpeg",
-            "audio/wav"
+            "audio/mpeg"
+
     );
 
     @Transactional

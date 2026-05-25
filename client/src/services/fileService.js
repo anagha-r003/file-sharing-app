@@ -78,9 +78,9 @@ export const deleteFile = async (fileIds) => {
   return deleteFiles(fileIds);
 };
 
-export const uploadFile = async (file, onProgress) => {
-  return uploadFiles([file], onProgress);
-};
+// export const uploadFile = async (file, onProgress) => {
+//   return uploadFiles([file], onProgress);
+// };
 
 export const viewFile = async (fileId) => {
   const response = await api.get(`/files/${fileId}/view`);

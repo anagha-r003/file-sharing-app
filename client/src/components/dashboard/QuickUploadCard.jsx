@@ -1,68 +1,105 @@
 import { useRef, useState } from "react";
-import { uploadFile } from "../../services/fileService";
+import { uploadFiles as uploadFilesApi } from "../../services/fileService";
 
+import { ALLOWED_FILE_EXTS } from "../../common/constants/fileTypes";
 
 function QuickUploadCard({ onUploadComplete }) {
   const fileInputRef = useRef();
-  // const folderInputRef = useRef();
+
   const [uploading, setUploading] = useState(false);
+
   const [progress, setProgress] = useState(0);
+
   const [results, setResults] = useState([]);
 
   const uploadFiles = async (fileList) => {
     const files = Array.from(fileList);
+
     setUploading(true);
     setResults([]);
+    setProgress(0);
+
+    const validFiles = [];
 
     const newResults = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      try {
-        await uploadFile(file, (pct) => {
-          setProgress(Math.round(((i + pct / 100) / files.length) * 100));
+
+    // Frontend Validation
+    for (const file of files) {
+      const extension = file.name.split(".").pop()?.toLowerCase();
+
+      // File type validation
+      if (!ALLOWED_FILE_EXTS.has(extension)) {
+        newResults.push({
+          name: file.name,
+          ok: false,
+          message: "Unsupported file type",
         });
-        newResults.push({ name: file.name, ok: true });
-      } catch (err) {
-        const message = err.response?.data?.message || "Upload failed";
-        newResults.push({ name: file.name, ok: false, message });
+
+        continue;
       }
+
+      // File size validation
+      if (file.size > 100 * 1024 * 1024) {
+        newResults.push({
+          name: file.name,
+          ok: false,
+          message: "File exceeds 100MB limit",
+        });
+
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    // Stop if all invalid
+    if (validFiles.length === 0) {
+      setResults(newResults);
+
+      setUploading(false);
+
+      return;
+    }
+
+    try {
+      // SINGLE API CALL
+      await uploadFilesApi(validFiles, (pct) => {
+        setProgress(pct);
+      });
+
+      // Success results
+      validFiles.forEach((file) => {
+        newResults.push({
+          name: file.name,
+          ok: true,
+        });
+      });
+    } catch (err) {
+      const message = err.response?.data?.message || "Upload failed";
+
+      validFiles.forEach((file) => {
+        newResults.push({
+          name: file.name,
+          ok: false,
+          message,
+        });
+      });
     }
 
     setResults(newResults);
+
     setProgress(0);
     setUploading(false);
-    if (onUploadComplete) onUploadComplete();
-  };
 
-  // const uploadFolderFiles = async (fileList) => {
-  //   const files = Array.from(fileList);
-  //   if (files.length === 0) return;
-  //
-  //   setUploading(true);
-  //   setResults([]);
-  //
-  //   try {
-  //     await uploadFolder(fileList, (pct) => setProgress(pct));
-  //     const newResults = files.map((f) => ({ name: f.name, ok: true }));
-  //     setResults(newResults);
-  //   } catch (err) {
-  //     const message = err.response?.data?.message || "Folder upload failed";
-  //     const newResults = files.map((f) => ({
-  //       name: f.name,
-  //       ok: false,
-  //       message,
-  //     }));
-  //     setResults(newResults);
-  //   }
-  //
-  //   setProgress(0);
-  //   setUploading(false);
-  //   if (onUploadComplete) onUploadComplete();
-  // };
+    onUploadComplete?.();
+  };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files);
+
+    if (e.dataTransfer.files.length > 0) {
+      uploadFiles(e.dataTransfer.files);
+    }
   };
 
   return (
@@ -72,6 +109,7 @@ function QuickUploadCard({ onUploadComplete }) {
         <span className="material-symbols-outlined text-violet-400">
           cloud_upload
         </span>
+
         <h3 className="text-base md:text-lg font-bold text-white font-['Space_Grotesk']">
           Quick Upload
         </h3>
@@ -98,10 +136,13 @@ function QuickUploadCard({ onUploadComplete }) {
             <p className="text-slate-300 font-medium text-sm md:text-base">
               Uploading... {progress}%
             </p>
+
             <div className="w-full max-w-xs mt-3 bg-slate-800 rounded-full h-1.5">
               <div
                 className="bg-violet-500 h-1.5 rounded-full transition-all"
-                style={{ width: `${progress}%` }}
+                style={{
+                  width: `${progress}%`,
+                }}
               />
             </div>
           </>
@@ -122,17 +163,6 @@ function QuickUploadCard({ onUploadComplete }) {
                 </span>
                 Upload Files
               </button>
-
-              {/* <button
-                onClick={() => folderInputRef.current.click()}
-                disabled={uploading}
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="material-symbols-outlined text-base">
-                  drive_folder_upload
-                </span>
-                Upload Folder
-              </button> */}
             </div>
 
             <p className="text-slate-500 text-xs mt-4 uppercase tracking-widest text-center">
@@ -150,16 +180,6 @@ function QuickUploadCard({ onUploadComplete }) {
           }
           className="hidden"
         />
-        {/* <input
-          type="file"
-          multiple
-          webkitdirectory="true"
-          ref={folderInputRef}
-          onChange={(e) =>
-            e.target.files.length > 0 && uploadFolderFiles(e.target.files)
-          }
-          className="hidden"
-        /> */}
       </div>
 
       {/* Results */}
@@ -175,7 +195,9 @@ function QuickUploadCard({ onUploadComplete }) {
               <span className="material-symbols-outlined text-base">
                 {r.ok ? "check_circle" : "error"}
               </span>
+
               <span className="truncate">{r.name}</span>
+
               {!r.ok && (
                 <span className="text-red-500 shrink-0">— {r.message}</span>
               )}

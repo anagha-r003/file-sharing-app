@@ -39,11 +39,28 @@ public class DashboardService {
 
         Object[] row = results.get(0);
 
-        long totalSize = ((Number) row[0]).longValue();
-        long imageSize = ((Number) row[1]).longValue();
-        long videoSize = ((Number) row[2]).longValue();
-        long docSize   = ((Number) row[3]).longValue();
-        long otherSize = ((Number) row[4]).longValue();
+        long totalSize =
+                ((Number) row[0])
+                        .longValue();
+
+        long imageSize =
+                ((Number) row[1])
+                        .longValue();
+
+        long videoSize =
+                ((Number) row[2])
+                        .longValue();
+
+        long docSize =
+                ((Number) row[3])
+                        .longValue();
+
+        long otherSize =
+                ((Number) row[4]).longValue() + // audio
+                        ((Number) row[5]).longValue() + // archive
+                        ((Number) row[6]).longValue();  // other
+
+
 
         long limit = user.getStorageLimit() != null
                 ? user.getStorageLimit()
