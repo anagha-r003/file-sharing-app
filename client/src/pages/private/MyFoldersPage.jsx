@@ -98,7 +98,7 @@ function MyFoldersPage() {
 
   return (
     <PageLayout
-      title="My Collections"
+      title="My Vaults"
       sidebarOpen={sidebarOpen}
       setSidebarOpen={setSidebarOpen}
       onMenuClick={() => setSidebarOpen((prev) => !prev)}
