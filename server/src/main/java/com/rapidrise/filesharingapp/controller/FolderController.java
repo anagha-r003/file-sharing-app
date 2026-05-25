@@ -5,6 +5,7 @@ import com.rapidrise.filesharingapp.dto.request.CreateFolderRequest;
 import com.rapidrise.filesharingapp.dto.response.FolderResponse;
 import com.rapidrise.filesharingapp.service.FolderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,12 +34,26 @@ public class FolderController {
 
     @GetMapping
     public ResponseEntity<
-                ResponseStructure<
-                        List<FolderResponse>>>
-    getFolders() {
+            ResponseStructure<
+                    Page<FolderResponse>>>
+    getFolders(
+
+            @RequestParam(
+                    defaultValue = "0"
+            )
+            int page,
+
+            @RequestParam(
+                    defaultValue = "8"
+            )
+            int size
+    ) {
 
         return folderService
-                .getFolders();
+                .getFolders(
+                        page,
+                        size
+                );
     }
 
     @DeleteMapping("/{folderId}")

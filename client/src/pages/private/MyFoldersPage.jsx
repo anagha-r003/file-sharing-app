@@ -7,6 +7,7 @@ import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import CreateFolderModal from "../../components/myfolders/CreateFolderModal";
 import Toast from "../../components/sharedlink/Toast";
 import { getFolders, deleteFolder } from "../../services/folderService";
+import Pagination from "../../common/ui/Pagination";
 
 function MyFoldersPage() {
   const navigate = useNavigate();
@@ -18,6 +19,14 @@ function MyFoldersPage() {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
+
+  const [page, setPage] = useState(1);
+
+  const [totalPages, setTotalPages] = useState(0);
+
+  const [totalItems, setTotalItems] = useState(0);
+
+  const pageSize = 8;
 
   const [showCreate, setShowCreate] = useState(false);
 
@@ -45,7 +54,7 @@ function MyFoldersPage() {
   // Fetch folders
   useEffect(() => {
     fetchFolders();
-  }, []);
+  }, [page]);
 
   function showToast(message, type = "success") {
     setToast({
@@ -66,11 +75,17 @@ function MyFoldersPage() {
     setLoading(true);
 
     try {
-      const response = await getFolders();
+      const response = await getFolders(page - 1, pageSize);
 
       console.log("Fetched folders:", response);
 
-      setFolders(response.data || []);
+      const pageData = response.data;
+
+      setFolders(pageData.content || []);
+
+      setTotalPages(pageData.totalPages);
+
+      setTotalItems(pageData.totalElements);
     } catch (err) {
       showToast("Failed to load folders", "error");
     } finally {
@@ -106,7 +121,11 @@ function MyFoldersPage() {
       <div className="flex flex-col gap-4 md:gap-6">
         <FolderToolbar
           search={search}
-          onSearchChange={(e) => setSearch(e.target.value)}
+          onSearchChange={(e) => {
+            setSearch(e.target.value);
+
+            setPage(1);
+          }}
           onSearchClear={() => setSearch("")}
           folderCount={folders.length}
           onCreate={() => setShowCreate(true)}
@@ -120,6 +139,16 @@ function MyFoldersPage() {
           onCreate={() => setShowCreate(true)}
           onOpen={(folder) => navigate(`/my-folders/${folder.id}`)}
           onDelete={setDeleteTarget}
+        />
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={totalItems}
+          itemLabel="vaults"
+          searchQuery={search}
+          onPageChange={setPage}
         />
       </div>
 
