@@ -22,7 +22,6 @@ export default function SharedLinkPreviewPage() {
   });
 
   // Modal states
-
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [accessGranted, setAccessGranted] = useState(false);
   const [accessToken, setAccessToken] = useState(null);
@@ -36,6 +35,8 @@ export default function SharedLinkPreviewPage() {
   const [otpError, setOtpError] = useState("");
 
   const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
+
+
 
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
@@ -51,7 +52,7 @@ export default function SharedLinkPreviewPage() {
         const data = response.data.data;
         setFileData(data);
 
-        // If restricted, open email modal immediately
+        // If restricted, open OTP modal immediately
         if (data.requiresOtp) {
           setOtpModalOpen(true);
         } else {
@@ -69,6 +70,7 @@ export default function SharedLinkPreviewPage() {
     fetchSharedFile();
   }, [token]);
 
+  // Step 2 — send OTP for restricted access
   const handleSendOtp = async () => {
     setOtpSending(true);
 
@@ -76,10 +78,11 @@ export default function SharedLinkPreviewPage() {
       await api.post("/share/request-otp", {
         token,
       });
-
-      showToast("OTP sent to registered email!");
+      showToast("OTP sent to your email!");
+      return true;
     } catch (error) {
       showToast(error.response?.data?.message || "Failed to send OTP", "error");
+      return false;
     } finally {
       setOtpSending(false);
     }
@@ -150,12 +153,15 @@ export default function SharedLinkPreviewPage() {
       <OtpModal
         isOpen={otpModalOpen}
         onClose={() => setOtpModalOpen(false)}
+        onSend={handleSendOtp}
         onSubmit={handleOtpSubmit}
         onSendOtp={handleSendOtp}
         onResend={handleResend}
+        isSending={otpSending}
         isLoading={otpVerifying}
         isSending={otpSending}
         isResending={otpResending}
+        email={fileData?.recipientEmail || fileData?.sharedByEmail}
         error={otpError}
       />
 

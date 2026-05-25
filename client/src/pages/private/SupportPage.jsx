@@ -1,22 +1,16 @@
 import { useState } from "react";
 import PageLayout from "../../layout/PageLayout";
+import { sendSupportMessage } from "../../services/supportService";
 import {
   MessageCircle,
-  Book,
-  Zap,
-  Shield,
-  Upload,
-  Share2,
   ChevronDown,
-  ChevronRight,
-  ExternalLink,
   Search,
-  Clock,
   CheckCircle,
   Mail,
-  FileText,
+  Upload,
+  Share2,
+  Shield,
   Folder,
-  Link,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,13 +89,6 @@ const FAQ_ITEMS = [
       },
     ],
   },
-];
-
-const QUICK_LINKS = [
-  { label: "Getting Started Guide", icon: <Book size={15} />, desc: "Set up your vault in minutes" },
-  { label: "API Documentation", icon: <FileText size={15} />, desc: "Integrate VaultLink into your app" },
-  { label: "Changelog", icon: <Zap size={15} />, desc: "See what's new in VaultLink" },
-  { label: "System Status", icon: <CheckCircle size={15} />, desc: "Real-time uptime and incidents" },
 ];
 
 const COLOR_MAP = {
@@ -209,15 +196,26 @@ function FAQCategory({ category, icon, color, questions }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function ContactCard() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [form, setForm] = useState({ subject: "", message: "" });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.subject.trim() || !form.message.trim()) return;
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
+    setLoading(true);
+    setError(null);
+    try {
+      await sendSupportMessage(form);
+      setSubmitted(true);
       setForm({ subject: "", message: "" });
-    }, 4000);
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 5000);
+    } catch (err) {
+      setError(err?.message || "Failed to send message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -230,7 +228,7 @@ function ContactCard() {
         </div>
         <div>
           <h3 className="text-sm font-semibold text-white">Contact Support</h3>
-          <p className="text-[11px] text-[#6b6b80] mt-0.5">We usually reply within 24 hours</p>
+          <p className="text-[11px] text-[#6b6b80] mt-0.5">We reply via email</p>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -245,7 +243,7 @@ function ContactCard() {
             <CheckCircle size={22} />
           </div>
           <p className="text-sm font-semibold text-white">Message sent!</p>
-          <p className="text-xs text-[#6b6b80]">Our team will get back to you at your registered email.</p>
+          <p className="text-xs text-[#6b6b80]">Your message has been sent to the administrator.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -259,10 +257,11 @@ function ContactCard() {
               value={form.subject}
               onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
               placeholder="e.g. Unable to share a file"
+              disabled={loading}
               className="w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 py-2.5
                          text-white text-sm placeholder-[#4a4d5a] outline-none
                          focus:border-violet-600 focus:ring-2 focus:ring-violet-700/20
-                         transition-all duration-150"
+                         transition-all duration-150 disabled:opacity-50"
             />
           </div>
 
@@ -276,12 +275,20 @@ function ContactCard() {
               onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
               placeholder="Describe your issue in detail..."
               rows={5}
+              disabled={loading}
               className="w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 py-2.5
                          text-white text-sm placeholder-[#4a4d5a] outline-none resize-none
                          focus:border-violet-600 focus:ring-2 focus:ring-violet-700/20
-                         transition-all duration-150"
+                         transition-all duration-150 disabled:opacity-50"
             />
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="text-xs text-red-500 bg-red-950/20 border border-red-800/30 px-3 py-2 rounded-xl">
+              {error}
+            </div>
+          )}
 
           {/* Email note */}
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl
@@ -294,7 +301,7 @@ function ContactCard() {
 
           <button
             onClick={handleSubmit}
-            disabled={!form.subject.trim() || !form.message.trim()}
+            disabled={loading || !form.subject.trim() || !form.message.trim()}
             className="w-full py-2.5 rounded-xl text-sm font-semibold bg-violet-700 text-white
                        hover:bg-violet-600 hover:-translate-y-px
                        hover:shadow-[0_4px_14px_rgba(124,58,237,0.35)]
@@ -302,7 +309,7 @@ function ContactCard() {
                        disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0
                        disabled:hover:shadow-none"
           >
-            Send Message
+            {loading ? "Sending..." : "Send Message"}
           </button>
         </div>
       )}
@@ -367,29 +374,6 @@ export default function SupportPage() {
               />
             </div>
           </div>
-        </div>
-
-        {/* ── Quick links ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {QUICK_LINKS.map((link) => (
-            <button
-              key={link.label}
-              className="group bg-[#13151a] border border-[#1e2130] rounded-2xl p-4
-                         hover:border-violet-800/40 hover:bg-violet-950/10
-                         transition-all duration-150 text-left"
-            >
-              <div className="w-7 h-7 rounded-lg bg-violet-950/60 border border-violet-800/30
-                              flex items-center justify-center text-violet-400 mb-3
-                              group-hover:bg-violet-900/40 transition-colors duration-150">
-                {link.icon}
-              </div>
-              <p className="text-sm font-medium text-[#c9cad4] group-hover:text-white
-                            transition-colors duration-150 leading-tight mb-1">
-                {link.label}
-              </p>
-              <p className="text-[11px] text-[#4a4d5a]">{link.desc}</p>
-            </button>
-          ))}
         </div>
 
         {/* ── Main content: FAQ + Contact side by side ── */}

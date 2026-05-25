@@ -15,8 +15,10 @@ import { useState, useRef, useEffect } from "react";
 export function OtpModal({
   isOpen,
   onClose,
+  onSend,
   onSubmit,
   onResend,
+  isSending,
   isLoading,
   isResending,
   email,
@@ -24,15 +26,22 @@ export function OtpModal({
 }) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
+  const [otpRequested, setOtpRequested] = useState(false);
   const inputRefs = useRef([]);
 
   useEffect(() => {
     if (isOpen) {
       setOtp(["", "", "", "", "", ""]);
       setError("");
-      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      setOtpRequested(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && otpRequested) {
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    }
+  }, [isOpen, otpRequested]);
 
   useEffect(() => {
     if (externalError) setError(externalError);
@@ -68,6 +77,15 @@ export function OtpModal({
     setOtp(newOtp);
     const nextEmpty = newOtp.findIndex((v) => !v);
     inputRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus();
+  };
+
+  const handleSend = async () => {
+    setError("");
+    if (!onSend) return;
+    const sent = await onSend();
+    if (sent) {
+      setOtpRequested(true);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -113,9 +131,13 @@ export function OtpModal({
             </div>
             <div>
               <h2 className="text-[16px] font-semibold text-white leading-tight">
-                Enter Verification Code
+                {otpRequested ? "Enter Verification Code" : "Restricted Access"}
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">Check your inbox</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {otpRequested
+                  ? "Check your inbox"
+                  : "Verify your identity to continue"}
+              </p>
             </div>
           </div>
           <button
@@ -126,41 +148,66 @@ export function OtpModal({
           </button>
         </div>
 
-        {/* Email hint */}
-        <p className="text-sm text-slate-400 mb-6 leading-relaxed">
-          We sent a 6-digit code to{" "}
-          <span className="text-violet-400 font-medium">{maskedEmail}</span>.
-          Enter it below to access the file.
-        </p>
+        <div className="text-sm text-slate-400 mb-6 leading-relaxed">
+          {otpRequested ? (
+            <>
+              We sent a 6-digit code to <span className="text-violet-400 font-medium">{maskedEmail}</span>.
+              Enter it below to access the file.
+            </>
+          ) : (
+            <>
+              <p>OTP will be sent to</p>
+              <p className="text-violet-400 font-medium mt-2">{maskedEmail}</p>
+            </>
+          )}
+        </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* OTP boxes */}
-          <div className="flex gap-2 justify-center mb-2">
-            {otp.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => (inputRefs.current[i] = el)}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                onPaste={i === 0 ? handlePaste : undefined}
-                className="w-12 h-14 text-center text-xl font-semibold text-white rounded-xl outline-none transition"
-                style={{
-                  background: digit ? "#1e1b3a" : "#0d0d1a",
-                  border: `0.5px solid ${
-                    error ? "#ef4444" : digit ? "#7c5fe6" : "#2a2a3d"
-                  }`,
-                  caretColor: "#7c5fe6",
-                }}
-              />
-            ))}
-          </div>
+        <form onSubmit={otpRequested ? handleSubmit : undefined}>
+          {otpRequested && (
+            <>
+              <div className="flex gap-2 justify-center mb-2">
+                {otp.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => (inputRefs.current[i] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleChange(i, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(i, e)}
+                    onPaste={i === 0 ? handlePaste : undefined}
+                    className="w-12 h-14 text-center text-xl font-semibold text-white rounded-xl outline-none transition"
+                    style={{
+                      background: digit ? "#1e1b3a" : "#0d0d1a",
+                      border: `0.5px solid ${
+                        error ? "#ef4444" : digit ? "#7c5fe6" : "#2a2a3d"
+                      }`,
+                      caretColor: "#7c5fe6",
+                    }}
+                  />
+                ))}
+              </div>
 
-          {/* Error */}
+              <div className="flex items-center justify-center mt-4 mb-6">
+                <span className="text-xs text-slate-500">Didn't receive it?</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtp(["", "", "", "", "", ""]);
+                    setError("");
+                    onResend();
+                  }}
+                  disabled={isResending}
+                  className="ml-1.5 text-xs text-violet-400 hover:text-violet-300 transition font-medium disabled:opacity-50"
+                >
+                  {isResending ? "Resending..." : "Resend code"}
+                </button>
+              </div>
+            </>
+          )}
+
           {error && (
             <p className="text-xs text-red-400 text-center mt-2 flex items-center justify-center gap-1">
               <span className="material-symbols-outlined text-sm">error</span>
@@ -168,25 +215,7 @@ export function OtpModal({
             </p>
           )}
 
-          {/* Resend */}
-          <div className="flex items-center justify-center mt-4 mb-6">
-            <span className="text-xs text-slate-500">Didn't receive it?</span>
-            <button
-              type="button"
-              onClick={() => {
-                setOtp(["", "", "", "", "", ""]);
-                setError("");
-                onResend();
-              }}
-              disabled={isResending}
-              className="ml-1.5 text-xs text-violet-400 hover:text-violet-300 transition font-medium disabled:opacity-50"
-            >
-              {isResending ? "Resending..." : "Resend code"}
-            </button>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 mt-4">
             <button
               type="button"
               onClick={onClose}
@@ -196,30 +225,44 @@ export function OtpModal({
               Cancel
             </button>
             <button
-              type="submit"
-              disabled={isLoading || otp.join("").length < 6}
+              type={otpRequested ? "submit" : "button"}
+              onClick={!otpRequested ? handleSend : undefined}
+              disabled={otpRequested ? isLoading || otp.join("").length < 6 : isSending}
               className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-white transition flex items-center justify-center gap-2"
               style={{
-                background:
-                  otp.join("").length < 6
+                background: otpRequested
+                  ? otp.join("").length < 6
                     ? "#2a2a3d"
                     : isLoading
                       ? "#4c3a9e"
-                      : "#7c5fe6",
-                opacity: isLoading ? 0.8 : 1,
+                      : "#7c5fe6"
+                  : isSending
+                    ? "#4c3a9e"
+                    : "#7c5fe6",
+                opacity: otpRequested ? (isLoading ? 0.8 : 1) : isSending ? 0.8 : 1,
               }}
             >
-              {isLoading ? (
+              {otpRequested ? (
+                isLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    Verify
+                  </>
+                )
+              ) : isSending ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Verifying...
+                  Sending...
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-sm">
-                    arrow_forward
-                  </span>
-                  Verify
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  Send OTP
                 </>
               )}
             </button>

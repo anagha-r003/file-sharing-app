@@ -96,6 +96,28 @@ public class EmailService {
     }
 
 
+    // ─── SUPPORT EMAIL ─────────────────────────────────────────
+
+    public void sendSupportEmail(
+            String senderEmail,
+            String senderName,
+            String subject,
+            String message
+    ) {
+        log.info("Sending support request from {} to admin", senderEmail);
+
+        String emailSubject = "Support Request: " + subject;
+
+        String body =
+                "You have received a new support request.\n\n"
+                        + "From: " + senderName + " (" + senderEmail + ")\n"
+                        + "Subject: " + subject + "\n\n"
+                        + "Message:\n" + message;
+
+        sendEmail(fromEmail, emailSubject, body);
+    }
+
+
     // ─── COMMON SEND METHOD ────────────────────────────────────
 
     private void sendEmail(
