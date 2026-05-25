@@ -1,8 +1,8 @@
 import { getFileMeta, formatSize, formatDate } from "../../utils/fileUtils";
 import { downloadFiles } from "../../services/fileService";
 
-const CB =
-  "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition relative";
+// const CB =
+//   "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition relative";
 
 // Custom checkbox with visible checkmark using a wrapper approach
 function Checkbox({ checked, onChange, className = "" }) {

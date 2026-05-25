@@ -6,6 +6,8 @@ import FolderDetailHeader from "../../components/myfolders/FolderDetailHeader";
 import FolderFileList from "../../components/myfolders/FolderFileList";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import Toast from "../../components/sharedlink/Toast";
+import FileViewModal from "../../components/myfiles/FileViewModal";
+import { downloadFiles } from "../../services/fileService";
 
 import {
   getFolderById,
@@ -26,6 +28,8 @@ function FolderDetailPage() {
   const [search, setSearch] = useState("");
 
   const [removeTarget, setRemoveTarget] = useState(null);
+
+  const [viewingFile, setViewingFile] = useState(null);
 
   const [toast, setToast] = useState({
     visible: false,
@@ -122,6 +126,7 @@ function FolderDetailPage() {
           onSearchChange={(e) => setSearch(e.target.value)}
           onSearchClear={() => setSearch("")}
           onRemove={setRemoveTarget}
+          onView={setViewingFile}
         />
       </div>
 
@@ -138,6 +143,14 @@ function FolderDetailPage() {
         visible={toast.visible}
         type={toast.type}
       />
+
+      {viewingFile && (
+        <FileViewModal
+          file={viewingFile}
+          onClose={() => setViewingFile(null)}
+          onDownload={() => downloadFiles([viewingFile.id])}
+        />
+      )}
     </PageLayout>
   );
 }

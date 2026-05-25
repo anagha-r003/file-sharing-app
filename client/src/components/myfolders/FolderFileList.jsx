@@ -56,6 +56,7 @@ function FolderFileList({
   onSearchChange,
   onSearchClear,
   onRemove,
+  onView,
 }) {
   return (
     <Card className="!p-0 overflow-hidden">
@@ -83,6 +84,7 @@ function FolderFileList({
               key={file.id}
               file={file}
               onRemove={() => onRemove(file)}
+              onView={() => onView(file)}
             />
           ))}
         </div>
