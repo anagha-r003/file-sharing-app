@@ -25,8 +25,7 @@ export default function AddToFolderModal({ files, onClose }) {
   const fetchFolders = async () => {
     try {
       const response = await getFolders();
-
-      setFolders(response.data || []);
+      setFolders(response.data?.content ?? []);
     } catch (err) {
       console.error("Failed to fetch folders", err);
     } finally {
