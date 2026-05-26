@@ -27,13 +27,18 @@ function formatRelativeTime(dateString) {
   });
 }
 
+const DROPDOWN_WIDTH = 360;
+const SCREEN_MARGIN = 8; // px gap from screen edges
+
 export default function NotificationDropdown() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
+  const buttonRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({});
 
   const fetchUnreadCount = async () => {
     try {
@@ -66,7 +71,41 @@ export default function NotificationDropdown() {
     if (isOpen) {
       fetchNotifications();
       fetchUnreadCount();
+      computeDropdownPosition();
     }
+  }, [isOpen]);
+
+  const computeDropdownPosition = () => {
+    if (!buttonRef.current) return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+
+    // Desired: right-align to button's right edge
+    const desiredLeft = rect.right - DROPDOWN_WIDTH;
+    const width = Math.min(DROPDOWN_WIDTH, vw - SCREEN_MARGIN * 2);
+
+    // Clamp so it never overflows either edge
+    const left = Math.max(
+      SCREEN_MARGIN,
+      Math.min(desiredLeft, vw - width - SCREEN_MARGIN),
+    );
+
+    const top = rect.bottom + 8; // 8px gap below button
+
+    setDropdownStyle({
+      position: "fixed",
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${width}px`,
+    });
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleResize = () => computeDropdownPosition();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [isOpen]);
 
   useEffect(() => {
@@ -113,6 +152,7 @@ export default function NotificationDropdown() {
   return (
     <div className="relative" ref={containerRef}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className="relative p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition"
@@ -127,7 +167,10 @@ export default function NotificationDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[min(360px,calc(100vw-2rem))] rounded-2xl border border-white/10 bg-[#14141c] shadow-2xl shadow-black/40 z-50 overflow-hidden">
+        <div
+          className="z-50 overflow-hidden rounded-2xl border border-white/10 bg-[#14141c] shadow-2xl shadow-black/40"
+          style={dropdownStyle}
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
             <h3 className="text-sm font-semibold text-white">Notifications</h3>
             {unreadCount > 0 && (
