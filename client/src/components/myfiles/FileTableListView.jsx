@@ -92,9 +92,7 @@ function FileTableListView({
               <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 Name
               </th>
-              <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                
-              </th>
+              <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap"></th>
               <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 Size
               </th>
@@ -102,7 +100,7 @@ function FileTableListView({
                 Type
               </th>
               <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                Last Modified
+                Uploaded On
               </th>
               <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap text-right">
                 Actions
@@ -174,29 +172,29 @@ function FileTableListView({
                     </td>
                     {/* Star */}
                     <td>
-                    <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleStar(file);
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleStar(file);
+                        }}
+                        title={file.isStarred ? "Unstar" : "Star"}
+                        className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-all ${
+                          file.isStarred
+                            ? "text-yellow-400"
+                            : "text-slate-700 hover:text-yellow-400"
+                        }`}
+                      >
+                        <span
+                          className="material-symbols-outlined text-[16px]"
+                          style={{
+                            fontVariationSettings: file.isStarred
+                              ? "'FILL' 1"
+                              : "'FILL' 0",
                           }}
-                          title={file.isStarred ? "Unstar" : "Star"}
-                          className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-all ${
-                            file.isStarred
-                              ? "text-yellow-400"
-                              : "text-slate-700 hover:text-yellow-400"
-                          }`}
                         >
-                          <span
-                            className="material-symbols-outlined text-[16px]"
-                            style={{
-                              fontVariationSettings: file.isStarred
-                                ? "'FILL' 1"
-                                : "'FILL' 0",
-                            }}
-                          >
-                            star
-                          </span>
-                        </button>
+                          star
+                        </span>
+                      </button>
                     </td>
 
                     {/* Size */}

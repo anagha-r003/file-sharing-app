@@ -531,6 +531,49 @@ public class FileService {
         );
     }
 
+    public ResponseEntity<
+            ResponseStructure<Page<FileResponse>>
+            > getStarredFiles(
+            int page,
+            int size
+    ) {
+
+        User user = SecurityUtil.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("uploadedAt").descending()
+        );
+
+        Page<UserFile> files =
+                fileRepository
+                        .findByUserIdAndIsDeletedFalseAndIsStarredTrue(
+                                user.getId(),
+                                pageable
+                        );
+
+        Page<FileResponse> dtoPage =
+                files.map(file ->
+                        FileResponse.builder()
+                                .id(file.getId())
+                                .name(file.getName())
+                                .size(file.getSize())
+                                .mimeType(file.getMimeType())
+                                .type(file.getType())
+                                .previewPath(file.getPreviewPath())
+                                .isStarred(file.getIsStarred())
+                                .uploadedAt(file.getUploadedAt())
+                                .build()
+                );
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Starred files fetched successfully",
+                dtoPage
+        );
+    }
+
     private UserFile getAuthorizedFile(
             Long fileId
     ) {

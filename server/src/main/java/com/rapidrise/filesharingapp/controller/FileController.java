@@ -102,6 +102,22 @@ public class FileController {
         return fileService.unstarFile(fileId);
     }
 
+    @GetMapping("/starred")
+    public ResponseEntity<ResponseStructure<Page<FileResponse>>> getStarredFiles(
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+
+        return fileService.getStarredFiles(
+                page,
+                size
+        );
+    }
+
 
 
 }

@@ -116,7 +116,8 @@ public class DashboardService {
     public DashboardStats getStats(Long userId) {
         long totalAssets = fileRepository.countByUserId(userId);
         long activeShares = shareLinkRepository
-                .countByCreatedByIdAndExpiresAtAfter(userId, LocalDateTime.now());
+                .countByCreatedByIdAndActiveTrueAndExpiresAtAfter(userId,
+                        LocalDateTime.now());
         long totalDownloads = fileRepository.sumDownloadCountByUserId(userId);  // ← new
 
         return DashboardStats.builder()

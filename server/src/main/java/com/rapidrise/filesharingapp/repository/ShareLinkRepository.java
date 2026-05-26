@@ -27,7 +27,7 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
 
     long countByCreatedById(Long userId);
 
-    long countByCreatedByIdAndExpiresAtAfter(
+    long countByCreatedByIdAndActiveTrueAndExpiresAtAfter(
             Long userId,
             LocalDateTime now
     );

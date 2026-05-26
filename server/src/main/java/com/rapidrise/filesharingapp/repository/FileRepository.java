@@ -30,8 +30,10 @@ public interface FileRepository extends JpaRepository<UserFile,Long> {
     );
 
     // Starred files
-    List<UserFile> findByUserIdAndIsDeletedFalseAndIsStarredTrue(
-            Long userId
+    Page<UserFile>
+    findByUserIdAndIsDeletedFalseAndIsStarredTrue(
+            Long userId,
+            Pageable pageable
     );
 
     // Filter files by type
@@ -179,6 +181,15 @@ AND f.isDeleted = true
     long countByFolderId(
             Long folderId
     );
+
+
+    @Modifying
+    @Query("""
+DELETE FROM UserFile f
+WHERE f.user.id = :userId
+AND f.isDeleted = true
+""")
+    void deleteRecycleBinFiles(Long userId);
 
 
 }

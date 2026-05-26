@@ -180,20 +180,40 @@ function RecycleBinPage() {
 
   const handleConfirm = async () => {
     if (!modal) return;
+
     try {
-      if (modal.type === "delete") await permDelete(modal.id);
+      if (modal.type === "delete") {
+        await permDelete(modal.id);
+      }
+
       if (modal.type === "deleteBulk") {
         await permanentlyDeleteFiles(selectedIds);
         setSelectedIds([]);
       }
-      if (modal.type === "emptyBin") await emptyRecycleBin();
-      if (modal.type === "restoreAll") await restoreAllFiles();
+
+      if (modal.type === "emptyBin") {
+        await emptyRecycleBin();
+
+        // clear UI immediately
+        setFiles([]);
+        setSelectedIds([]);
+        setTotalElements(0);
+      }
+
+      if (modal.type === "restoreAll") {
+        await restoreAllFiles();
+      }
+
       if (modal.type === "restoreBulk") {
         await restoreFiles(selectedIds);
         setSelectedIds([]);
       }
+
       setPage(0);
+
+      // refresh latest data
       await fetchDeletedFiles(0);
+      await fetchRecycleBinStats();
     } catch (err) {
       console.error("Action failed", err);
     } finally {

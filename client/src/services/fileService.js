@@ -116,3 +116,14 @@ export const unstarFile = async (fileId) => {
 
   return response.data;
 };
+
+export const getStarredFiles = async (page = 0, size = 10) => {
+  const response = await api.get("/files/starred", {
+    params: {
+      page,
+      size,
+    },
+  });
+
+  return response.data.data;
+};

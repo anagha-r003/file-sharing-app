@@ -201,7 +201,7 @@ public class RestrictedShareService {
         }
 
         // attempts exceeded
-        if (storedOtp.getAttempts() >= 5) {
+        if (storedOtp.getAttempts() >= 3) {
 
             throw new BadRequestException(
                     "Too many invalid attempts"

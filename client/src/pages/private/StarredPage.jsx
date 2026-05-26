@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../../components/dashboard/Sidebar";
 import TopNavbar from "../../components/dashboard/TopNavbar";
 import FileTable from "../../components/myfiles/FileTable"; // Reuse your existing table logic
-import { getFiles } from "../../services/fileService";
+import { getStarredFiles } from "../../services/fileService";
 
 function StarredPage() {
   const [starredFiles, setStarredFiles] = useState(null);
@@ -14,16 +14,9 @@ function StarredPage() {
   const fetchStarredData = async () => {
     setLoading(true);
     try {
-      const filesRes = await getFiles(page, pageSize);
+      const filesRes = await getStarredFiles(page, pageSize);
 
-      // Filter for only starred items
-      if (filesRes?.content) {
-        const starred = filesRes.content.filter((file) => file.isStarred);
-        setStarredFiles({
-          ...filesRes,
-          content: starred,
-        });
-      }
+      setStarredFiles(filesRes);
     } catch (err) {
       console.error("Failed to fetch starred files:", err);
     } finally {

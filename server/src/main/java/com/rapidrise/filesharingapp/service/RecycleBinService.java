@@ -393,7 +393,11 @@ public class RecycleBinService {
 
         shareHistoryRepository.saveAll(historyList);
 
-        fileRepository.deleteAll(files);
+        fileRepository.deleteRecycleBinFiles(
+                user.getId()
+        );
+
+        fileRepository.flush();
 
         user.setStorageUsed(
                 Math.max(

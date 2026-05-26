@@ -141,7 +141,7 @@ function ShareModal({ file, onClose }) {
       // NEW API CALL
       await sendShareLink(requestBody);
 
-      showToast("Emails sent successfully!");
+      showToast("File sent successfully!");
 
       setTimeout(() => {
         onClose();

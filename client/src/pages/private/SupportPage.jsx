@@ -24,15 +24,15 @@ const FAQ_ITEMS = [
     questions: [
       {
         q: "What file types can I upload to VaultLink?",
-        a: "VaultLink supports all common file types including documents (PDF, DOCX, TXT), images (PNG, JPG, SVG, WEBP), videos (MP4, MOV, AVI), archives (ZIP, RAR), and many more. There is no restriction on file type.",
+        a: "VaultLink supports common file types including documents (PDF, DOC, DOCX, TXT, CSV, Excel, PowerPoint), images (JPG, JPEG, PNG, GIF, WEBP, SVG), videos (MP4, WEBM, MKV), audio (MP3), and compressed files (ZIP).",
       },
       {
         q: "Is there a file size limit?",
-        a: "Individual file uploads are limited to 5GB on the Enterprise plan. Free and Pro plans support up to 500MB per file. Contact support if you need to upload larger files.",
+        a: "Yes, individual file uploads are limited to 100MB, and the total storage capacity provided is 1GB.",
       },
       {
         q: "Can I upload multiple files at once?",
-        a: "Yes! You can drag and drop multiple files onto the upload area on the Dashboard or My Files page. Batch uploads of up to 50 files are supported simultaneously.",
+        a: "Yes! You can drag and drop multiple files onto the upload area on the Dashboard.",
       },
     ],
   },
@@ -43,15 +43,15 @@ const FAQ_ITEMS = [
     questions: [
       {
         q: "How do shared links work?",
-        a: "When you share a file, VaultLink generates a unique, secure link. You can control whether the link requires a password, has a download limit, or expires after a set date.",
+        a: "When you share a file, VaultLink generates a secure link that can be shared in either public or private mode. Public links can be accessed directly, while private links require verification to access the shared file.",
       },
       {
         q: "Can I revoke a shared link?",
-        a: "Yes. Go to Shared Links in the sidebar, find the link you want to disable, and click the toggle to deactivate it instantly. The link will return a 404 for anyone who tries to access it.",
+        a: "Yes. Go to the Shared Links section, find the link you want to disable, and click the Revoke button to instantly remove access to the shared file.",
       },
       {
-        q: "How many active shared links can I have?",
-        a: "Enterprise plans support unlimited active shared links. Pro plans allow up to 100 active links, and Free plans are limited to 10.",
+        q: "Can I send a file to multiple people at a time?",
+        a: "Yes. VaultLink allows you to share a file with multiple people at once, and each recipient receives a unique secure link for access.",
       },
     ],
   },
@@ -61,31 +61,31 @@ const FAQ_ITEMS = [
     color: "amber",
     questions: [
       {
-        q: "How is my data encrypted?",
-        a: "All files are encrypted at rest using AES-256 and in transit using TLS 1.3. Your encryption keys are unique to your account and are never shared with third parties.",
+        q: "How secure are my files in VaultLink?",
+        a: "VaultLink ensures secure file storage and sharing. Private shared files require verification before access, helping protect your data from unauthorized users.",
       },
       {
         q: "Can I change my email address?",
         a: "Email addresses are tied to your account identity and cannot be changed directly. Please contact our support team at support@vaultlink.io to request an email change.",
       },
       {
-        q: "What happens to my files if I cancel my plan?",
-        a: "Your files remain accessible for 30 days after cancellation. After that, your account enters a read-only grace period for another 30 days before permanent deletion. You can download all your files during this period.",
+        q: "How does private file sharing work?",
+        a: "In private mode, access is restricted to verified recipients. If the recipient has a VaultLink account, files can be shared directly through the system. Otherwise, access is provided through email verification using OTP.",
       },
     ],
   },
   {
-    category: "File Collections",
+    category: "File Vaults",
     icon: <Folder size={15} />,
     color: "pink",
     questions: [
       {
-        q: "What is a File Collection?",
-        a: "File Collections are folders that help you organize your uploads. You can move files into collections, share an entire collection at once, and set collection-level permissions.",
+        q: "What is a File Vault?",
+        a: "A File Vault is a way to organize your files into groups for better management. It helps you keep related files together, making them easier to access, manage, and share.",
       },
       {
-        q: "Can I nest collections inside each other?",
-        a: "Currently, VaultLink supports one level of collections (no sub-folders). Nested collections are on our roadmap and will be available in an upcoming release.",
+        q: "Can I nest vaults inside each other?",
+        a: "Currently, VaultLink supports one level of vaults. ",
       },
     ],
   },
@@ -131,12 +131,16 @@ function AccordionItem({ q, a, isOpen, onToggle }) {
         onClick={onToggle}
         className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
       >
-        <span className={`text-sm font-medium transition-colors duration-150
-                          ${isOpen ? "text-white" : "text-[#c9cad4]"}`}>
+        <span
+          className={`text-sm font-medium transition-colors duration-150
+                          ${isOpen ? "text-white" : "text-[#c9cad4]"}`}
+        >
           {q}
         </span>
-        <span className={`shrink-0 transition-colors duration-150
-                          ${isOpen ? "text-violet-400" : "text-[#3a3d4d]"}`}>
+        <span
+          className={`shrink-0 transition-colors duration-150
+                          ${isOpen ? "text-violet-400" : "text-[#3a3d4d]"}`}
+        >
           {isOpen ? <ChevronDown size={16} /> : <ChevronDown size={16} />}
         </span>
       </button>
@@ -164,13 +168,19 @@ function FAQCategory({ category, icon, color, questions }) {
     <div className="bg-[#13151a] border border-[#1e2130] rounded-2xl p-5 md:p-6">
       {/* Category header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0
-                         ${c.bg} ${c.border} ${c.icon}`}>
+        <div
+          className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0
+                         ${c.bg} ${c.border} ${c.icon}`}
+        >
           {icon}
         </div>
-        <span className="text-sm font-semibold text-white tracking-wide">{category}</span>
-        <span className={`ml-auto text-[10px] font-semibold uppercase tracking-widest
-                          border px-2 py-0.5 rounded-full ${c.badge}`}>
+        <span className="text-sm font-semibold text-white tracking-wide">
+          {category}
+        </span>
+        <span
+          className={`ml-auto text-[10px] font-semibold uppercase tracking-widest
+                          border px-2 py-0.5 rounded-full ${c.badge}`}
+        >
           {questions.length} FAQs
         </span>
       </div>
@@ -222,28 +232,38 @@ function ContactCard() {
     <div className="bg-[#13151a] border border-[#1e2130] rounded-2xl p-5 md:p-6 h-full">
       {/* Header */}
       <div className="flex items-center gap-3 mb-5 pb-4 border-b border-[#1e2130]">
-        <div className="w-8 h-8 rounded-lg bg-violet-950/60 border border-violet-800/30
-                        flex items-center justify-center text-violet-400 shrink-0">
+        <div
+          className="w-8 h-8 rounded-lg bg-violet-950/60 border border-violet-800/30
+                        flex items-center justify-center text-violet-400 shrink-0"
+        >
           <MessageCircle size={16} />
         </div>
         <div>
           <h3 className="text-sm font-semibold text-white">Contact Support</h3>
-          <p className="text-[11px] text-[#6b6b80] mt-0.5">We reply via email</p>
+          <p className="text-[11px] text-[#6b6b80] mt-0.5">
+            We reply via email
+          </p>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] text-emerald-400 font-medium">Online</span>
+          <span className="text-[10px] text-emerald-400 font-medium">
+            Online
+          </span>
         </div>
       </div>
 
       {submitted ? (
         <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
-          <div className="w-12 h-12 rounded-full bg-emerald-950/40 border border-emerald-800/30
-                          flex items-center justify-center text-emerald-400">
+          <div
+            className="w-12 h-12 rounded-full bg-emerald-950/40 border border-emerald-800/30
+                          flex items-center justify-center text-emerald-400"
+          >
             <CheckCircle size={22} />
           </div>
           <p className="text-sm font-semibold text-white">Message sent!</p>
-          <p className="text-xs text-[#6b6b80]">Your message has been sent to the administrator.</p>
+          <p className="text-xs text-[#6b6b80]">
+            Your message has been sent to the administrator.
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -255,7 +275,9 @@ function ContactCard() {
             <input
               type="text"
               value={form.subject}
-              onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, subject: e.target.value }))
+              }
               placeholder="e.g. Unable to share a file"
               disabled={loading}
               className="w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 py-2.5
@@ -272,7 +294,9 @@ function ContactCard() {
             </label>
             <textarea
               value={form.message}
-              onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, message: e.target.value }))
+              }
               placeholder="Describe your issue in detail..."
               rows={5}
               disabled={loading}
@@ -291,8 +315,10 @@ function ContactCard() {
           )}
 
           {/* Email note */}
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl
-                          bg-[#1a1d23] border border-[#2a2d3a]">
+          <div
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl
+                          bg-[#1a1d23] border border-[#2a2d3a]"
+          >
             <Mail size={13} className="text-[#4a4d5a] shrink-0" />
             <span className="text-[11.5px] text-[#6b6b80]">
               Reply will be sent to your registered email address.
@@ -331,7 +357,7 @@ export default function SupportPage() {
       (item) =>
         !search.trim() ||
         item.q.toLowerCase().includes(search.toLowerCase()) ||
-        item.a.toLowerCase().includes(search.toLowerCase())
+        item.a.toLowerCase().includes(search.toLowerCase()),
     ),
   })).filter((cat) => cat.questions.length > 0);
 
@@ -343,7 +369,6 @@ export default function SupportPage() {
       setSidebarOpen={setSidebarOpen}
     >
       <div className="max-w-5xl mx-auto w-full space-y-6">
-
         {/* ── Page heading ── */}
         <div>
           <h1 className="text-xl font-bold text-white mb-1">Support</h1>
@@ -355,13 +380,22 @@ export default function SupportPage() {
         {/* ── Hero search banner ── */}
         <div className="relative bg-[#13151a] border border-[#1e2130] rounded-2xl px-6 py-7 overflow-hidden">
           {/* Ambient glow */}
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-80 h-40
-                          bg-violet-700/10 rounded-full blur-3xl pointer-events-none" />
+          <div
+            className="absolute -top-16 left-1/2 -translate-x-1/2 w-80 h-40
+                          bg-violet-700/10 rounded-full blur-3xl pointer-events-none"
+          />
           <div className="relative z-10 max-w-xl mx-auto text-center">
-            <h2 className="text-lg font-bold text-white mb-1">How can we help?</h2>
-            <p className="text-sm text-[#6b6b80] mb-5">Search our knowledge base or browse FAQs below.</p>
+            <h2 className="text-lg font-bold text-white mb-1">
+              How can we help?
+            </h2>
+            <p className="text-sm text-[#6b6b80] mb-5">
+              Search our knowledge base or browse FAQs below.
+            </p>
             <div className="relative">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a4d5a]" />
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a4d5a]"
+              />
               <input
                 type="text"
                 value={search}
@@ -378,13 +412,14 @@ export default function SupportPage() {
 
         {/* ── Main content: FAQ + Contact side by side ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 items-start">
-
           {/* FAQs */}
           <div className="flex flex-col gap-4">
             {search.trim() && filteredFAQs.length === 0 ? (
               <div className="bg-[#13151a] border border-[#1e2130] rounded-2xl p-10 text-center">
                 <Search size={28} className="mx-auto text-[#3a3d4d] mb-3" />
-                <p className="text-sm font-medium text-[#c9cad4] mb-1">No results found</p>
+                <p className="text-sm font-medium text-[#c9cad4] mb-1">
+                  No results found
+                </p>
                 <p className="text-xs text-[#4a4d5a]">
                   Try different keywords or send us a message directly.
                 </p>
@@ -407,23 +442,43 @@ export default function SupportPage() {
               </p>
               <div className="flex flex-col gap-2.5">
                 {[
-                  { label: "Critical issues", time: "< 2 hours", dot: "bg-red-400" },
-                  { label: "General support", time: "< 24 hours", dot: "bg-amber-400" },
-                  { label: "Feature requests", time: "2–5 business days", dot: "bg-violet-400" },
+                  {
+                    label: "Critical issues",
+                    time: "< 2 hours",
+                    dot: "bg-red-400",
+                  },
+                  {
+                    label: "General support",
+                    time: "< 24 hours",
+                    dot: "bg-amber-400",
+                  },
+                  {
+                    label: "Feature requests",
+                    time: "2–5 business days",
+                    dot: "bg-violet-400",
+                  },
                 ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between">
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${row.dot}`} />
-                      <span className="text-xs text-[#6b6b80]">{row.label}</span>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${row.dot}`}
+                      />
+                      <span className="text-xs text-[#6b6b80]">
+                        {row.label}
+                      </span>
                     </div>
-                    <span className="text-xs font-medium text-[#c9cad4]">{row.time}</span>
+                    <span className="text-xs font-medium text-[#c9cad4]">
+                      {row.time}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </PageLayout>
   );
