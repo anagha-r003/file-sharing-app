@@ -49,18 +49,19 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
             Long fileId,
             String recipientEmail
     );
-
     @Query("""
-            SELECT s FROM ShareLink s
-            WHERE s.recipientEmail = :recipientEmail
-            AND s.active = true
-            AND (s.hiddenByRecipient IS NULL OR s.hiddenByRecipient = false)
-            AND s.expiresAt > :now
-            ORDER BY s.createdAt DESC
-            """)
-    Page<ShareLink> findVisibleSharedWithMe(
-            @Param("recipientEmail") String recipientEmail,
-            @Param("now") LocalDateTime now,
+        SELECT s FROM ShareLink s
+        WHERE s.recipientEmail = :recipientEmail
+        AND (
+            s.hiddenByRecipient IS NULL
+            OR s.hiddenByRecipient = false
+        )
+        ORDER BY s.createdAt DESC
+        """)
+    Page<ShareLink> findAllSharedWithMe(
+            @Param("recipientEmail")
+            String recipientEmail,
+
             Pageable pageable
     );
 }

@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { revokeShareLink } from "../../services/shareService";
 import Pagination from "../../common/ui/Pagination";
 import { SearchInput } from "../../common/ui";
+import FileViewModal from "../myfiles/FileViewModal";
+import { downloadFiles } from "../../services/fileService";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
@@ -27,6 +29,8 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -88,9 +92,11 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
         <div className="divide-y divide-white/[0.05]">
           {paginated.length > 0 ? (
             paginated.map((link) => {
-              const isExpired = new Date(link.expiryDate) <= new Date();
-              const isRevoked = link.active === false;
-              const isActive = !isExpired && !isRevoked;
+              const isActive = link.status === "ACTIVE";
+
+              const isExpired = link.status === "EXPIRED";
+
+              const isRevoked = link.status === "REVOKED";
 
               return (
                 <div
@@ -103,13 +109,21 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
                       <span className="text-white font-semibold text-base truncate max-w-xs">
                         {link.fileName}
                       </span>
-                      {isActive ? (
+                      {isActive && (
                         <span className="bg-green-500/15 text-green-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                           Active
                         </span>
-                      ) : (
+                      )}
+
+                      {isExpired && (
                         <span className="bg-orange-500/15 text-orange-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                           Expired
+                        </span>
+                      )}
+
+                      {isRevoked && (
+                        <span className="bg-red-500/15 text-red-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                          Revoked
                         </span>
                       )}
                     </div>
@@ -119,9 +133,11 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
                         {link.recipientEmail}
                       </span>
                       {" · "}
-                      {isExpired
-                        ? `Expired ${formatDate(link.expiryDate)}`
-                        : `Expires ${formatDate(link.expiryDate)}`}
+                      {isRevoked
+                        ? `Revoked ${formatDate(link.expiryDate)}`
+                        : isExpired
+                          ? `Expired ${formatDate(link.expiryDate)}`
+                          : `Expires ${formatDate(link.expiryDate)}`}
                       {" · "}
                       Created {formatRelative(link.createdAt)}
                     </p>
@@ -148,7 +164,13 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
 
                     {/* Open */}
                     <button
-                      onClick={() => window.open(link.shareUrl, "_blank")}
+                      onClick={() =>
+                        setPreviewFile({
+                          id: link.fileId,
+                          name: link.fileName,
+                          size: 0,
+                        })
+                      }
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
                     >
                       <span
@@ -200,6 +222,14 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
           />
         </div>
       </div>
+
+      {previewFile && (
+        <FileViewModal
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+          onDownload={() => downloadFiles([previewFile.id])}
+        />
+      )}
     </div>
   );
 }

@@ -24,3 +24,11 @@
     @apply bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-2xl transition-all duration-300 hover:border-brand-violet/40;
   }
 }
+@layer base {
+  * {
+    scrollbar-width: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}

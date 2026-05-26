@@ -17,6 +17,8 @@ import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 import ProfilePage from "./pages/private/ProfilePage";
 import SupportPage from "./pages/private/SupportPage";
+import LinkExpired from "./components/sharedlink/LinkExpired";
+import AccessRevoked from "./components/sharedlink/AccessRevoked";
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
             path="/public/share/:token"
             element={<SharedLinkPreviewPage />}
           />
+          <Route path="/share-expired" element={<LinkExpired />} />
+          <Route path="/share-revoked" element={<AccessRevoked />} />
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 

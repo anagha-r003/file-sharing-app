@@ -45,11 +45,13 @@ function SharedLinksPage() {
       const formattedData = items.map((item) => ({
         id: item.id,
         fileName: item.fileName, // already mapped in service layer
+        fileId: item.fileId,
         recipientEmail: item.recipientEmail,
         expiryDate: item.expiresAt,
         active: item.active,
         downloadCount: item.downloadCount,
         shareUrl: item.shareUrl, // backend builds this
+        status: item.status,
       }));
 
       setSharedLinks(formattedData);

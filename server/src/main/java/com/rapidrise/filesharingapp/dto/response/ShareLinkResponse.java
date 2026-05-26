@@ -17,6 +17,8 @@ public class ShareLinkResponse {
 
     private String fileName;
 
+    private Long fileId;
+
     private LocalDateTime expiresAt;
 
     private Integer downloadCount;
@@ -36,4 +38,6 @@ public class ShareLinkResponse {
     private Boolean requiresOtp;
 
     private String shareType;
+
+    private String status;
 }

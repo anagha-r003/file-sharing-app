@@ -526,53 +526,47 @@ public class ShareService {
                         pageable
                 );
 
-        LocalDateTime now = LocalDateTime.now();
-
-        // Check and update expired links
-        sharedFiles.forEach(shareLink -> {
-
-            if (Boolean.TRUE.equals(shareLink.getActive())
-                    && shareLink.getExpiresAt() != null
-                    && shareLink.getExpiresAt().isBefore(now)) {
-
-                shareLink.setActive(false);
-
-                shareLinkRepository.save(shareLink);
-            }
-        });
-
         Page<ShareLinkResponse> response =
-                sharedFiles.map(shareLink ->
-                        ShareLinkResponse.builder()
-                                .id(shareLink.getId())
-                                .shareUrl(
-                                        frontendUrl
-                                                + "/public/share/"
-                                                + shareLink.getToken()
-                                )
-                                .recipientEmail(
-                                        shareLink.getRecipientEmail()
-                                )
-                                .fileName(
-                                        shareLink.getFile().getName()
-                                )
-                                .active(
-                                        shareLink.getActive()
-                                )
-                                .expiresAt(
-                                        shareLink.getExpiresAt()
-                                )
-                                .downloadCount(
-                                        shareLink.getDownloadCount()
-                                )
-                                .requiresOtp(
-                                        shareLink.getRequiresOtp()
-                                )
-                                .shareType(
-                                        shareLink.getShareType() != null ? shareLink.getShareType().name() : null
-                                )
-                                .build()
-                );
+                sharedFiles.map(shareLink -> {
+
+                    String status= getShareStatus(shareLink);
+
+                    return ShareLinkResponse.builder()
+                            .id(shareLink.getId())
+                            .shareUrl(
+                                    frontendUrl
+                                            + "/public/share/"
+                                            + shareLink.getToken()
+                            )
+                            .recipientEmail(
+                                    shareLink.getRecipientEmail()
+                            )
+                            .fileName(
+                                    shareLink.getFile().getName()
+                            )
+                            .active(
+                                    shareLink.getActive()
+                            )
+                            .expiresAt(
+                                    shareLink.getExpiresAt()
+                            )
+                            .downloadCount(
+                                    shareLink.getDownloadCount()
+                            )
+                            .requiresOtp(
+                                    shareLink.getRequiresOtp()
+                            )
+                            .shareType(
+                                    shareLink.getShareType() != null
+                                            ? shareLink.getShareType().name()
+                                            : null
+                            )
+                            .fileId(
+                                    shareLink.getFile().getId()
+                            )
+                            .status(status) // ADD THIS
+                            .build();
+                });
 
         return ResponseBuilder.build(
                 HttpStatus.OK,
@@ -815,53 +809,62 @@ public class ShareService {
                 Sort.by("createdAt").descending()
         );
 
-        Page<ShareLink> sharedFiles = shareLinkRepository
-                .findVisibleSharedWithMe(
-                        user.getEmail(),
-                        LocalDateTime.now(),
-                        pageable
-                );
+        Page<ShareLink> sharedFiles =
+                shareLinkRepository
+                        .findAllSharedWithMe(
+                                user.getEmail(),
+                                pageable
+                        );
 
         Page<ShareLinkResponse> response =
-                sharedFiles.map(shareLink ->
-                        ShareLinkResponse.builder()
-                                .id(shareLink.getId())
-                                .shareUrl(
-                                        frontendUrl
-                                                + "/public/share/"
-                                                + shareLink.getToken()
-                                )
-                                .recipientEmail(
-                                        shareLink.getRecipientEmail()
-                                )
-                                .fileName(
-                                        shareLink.getFile().getName()
-                                )
-                                .active(
-                                        shareLink.getActive()
-                                )
-                                .expiresAt(
-                                        shareLink.getExpiresAt()
-                                )
-                                .downloadCount(
-                                        shareLink.getDownloadCount()
-                                )
-                                .sharedByName(
-                                        shareLink.getCreatedBy().getFirstName()
-                                                + " "
-                                                + shareLink.getCreatedBy().getLastName()
-                                )
-                                .sharedByEmail(
-                                        shareLink.getCreatedBy().getEmail()
-                                )
-                                .requiresOtp(
-                                        shareLink.getRequiresOtp()
-                                )
-                                .shareType(
-                                        shareLink.getShareType() != null ? shareLink.getShareType().name() : null
-                                )
-                                .build()
-                );
+                sharedFiles.map(shareLink -> {
+
+                    String status=getShareStatus(shareLink);
+
+                    return ShareLinkResponse.builder()
+                            .id(shareLink.getId())
+                            .shareUrl(
+                                    frontendUrl
+                                            + "/public/share/"
+                                            + shareLink.getToken()
+                            )
+                            .recipientEmail(
+                                    shareLink.getRecipientEmail()
+                            )
+                            .fileName(
+                                    shareLink.getFile().getName()
+                            )
+                            .active(
+                                    shareLink.getActive()
+                            )
+                            .expiresAt(
+                                    shareLink.getExpiresAt()
+                            )
+                            .downloadCount(
+                                    shareLink.getDownloadCount()
+                            )
+                            .sharedByName(
+                                    shareLink.getCreatedBy()
+                                            .getFirstName()
+                                            + " "
+                                            + shareLink.getCreatedBy()
+                                            .getLastName()
+                            )
+                            .sharedByEmail(
+                                    shareLink.getCreatedBy()
+                                            .getEmail()
+                            )
+                            .requiresOtp(
+                                    shareLink.getRequiresOtp()
+                            )
+                            .shareType(
+                                    shareLink.getShareType() != null
+                                            ? shareLink.getShareType().name()
+                                            : null
+                            )
+                            .status(status) // THIS WAS MISSING
+                            .build();
+                });
 
         return ResponseBuilder.build(
                 HttpStatus.OK,
@@ -902,6 +905,32 @@ public class ShareService {
                 "Shared file removed from your list",
                 null
         );
+    }
+
+    private String getShareStatus(
+            ShareLink shareLink
+    ) {
+
+        if (!Boolean.TRUE.equals(
+                shareLink.getActive()
+        )) {
+
+            return "REVOKED";
+        }
+
+        if (
+                shareLink.getExpiresAt() != null
+                        &&
+                        shareLink.getExpiresAt()
+                                .isBefore(
+                                        LocalDateTime.now()
+                                )
+        ) {
+
+            return "EXPIRED";
+        }
+
+        return "ACTIVE";
     }
 
 

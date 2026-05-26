@@ -131,6 +131,39 @@ function SharedWithMePage() {
     });
   };
 
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "ACTIVE":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="material-symbols-outlined text-sm">
+              check_circle
+            </span>
+            Active
+          </span>
+        );
+
+      case "EXPIRED":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span className="material-symbols-outlined text-sm">schedule</span>
+            Expired
+          </span>
+        );
+
+      case "REVOKED":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide bg-red-500/10 text-red-400 border border-red-500/20">
+            <span className="material-symbols-outlined text-sm">block</span>
+            Revoked
+          </span>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex h-screen bg-[#0c0e12] text-white overflow-hidden">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
@@ -149,7 +182,8 @@ function SharedWithMePage() {
                   Files Shared Directly with You
                 </h2>
                 <p className="text-sm text-slate-400 mt-1">
-                  View files shared to your account, including public and restricted links.
+                  View files shared to your account, including public and
+                  restricted links.
                 </p>
               </div>
 
@@ -178,7 +212,9 @@ function SharedWithMePage() {
                 <span className="material-symbols-outlined text-slate-600 text-5xl mb-4">
                   folder_shared
                 </span>
-                <h3 className="text-lg font-bold text-slate-400">No shared files found</h3>
+                <h3 className="text-lg font-bold text-slate-400">
+                  No shared files found
+                </h3>
                 <p className="text-sm text-slate-500 mt-1">
                   Files shared directly to your email will appear here.
                 </p>
@@ -191,8 +227,9 @@ function SharedWithMePage() {
                       <th className="px-6 py-4">File Name</th>
                       <th className="px-6 py-4">Shared By</th>
                       <th className="px-6 py-4">Access</th>
+                      <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4">Expiry Date</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
+                      <th className="px-6 py-4 text-right pr-13">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5 text-sm text-slate-300">
@@ -237,6 +274,11 @@ function SharedWithMePage() {
                             {getShareTypeLabel(file.shareType)}
                           </span>
                         </td>
+
+                        <td className="px-6 py-4">
+                          {getStatusBadge(file.status)}
+                        </td>
+
                         <td className="px-6 py-4">
                           <span className="text-slate-400">
                             {getFormatDate(file.expiresAt)}
@@ -245,13 +287,28 @@ function SharedWithMePage() {
                         <td className="px-6 py-4 text-right">
                           <div className="inline-flex items-center gap-2">
                             <button
-                              onClick={() => handlePreview(file)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-400 hover:text-white bg-violet-500/10 hover:bg-violet-600 border border-violet-500/10 hover:border-violet-500 transition"
+                              onClick={() => {
+                                if (file.status === "EXPIRED") {
+                                  navigate("/share-expired");
+                                  return;
+                                }
+
+                                if (file.status === "REVOKED") {
+                                  navigate("/share-revoked");
+                                  return;
+                                }
+
+                                handlePreview(file);
+                              }}
+                              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
                             >
-                              <span className="material-symbols-outlined text-sm">
+                              <span
+                                className="material-symbols-outlined text-sm"
+                                style={{ fontSize: "16px" }}
+                              >
                                 open_in_new
                               </span>
-                              Open File
+                              Open
                             </button>
                             <button
                               onClick={() => setRemoveTarget(file)}
@@ -260,7 +317,9 @@ function SharedWithMePage() {
                               className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-50"
                             >
                               <span className="material-symbols-outlined text-base">
-                                {removingId === file.id ? "hourglass_empty" : "close"}
+                                {removingId === file.id
+                                  ? "hourglass_empty"
+                                  : "close"}
                               </span>
                             </button>
                           </div>
@@ -283,7 +342,11 @@ function SharedWithMePage() {
         />
       )}
 
-      <Toast message={toast.message} visible={toast.visible} type={toast.type} />
+      <Toast
+        message={toast.message}
+        visible={toast.visible}
+        type={toast.type}
+      />
     </div>
   );
 }

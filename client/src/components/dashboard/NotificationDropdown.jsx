@@ -126,9 +126,7 @@ export default function NotificationDropdown() {
       try {
         await markNotificationAsRead(notification.id);
         setNotifications((prev) =>
-          prev.map((item) =>
-            item.id === notification.id ? { ...item, read: true } : item,
-          ),
+          prev.filter((item) => item.id !== notification.id),
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } catch (error) {
@@ -142,7 +140,9 @@ export default function NotificationDropdown() {
   const handleMarkAllRead = async () => {
     try {
       await markAllNotificationsAsRead();
-      setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+
+      setNotifications([]);
+
       setUnreadCount(0);
     } catch (error) {
       console.error("Failed to mark all notifications as read", error);
@@ -194,36 +194,38 @@ export default function NotificationDropdown() {
                 No notifications yet
               </div>
             ) : (
-              notifications.map((notification) => (
-                <button
-                  key={notification.id}
-                  type="button"
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`w-full text-left px-4 py-3 border-b border-white/5 hover:bg-white/[0.03] transition ${
-                    !notification.read ? "bg-violet-500/[0.06]" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-violet-400 text-lg mt-0.5 flex-shrink-0">
-                      folder_shared
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-white truncate">
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-1.5">
-                        {formatRelativeTime(notification.createdAt)}
-                      </p>
+              notifications
+                .filter((notification) => !notification.read)
+                .map((notification) => (
+                  <button
+                    key={notification.id}
+                    type="button"
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`w-full text-left px-4 py-3 border-b border-white/5 hover:bg-white/[0.03] transition ${
+                      !notification.read ? "bg-violet-500/[0.06]" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined text-violet-400 text-lg mt-0.5 flex-shrink-0">
+                        folder_shared
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white truncate">
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                          {notification.message}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1.5">
+                          {formatRelativeTime(notification.createdAt)}
+                        </p>
+                      </div>
+                      {!notification.read && (
+                        <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0 mt-1.5" />
+                      )}
                     </div>
-                    {!notification.read && (
-                      <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0 mt-1.5" />
-                    )}
-                  </div>
-                </button>
-              ))
+                  </button>
+                ))
             )}
           </div>
         </div>
