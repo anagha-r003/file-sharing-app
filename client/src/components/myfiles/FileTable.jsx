@@ -25,6 +25,7 @@ function FileTable({
   setPageSize,
   onRefresh,
   onFileClick,
+  onFileUpdate,
   showStats = true,
 }) {
   const [shareFile, setShareFile] = useState(null);
@@ -126,16 +127,16 @@ function FileTable({
   };
 
   // Star toggle
-  const handleToggleStar = async (file) => {
-    try {
-      if (file.isStarred) await unstarFile(file.id);
-      else await starFile(file.id);
+const handleToggleStar = async (file) => {
+  try {
+    if (file.isStarred) await unstarFile(file.id);
+    else await starFile(file.id);
 
-      onRefresh();
-    } catch (err) {
-      console.error("Star/unstar failed", err);
-    }
-  };
+    onFileUpdate?.({ ...file, isStarred: !file.isStarred });
+  } catch (err) {
+    console.error("Star/unstar failed", err);
+  }
+};
 
   // Single selection
   const toggleSelect = (id, e) => {

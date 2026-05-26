@@ -30,7 +30,14 @@ function MyFilesPage() {
       setLoading(false);
     }
   };
-
+const handleFileUpdate = (updatedFile) => {
+  setFiles((prev) => ({
+    ...prev,
+    content: prev.content.map((f) =>
+      f.id === updatedFile.id ? updatedFile : f
+    ),
+  }));
+};
   // Responsive sidebar
   useEffect(() => {
     const handleResize = () => {
@@ -67,6 +74,7 @@ function MyFilesPage() {
           setPageSize={setPageSize}
           onRefresh={() => fetchData(page, pageSize)}
           onFileClick={setViewingFile}
+          onFileUpdate={handleFileUpdate} 
         />
       )}
 
