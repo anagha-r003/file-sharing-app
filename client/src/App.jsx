@@ -16,7 +16,7 @@ import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 import ProfilePage from "./pages/private/ProfilePage";
 import SupportPage from "./pages/private/SupportPage";
-import AnalyticsPage from "./pages/private/Analyticspage";
+
 
 function App() {
   return (
