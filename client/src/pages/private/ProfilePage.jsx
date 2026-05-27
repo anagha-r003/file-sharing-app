@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Lock, Info, Eye, EyeOff, Check, XCircle } from "lucide-react";
-import PageLayout from "../../layout/PageLayout";
 import { Card, Button, Badge } from "../../common/ui";
+import { usePageSettings } from "../../context/LayoutContext";
 import Toast from "../../components/sharedlink/Toast";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -146,7 +146,8 @@ function useToast(duration = 3000) {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  usePageSettings({ title: "My Profile" });
 
   // Profile form
   const [firstName, setFirstName] = useState("");
@@ -282,13 +283,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <PageLayout
-        title="My Profile"
-        sidebarOpen={sidebarOpen}
-        onMenuClick={() => setSidebarOpen(true)}
-        setSidebarOpen={setSidebarOpen}
-      >
-        <div className="max-w-3xl mx-auto w-full space-y-5">
+      <div className="max-w-3xl mx-auto w-full space-y-5">
           {/* Page heading */}
           <div className="mb-2">
             <h1 className="text-xl font-bold text-white mb-1">My Profile</h1>
@@ -488,7 +483,6 @@ export default function ProfilePage() {
             </div>
           </SectionCard>
         </div>
-      </PageLayout>
 
       {/*
         Your reusable Toast — driven by toastState from useToast().

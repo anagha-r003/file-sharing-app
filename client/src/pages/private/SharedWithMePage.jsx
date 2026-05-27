@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/dashboard/Sidebar";
-import TopNavbar from "../../components/dashboard/TopNavbar";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
+import { usePageSettings } from "../../context/LayoutContext";
 import {
   getSharedWithMeFiles,
   dismissSharedWithMeFile,
@@ -13,7 +12,8 @@ function SharedWithMePage() {
   const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  usePageSettings({ title: "Shared with Me" });
   const [searchQuery, setSearchQuery] = useState("");
   const [removeTarget, setRemoveTarget] = useState(null);
   const [removingId, setRemovingId] = useState(null);
@@ -29,12 +29,7 @@ function SharedWithMePage() {
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
   };
 
-  useEffect(() => {
-    const handleResize = () => setSidebarOpen(window.innerWidth >= 1024);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+
 
   useEffect(() => {
     fetchSharedFiles();
@@ -165,16 +160,7 @@ function SharedWithMePage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0c0e12] text-white overflow-hidden">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        <TopNavbar
-          title="Shared with Me"
-          onMenuClick={() => setSidebarOpen((prev) => !prev)}
-        />
-
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+    <>
           <div className="max-w-[1400px] mx-auto space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -331,9 +317,6 @@ function SharedWithMePage() {
               </div>
             )}
           </div>
-        </main>
-      </div>
-
       {removeTarget && (
         <ConfirmModal
           message={`Remove "${removeTarget.fileName}" from your Shared with Me list? The share link will still exist for the owner.`}
@@ -347,7 +330,7 @@ function SharedWithMePage() {
         visible={toast.visible}
         type={toast.type}
       />
-    </div>
+    </>
   );
 }
 

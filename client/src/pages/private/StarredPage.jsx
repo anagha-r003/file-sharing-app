@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../../components/dashboard/Sidebar";
-import TopNavbar from "../../components/dashboard/TopNavbar";
 import FileTable from "../../components/myfiles/FileTable"; // Reuse your existing table logic
 import { getStarredFiles } from "../../services/fileService";
+import { usePageSettings } from "../../context/LayoutContext";
 
 function StarredPage() {
   const [starredFiles, setStarredFiles] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  usePageSettings({
+    title: "Starred",
+    contentClassName: "none-scrollbar",
+  });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
@@ -24,29 +27,14 @@ function StarredPage() {
     }
   };
 
-  // Exact Sidebar Responsive Logic
-  useEffect(() => {
-    const handleResize = () => setSidebarOpen(window.innerWidth >= 1024);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+
 
   useEffect(() => {
     fetchStarredData();
   }, [page, pageSize]);
 
   return (
-    <div className="flex h-screen bg-[#0c0e12] text-white overflow-hidden">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        <TopNavbar
-          title="Starred"
-          onMenuClick={() => setSidebarOpen((prev) => !prev)}
-        />
-
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 none-scrollbar">
+    <>
           <div className="max-w-[1400px] mx-auto">
             {/* Page Header */}
             <header className="mb-8">
@@ -98,9 +86,7 @@ function StarredPage() {
               </div>
             )}
           </div>
-        </main>
-      </div>
-    </div>
+    </>
   );
 }
 

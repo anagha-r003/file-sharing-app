@@ -9,11 +9,11 @@ import {
   X,
 } from "lucide-react";
 
-import PageLayout from "../../layout/PageLayout";
 import DaysBar from "../../components/recyclebin/DayBar";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import Pagination from "../../common/ui/Pagination";
 import { SearchInput } from "../../common/ui";
+import { usePageSettings } from "../../context/LayoutContext";
 
 import {
   getDeletedFiles,
@@ -25,7 +25,6 @@ import {
 } from "../../services/recyclebinService";
 
 function RecycleBinPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [files, setFiles] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -36,12 +35,12 @@ function RecycleBinPage() {
   const [statsData, setStatsData] = useState(null); //storage in recycle bin
   const pageSize = 10;
 
-  useEffect(() => {
-    const handleResize = () => setSidebarOpen(window.innerWidth >= 1024);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  usePageSettings({
+    title: "Trash",
+    contentClassName: "space-y-4 md:space-y-5",
+  });
+
+
 
   const filtered = useMemo(() => {
     return files.filter((f) =>
@@ -257,13 +256,7 @@ function RecycleBinPage() {
   ];
 
   return (
-    <PageLayout
-      title="Recycle Bin"
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      onMenuClick={() => setSidebarOpen((prev) => !prev)}
-      contentClassName="space-y-4 md:space-y-5"
-    >
+    <>
       {/* Warning Banner */}
       <div className="flex items-start sm:items-center gap-3 bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3">
         <AlertTriangle
@@ -632,7 +625,7 @@ function RecycleBinPage() {
           onCancel={() => setModal(null)}
         />
       )}
-    </PageLayout>
+    </>
   );
 }
 

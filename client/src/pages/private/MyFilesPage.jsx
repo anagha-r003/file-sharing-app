@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
 import FileTable from "../../components/myfiles/FileTable";
 import { getFiles,downloadFiles } from "../../services/fileService";
-import PageLayout from "../../layout/PageLayout";
 import FileViewModal from "../../components/myfiles/FileViewModal";
+import { usePageSettings } from "../../context/LayoutContext";
 
 function MyFilesPage() {
   const [files, setFiles] = useState(null);
 
   const [loading, setLoading] = useState(true);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const [page, setPage] = useState(0);
 
   const [pageSize, setPageSize] = useState(10);
 
   const [viewingFile, setViewingFile] = useState(null);
+
+  usePageSettings({ title: "My Files" });
 
   const fetchData = async (currentPage = page, currentSize = pageSize) => {
     setLoading(true);
@@ -38,18 +38,6 @@ const handleFileUpdate = (updatedFile) => {
     ),
   }));
 };
-  // Responsive sidebar
-  useEffect(() => {
-    const handleResize = () => {
-      setSidebarOpen(window.innerWidth >= 1024);
-    };
-
-    handleResize();
-
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Fetch data when page changes
   useEffect(() => {
@@ -57,12 +45,7 @@ const handleFileUpdate = (updatedFile) => {
   }, [page, pageSize]);
 
   return (
-    <PageLayout
-      title="My Files"
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      onMenuClick={() => setSidebarOpen((prev) => !prev)}
-    >
+    <>
       {loading ? (
         <div className="p-16 text-center text-slate-500">Loading files...</div>
       ) : (
@@ -85,7 +68,7 @@ const handleFileUpdate = (updatedFile) => {
           onDownload={() => downloadFiles([viewingFile.id])}
         />
       )}
-    </PageLayout>
+    </>
   );
 }
 

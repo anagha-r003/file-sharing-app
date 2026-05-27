@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-import PageLayout from "../../layout/PageLayout";
 import FolderDetailHeader from "../../components/myfolders/FolderDetailHeader";
 import FolderFileList from "../../components/myfolders/FolderFileList";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import Toast from "../../components/sharedlink/Toast";
 import FileViewModal from "../../components/myfiles/FileViewModal";
 import { downloadFiles } from "../../services/fileService";
+import { usePageSettings } from "../../context/LayoutContext";
 
 import {
   getFolderById,
@@ -16,8 +16,6 @@ import {
 
 function FolderDetailPage() {
   const { id } = useParams();
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [folder, setFolder] = useState(null);
 
@@ -37,18 +35,7 @@ function FolderDetailPage() {
     type: "success",
   });
 
-  // Responsive sidebar
-  useEffect(() => {
-    const handleResize = () => {
-      setSidebarOpen(window.innerWidth >= 1024);
-    };
-
-    handleResize();
-
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  usePageSettings({ title: folder?.name ?? "Folder" });
 
   // Fetch folder
   useEffect(() => {
@@ -110,12 +97,7 @@ function FolderDetailPage() {
   );
 
   return (
-    <PageLayout
-      title={folder?.name ?? "Folder"}
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      onMenuClick={() => setSidebarOpen((prev) => !prev)}
-    >
+    <>
       <div className="flex flex-col gap-4 md:gap-5 max-w-4xl">
         <FolderDetailHeader folder={folder} fileCount={files.length} />
 
@@ -151,7 +133,7 @@ function FolderDetailPage() {
           onDownload={() => downloadFiles([viewingFile.id])}
         />
       )}
-    </PageLayout>
+    </>
   );
 }
 
