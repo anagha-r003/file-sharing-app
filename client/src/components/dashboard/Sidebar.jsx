@@ -1,11 +1,10 @@
 import { NavLink, useNavigate } from "react-router-dom";
 
-
 const navItems = [
   { label: "Dashboard", icon: "grid_view", path: "/dashboard" },
   { label: "My Files", icon: "description", path: "/my-files" },
   { label: "My Vaults", icon: "folder", path: "/my-folders" },
-  { label: "Shared Vaults", icon: "folder_shared", path: "/shared-with-me" },
+  { label: "Shared With Me", icon: "folder_shared", path: "/shared-with-me" },
   { label: "Shared Links", icon: "share", path: "/shared-links" },
   { label: "Starred", icon: "star", path: "/starred" },
   { label: "Recycle Bin", icon: "delete", path: "/recycle-bin" },
