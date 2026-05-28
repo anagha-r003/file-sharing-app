@@ -101,6 +101,12 @@ public class ShareService {
         for (String recipientEmail
                 : request.getRecipientEmails()) {
 
+            if (recipientEmail.equalsIgnoreCase(user.getEmail())) {
+                throw new BadRequestException(
+                        "You cannot share files with yourself"
+                );
+            }
+
             boolean recipientHasAccount = userRepository.findByEmail(recipientEmail).isPresent();
 
             // Find existing active share
