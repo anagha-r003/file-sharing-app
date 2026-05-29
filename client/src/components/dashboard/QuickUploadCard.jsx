@@ -38,6 +38,38 @@ function QuickUploadCard({ onUploadComplete }) {
         continue;
       }
 
+      // Empty file validation
+      if (file.size === 0) {
+        newResults.push({
+          name: file.name,
+          ok: false,
+          message: "Empty file is not allowed",
+        });
+
+        continue;
+      }
+
+      // Invalid file name validation
+      const invalidFileNameRegex = /[<>:"/\\|?*]/;
+
+      const fileNameWithoutExtension =
+        file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+
+      if (
+        !fileNameWithoutExtension.trim() || // empty or only spaces
+        invalidFileNameRegex.test(file.name) || // invalid symbols
+        file.name.startsWith(".") || // hidden file
+        file.name.length > 255 // too long
+      ) {
+        newResults.push({
+          name: file.name,
+          ok: false,
+          message: "Invalid file name",
+        });
+
+        continue;
+      }
+
       // File size validation
       if (file.size > 100 * 1024 * 1024) {
         newResults.push({

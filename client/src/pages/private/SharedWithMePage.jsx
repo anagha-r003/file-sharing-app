@@ -182,8 +182,8 @@ function SharedWithMePage() {
               Files Shared Directly with You
             </h2>
             <p className="text-sm text-slate-400 mt-1">
-              View files shared to your account, including public and
-              restricted links.
+              View files shared to your account, including public and restricted
+              links.
             </p>
           </div>
 
@@ -240,12 +240,12 @@ function SharedWithMePage() {
                       key={file.id}
                       className="hover:bg-white/[0.02] transition-colors group"
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 max-w-[200px] w-[200px]">
                         <div className="flex items-center gap-3">
                           <span className="material-symbols-outlined text-violet-400 bg-violet-500/10 p-2 rounded-xl text-xl flex-shrink-0">
                             description
                           </span>
-                          <div className="truncate">
+                          <div className="truncate min-w-0">
                             <span className="font-semibold text-white group-hover:text-violet-400 transition truncate block">
                               {file.fileName}
                             </span>
@@ -366,7 +366,10 @@ function SharedWithMePage() {
                           : "bg-violet-500/10 text-violet-400 border border-violet-500/20"
                       }`}
                     >
-                      <span className="material-symbols-outlined text-xs" style={{ fontSize: "14px" }}>
+                      <span
+                        className="material-symbols-outlined text-xs"
+                        style={{ fontSize: "14px" }}
+                      >
                         {file.shareType === "PUBLIC" ? "public" : "lock"}
                       </span>
                       {getShareTypeLabel(file.shareType)}
@@ -415,9 +418,7 @@ function SharedWithMePage() {
                         className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-50"
                       >
                         <span className="material-symbols-outlined text-base">
-                          {removingId === file.id
-                            ? "hourglass_empty"
-                            : "close"}
+                          {removingId === file.id ? "hourglass_empty" : "close"}
                         </span>
                       </button>
                     </div>

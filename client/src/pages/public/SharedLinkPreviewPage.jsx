@@ -37,8 +37,6 @@ export default function SharedLinkPreviewPage() {
 
   const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
 
-
-
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast((p) => ({ ...p, visible: false })), 3000);
@@ -61,15 +59,18 @@ export default function SharedLinkPreviewPage() {
             // Shared directly to account — verify with session token
             const sessionToken = localStorage.getItem("accessToken");
             if (sessionToken) {
-              const fileRes = await fetch(`http://localhost:8080/share/view/${token}`, {
-                headers: { Authorization: `Bearer ${sessionToken}` },
-              });
+              const fileRes = await fetch(
+                `http://localhost:8080/share/view/${token}`,
+                {
+                  headers: { Authorization: `Bearer ${sessionToken}` },
+                },
+              );
               if (fileRes.ok) {
                 const blob = await fileRes.blob();
                 const blobUrl = URL.createObjectURL(blob);
                 setPreviewBlobUrl(blobUrl);
                 setAccessGranted(true);
-                showToast("Access granted via account session!");
+                showToast("Access granted!");
               } else {
                 setAccessGranted(false);
                 showToast("Please log in to the correct account.", "error");
@@ -288,9 +289,15 @@ export default function SharedLinkPreviewPage() {
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Direct Account Share</h3>
+                    <h3 className="text-lg font-bold text-white">
+                      Direct Account Share
+                    </h3>
                     <p className="text-slate-400 text-xs leading-relaxed mt-2">
-                      This file is restricted to the account of <span className="text-violet-400 font-semibold">{maskEmail(fileData.recipientEmail)}</span>. Please log in to your account to view it.
+                      This file is restricted to the account of{" "}
+                      <span className="text-violet-400 font-semibold">
+                        {maskEmail(fileData.recipientEmail)}
+                      </span>
+                      . Please log in to your account to view it.
                     </p>
                   </div>
                   <button

@@ -86,6 +86,11 @@ public interface FileRepository extends JpaRepository<UserFile,Long> {
     @Query("SELECT COALESCE(SUM(f.downloadCount), 0) FROM UserFile f WHERE f.user.id = :userId")
     long sumDownloadCountByUserId(@Param("userId") Long userId);
 
+    boolean existsByNameAndUserId(
+            String name,
+            Long userId
+    );
+
 
 
     // Storage statistics

@@ -7,6 +7,7 @@ import { downloadFiles } from "../../services/fileService";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
+
   return new Date(dateStr).toLocaleDateString("en-US", {
     month: "numeric",
     day: "numeric",
@@ -16,25 +17,41 @@ const formatDate = (dateStr) => {
 
 const formatRelative = (dateStr) => {
   if (!dateStr) return "recent";
+
   const date = new Date(dateStr);
   const now = new Date();
+
   const diffMs = now - date;
+
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
   if (diffDays === 0) return "today";
   if (diffDays === 1) return "1d ago";
+
   return `${diffDays}d ago`;
 };
 
-function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
+function SharedLinksTable({
+  sharedLinks = [],
+  onRefresh,
+  showToast,
+
+  // NEW
+  page,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+}) {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
-  const [selectedFile, setSelectedFile] = useState(null);
+
   const [previewFile, setPreviewFile] = useState(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+
     if (!q) return sharedLinks;
+
     return sharedLinks.filter(
       (l) =>
         l.fileName?.toLowerCase().includes(q) ||
@@ -42,24 +59,28 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
     );
   }, [sharedLinks, search]);
 
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
-
   const handleRevoke = async (shareId) => {
     const link = sharedLinks.find((l) => l.id === shareId);
+
     if (
       !link ||
       link.active === false ||
       new Date(link.expiryDate) <= new Date()
     ) {
       showToast?.("Link already inactive", "error");
+
       return;
     }
+
     try {
       await revokeShareLink(shareId);
+
       showToast?.("Share link revoked!", "success");
-      if (onRefresh) onRefresh(); // re-fetch from backend
+
+      onRefresh?.();
     } catch (error) {
       console.error("Failed to revoke share link", error);
+
       showToast?.("Failed to revoke link", "error");
     }
   };
@@ -71,6 +92,7 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
           Sharing history
         </h1>
+
         <p className="text-sm text-slate-500">
           Manage active and expired share links to your files.
         </p>
@@ -87,11 +109,11 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
         />
       </div>
 
-      {/* Table card */}
+      {/* Table */}
       <div className="bg-[#111114] border border-white/[0.06] rounded-2xl overflow-hidden">
         <div className="divide-y divide-white/[0.05]">
-          {paginated.length > 0 ? (
-            paginated.map((link) => {
+          {filtered.length > 0 ? (
+            filtered.map((link) => {
               const isActive = link.status === "ACTIVE";
 
               const isExpired = link.status === "EXPIRED";
@@ -109,6 +131,7 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
                       <span className="text-white font-semibold text-base truncate max-w-xs">
                         {link.fileName}
                       </span>
+
                       {isActive && (
                         <span className="bg-green-500/15 text-green-400 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                           Active
@@ -127,6 +150,7 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
                         </span>
                       )}
                     </div>
+
                     <p className="text-xs text-slate-500">
                       Shared with{" "}
                       <span className="text-slate-400 font-medium">
@@ -145,24 +169,17 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Copy */}
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(link.shareUrl);
+
                         showToast?.("Link copied!", "success");
                       }}
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-[#26262b] hover:bg-[#303036] text-white text-xs font-medium rounded-lg transition-colors"
                     >
-                      <span
-                        className="material-symbols-outlined text-sm"
-                        style={{ fontSize: "16px" }}
-                      >
-                        content_copy
-                      </span>
                       Copy
                     </button>
 
-                    {/* Open */}
                     <button
                       onClick={() =>
                         setPreviewFile({
@@ -173,16 +190,9 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
                       }
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
                     >
-                      <span
-                        className="material-symbols-outlined text-sm"
-                        style={{ fontSize: "16px" }}
-                      >
-                        open_in_new
-                      </span>
                       Open
                     </button>
 
-                    {/* Revoke */}
                     <button
                       disabled={!isActive}
                       onClick={() => handleRevoke(link.id)}
@@ -192,12 +202,6 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
                           : "bg-[#2e1a1a] hover:bg-[#3d2222] text-red-400"
                       }`}
                     >
-                      <span
-                        className="material-symbols-outlined text-sm"
-                        style={{ fontSize: "16px" }}
-                      >
-                        link_off
-                      </span>
                       Revoke
                     </button>
                   </div>
@@ -206,7 +210,7 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
             })
           ) : (
             <div className="py-16 text-center text-slate-600 text-sm">
-              No shared links found matching your search.
+              No shared links found.
             </div>
           )}
         </div>
@@ -215,10 +219,12 @@ function SharedLinksTable({ sharedLinks = [], onRefresh, showToast }) {
         <div className="border-t border-white/[0.05] px-5 py-3">
           <Pagination
             page={page}
-            setPage={setPage}
-            totalItems={filtered.length}
+            totalPages={totalPages}
             pageSize={pageSize}
-            label={search ? "results" : "items"}
+            totalItems={totalItems}
+            itemLabel="links"
+            searchQuery={search}
+            onPageChange={onPageChange}
           />
         </div>
       </div>

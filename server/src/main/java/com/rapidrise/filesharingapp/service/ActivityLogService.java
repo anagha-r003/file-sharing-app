@@ -35,6 +35,6 @@ public class ActivityLogService {
 
     public List<ActivityLog> getRecentActivity(Long userId, int limit) {
         return activityLogRepository.findByUserIdOrderByCreatedAtDesc(
-                userId, PageRequest.of(0, limit));
+                userId, PageRequest.of(0, 5));
     }
 }

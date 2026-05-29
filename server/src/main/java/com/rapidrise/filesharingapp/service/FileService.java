@@ -143,6 +143,12 @@ public class FileService {
                 String originalName =
                         sanitizeFilename(file.getOriginalFilename());
 
+                String displayName =
+                        generateUniqueFileName(
+                                originalName,
+                                user
+                        );
+
                 String extension =
                         getExtension(originalName);
 
@@ -184,7 +190,7 @@ public class FileService {
                 }
 
                 UserFile userFile = UserFile.builder()
-                        .name(originalName)
+                        .name(displayName)
                         .storedName(storedFileName)
                         .path(filePath.toString())
                         .mimeType(mimeType)
@@ -480,22 +486,67 @@ public class FileService {
                 .body(resource);
     }
 
-    public ResponseEntity<Resource> viewFile(Long fileId) throws IOException {
-        UserFile file = fileRepository.findById(fileId)
-                .orElseThrow(() -> new FileNotFoundException("File not found"));
+    public ResponseEntity<Resource>
+    viewFile(Long fileId)
+            throws IOException {
 
-        Path path = Paths.get(file.getPath()).toAbsolutePath().normalize();
-        Resource resource = new UrlResource(path.toUri());
+        User user =
+                SecurityUtil.getCurrentUser();
 
-        if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
+        // SECURITY FIX
+        UserFile file =
+                getAuthorizedFile(
+                        fileId
+                );
+
+        Path path =
+                Paths.get(
+                                file.getPath()
+                        )
+                        .toAbsolutePath()
+                        .normalize();
+
+        log.info(
+                "Checking file path: {}",
+                path
+        );
+
+        // CHECK PHYSICAL FILE EXISTS
+        if (!Files.exists(path)) {
+
+            log.error(
+                    "Physical file missing: {}",
+                    path
+            );
+
+            throw new FileNotFoundException(
+                    "File no longer exists in storage"
+            );
         }
 
+        Resource resource =
+                new UrlResource(
+                        path.toUri()
+                );
+
+        String contentType =
+                file.getMimeType() != null
+                        ? file.getMimeType()
+                        : "application/octet-stream";
+
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(file.getMimeType()))
-                // ✅ inline = browser displays it, not downloads it
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + file.getName() + "\"")
+                .contentType(
+                        MediaType.parseMediaType(
+                                contentType
+                        )
+                )
+                .header(
+                        HttpHeaders
+                                .CONTENT_DISPOSITION,
+                        "inline; filename=\""
+                                + file.getName()
+                                + "\""
+                )
                 .body(resource);
     }
 
@@ -684,6 +735,22 @@ public class FileService {
                     "Invalid filename"
             );
         }
+
+        if (filename.matches(
+                ".*[<>:\"/\\\\|?*].*"
+        )) {
+
+            throw new InvalidFileException(
+                    "Invalid file name"
+            );
+        }
+
+        if (filename.startsWith(".")) {
+
+            throw new InvalidFileException(
+                    "Hidden files are not allowed"
+            );
+        }
     }
 
     private Path createUploadDirectories() {
@@ -844,5 +911,47 @@ public class FileService {
                 );
             }
         }
+    }
+
+    private String generateUniqueFileName(
+            String originalName,
+            User user
+    ) {
+
+        int dotIndex = originalName.lastIndexOf(".");
+
+        String baseName;
+        String extension = "";
+
+        if (dotIndex > 0) {
+            baseName =
+                    originalName.substring(0, dotIndex);
+
+            extension =
+                    originalName.substring(dotIndex);
+        } else {
+            baseName = originalName;
+        }
+
+        String finalName = originalName;
+
+        int count = 1;
+
+        while (
+                fileRepository.existsByNameAndUserId(
+                        finalName,
+                        user.getId()
+                )
+        ) {
+
+            finalName =
+                    baseName +
+                            "(" + count + ")" +
+                            extension;
+
+            count++;
+        }
+
+        return finalName;
     }
 }

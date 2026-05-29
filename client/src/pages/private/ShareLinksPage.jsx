@@ -8,6 +8,14 @@ function SharedLinksPage() {
   const [sharedLinks, setSharedLinks] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [page, setPage] = useState(1);
+
+  const [totalPages, setTotalPages] = useState(0);
+
+  const [totalItems, setTotalItems] = useState(0);
+
+  const PAGE_SIZE = 10;
+
   usePageSettings({ title: "Shared Links" });
 
   const [toast, setToast] = useState({
@@ -16,11 +24,9 @@ function SharedLinksPage() {
     type: "success",
   });
 
-
-
   useEffect(() => {
     fetchSharedLinks();
-  }, []);
+  }, [page]);
 
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
@@ -30,11 +36,14 @@ function SharedLinksPage() {
   const fetchSharedLinks = async () => {
     try {
       setLoading(true);
-      const response = await getMySharedFiles();
+      const response = await getMySharedFiles(page - 1, PAGE_SIZE);
 
-      // response.data is the ResponseStructure wrapper
-      // response.data.data is the Page object
       const pageData = response.data;
+
+      setTotalPages(pageData.totalPages || 0);
+
+      setTotalItems(pageData.totalElements || 0);
+
       const items = pageData.content ?? [];
 
       const formattedData = items.map((item) => ({
@@ -63,26 +72,35 @@ function SharedLinksPage() {
 
   return (
     <>
-          <div className="max-w-[1400px] mx-auto">
-            {/* Search bar container has been removed from here.
+      <div className="max-w-[1400px] mx-auto">
+        {/* Search bar container has been removed from here.
                 Design now flows directly into the content table.
             */}
 
-            {loading ? (
-              <div className="p-16 text-center text-slate-500">
-                <div className="animate-pulse font-medium">
-                  Loading shared links...
-                </div>
-              </div>
-            ) : (
-              <SharedLinksTable
-                sharedLinks={sharedLinks}
-                onRefresh={handleRefresh}
-                showToast={showToast}
-              />
-            )}
+        {loading ? (
+          <div className="p-16 text-center text-slate-500">
+            <div className="animate-pulse font-medium">
+              Loading shared links...
+            </div>
           </div>
-     <Toast message={toast.message} visible={toast.visible} type={toast.type} />
+        ) : (
+          <SharedLinksTable
+            sharedLinks={sharedLinks}
+            onRefresh={handleRefresh}
+            showToast={showToast}
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        )}
+      </div>
+      <Toast
+        message={toast.message}
+        visible={toast.visible}
+        type={toast.type}
+      />
     </>
   );
 }

@@ -36,9 +36,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.nio.file.Files;
 
 @Service
 @RequiredArgsConstructor
@@ -98,6 +97,22 @@ public class ShareService {
         List<ShareLinkResponse> responseList =
                 new ArrayList<>();
 
+        // Validate duplicate recipient emails
+        Set<String> uniqueEmails = new HashSet<>();
+
+        for (String email : request.getRecipientEmails()) {
+
+            String normalizedEmail =
+                    email.trim().toLowerCase();
+
+            if (!uniqueEmails.add(normalizedEmail)) {
+                throw new BadRequestException(
+                        "Duplicate recipient emails are not allowed: "
+                                + email
+                );
+            }
+        }
+
         for (String recipientEmail
                 : request.getRecipientEmails()) {
 
@@ -108,25 +123,6 @@ public class ShareService {
             }
 
             boolean recipientHasAccount = userRepository.findByEmail(recipientEmail).isPresent();
-
-            // Find existing active share
-            ShareLink existingShareLink =
-                    shareLinkRepository
-                            .findTopByFileIdAndRecipientEmailAndActiveTrueOrderByCreatedAtDesc(
-                                    file.getId(),
-                                    recipientEmail
-                            )
-                            .orElse(null);
-
-            // deactivate old active link
-            if (existingShareLink != null) {
-
-                existingShareLink
-                        .setActive(false);
-
-                shareLinkRepository
-                        .save(existingShareLink);
-            }
 
             // Generate token
             String token =
@@ -377,6 +373,31 @@ public class ShareService {
 
         ShareLink shareLink =
                 getValidShareLink(token);
+
+        // Check physical file existence
+        Path filePath =
+                Paths.get(
+                        shareLink
+                                .getFile()
+                                .getPath()
+                ).normalize();
+
+        log.info(
+                "Checking shared file path: {}",
+                filePath.toAbsolutePath()
+        );
+
+        if (!Files.exists(filePath)) {
+
+            log.error(
+                    "Shared file missing: {}",
+                    filePath.toAbsolutePath()
+            );
+
+            throw new FileNotFoundException(
+                    "Shared file no longer exists"
+            );
+        }
 
         shareLinkRepository.save(shareLink);
 
@@ -713,6 +734,15 @@ public class ShareService {
             // Check if it is a valid regular user access token
             if (jwtService.isTokenValid(accessToken)) {
                 String userEmail = jwtService.extractUsername(accessToken);
+                log.info(
+                        "LOGGED USER EMAIL = {}",
+                        userEmail
+                );
+
+                log.info(
+                        "RECIPIENT EMAIL = {}",
+                        shareLink.getRecipientEmail()
+                );
                 if (userEmail != null && userEmail.equalsIgnoreCase(shareLink.getRecipientEmail())) {
                     log.info("ACCESS GRANTED via recipient user account login session");
                     return;
