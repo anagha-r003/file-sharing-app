@@ -275,9 +275,7 @@ public class FolderService {
             ResponseStructure<
                     FolderResponse>>
     getFolderById(
-            Long folderId,
-            int page,
-            int size
+            Long folderId
     ) {
 
         User user =
