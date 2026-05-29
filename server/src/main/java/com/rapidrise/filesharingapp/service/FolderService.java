@@ -141,12 +141,7 @@ public class FolderService {
                                 )
                         );
 
-        // remove folder from files
-        for (UserFile file :
-                folder.getFiles()) {
 
-            file.setFolder(null);
-        }
 
         folderRepository.delete(folder);
 
@@ -187,28 +182,30 @@ public class FolderService {
                                 fileIds
                         );
 
-        for (
-                UserFile file
-                : files
-        ) {
+        for (UserFile file : files) {
 
-            if (
-                    file.getUser()
-                            .getId()
-                            .equals(
-                                    user.getId()
-                            )
-            ) {
+            if (!file.getUser()
+                    .getId()
+                    .equals(user.getId())) {
 
-                file.setFolder(
-                        folder
+                continue;
+            }
+
+            // Prevent duplicate add
+            if (folder.getFiles()
+                    .contains(file)) {
+
+                throw new FileAlreadyAddedException(
+                        file.getName()
+                                + " already exists in folder"
                 );
             }
+
+            folder.getFiles()
+                    .add(file);
         }
 
-        fileRepository.saveAll(
-                files
-        );
+        folderRepository.save(folder);
 
         return ResponseBuilder
                 .build(
@@ -254,22 +251,18 @@ public class FolderService {
                         );
 
         // Check file belongs to folder
-        if (
-                file.getFolder() == null ||
-                        !file.getFolder()
-                                .getId()
-                                .equals(folder.getId())
-        ) {
+        if (!folder.getFiles()
+                .contains(file)) {
 
             throw new FileNotFoundException(
                     "File not found in folder"
             );
         }
 
-        // Remove folder association
-        file.setFolder(null);
 
-        fileRepository.save(file);
+        folder.getFiles().remove(file);
+
+        folderRepository.save(folder);
 
         return ResponseBuilder.build(
                 HttpStatus.OK,
@@ -282,7 +275,9 @@ public class FolderService {
             ResponseStructure<
                     FolderResponse>>
     getFolderById(
-            Long folderId
+            Long folderId,
+            int page,
+            int size
     ) {
 
         User user =
@@ -313,9 +308,11 @@ public class FolderService {
                         .createdAt(
                                 folder.getCreatedAt()
                         )
-                        .filesCount(fileRepository.countByFolderId(
-                                folder.getId()
-                        ))
+                        .filesCount(
+                                (long) folder
+                                        .getFiles()
+                                        .size()
+                        )
                         .build();
 
         return ResponseBuilder.build(

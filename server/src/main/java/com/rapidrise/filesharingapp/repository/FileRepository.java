@@ -183,10 +183,6 @@ AND f.isDeleted = true
             Long userId
     );
 
-    long countByFolderId(
-            Long folderId
-    );
-
 
     @Modifying
     @Query("""
