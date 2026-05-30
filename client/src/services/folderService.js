@@ -55,3 +55,18 @@ export const getFolderById = async (
 
   return response.data;
 };
+
+export const renameFolder = async (
+  folderId,
+  name,
+) => {
+  const response =
+    await api.patch(
+      `/folders/rename/${folderId}`,
+      {
+        name,
+      },
+    );
+
+  return response.data;
+};

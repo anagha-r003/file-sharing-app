@@ -67,7 +67,7 @@ function FolderFileList({
   onRename,
 }) {
   return (
-    <Card className="!p-0 overflow-hidden">
+    <Card className="!p-0 ">
       {/* Search — only if files exist */}
       {!loading && files.length > 0 && (
         <div className="px-4 md:px-5 py-3.5 border-b border-white/5">
