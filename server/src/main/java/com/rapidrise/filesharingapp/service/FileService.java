@@ -111,7 +111,9 @@ public class FileService {
     );
 
     @Transactional
-    public ResponseEntity<ResponseStructure<String>> uploadFiles(
+    public ResponseEntity<
+            ResponseStructure<String>>
+    uploadFiles(
             List<MultipartFile> files
     ) {
 
@@ -120,28 +122,48 @@ public class FileService {
                 files.size()
         );
 
-        User user = SecurityUtil.getCurrentUser();
+        User user =
+                SecurityUtil
+                        .getCurrentUser();
 
-        log.info("Current user = {}", user.getEmail());
+        log.info(
+                "Current user = {}",
+                user.getEmail()
+        );
 
-        initializeUserStorage(user);
+        initializeUserStorage(
+                user
+        );
 
-        validateUploadRequest(files, user);
+        validateUploadRequest(
+                files,
+                user
+        );
 
-        Path uploadPath = createUploadDirectories();
+        Path uploadPath =
+                createUploadDirectories();
 
-        List<UserFile> savedFiles = new ArrayList<>();
+        Path baseUploadPath =
+                Paths.get(uploadDir);
 
-        List<Path> writtenPaths = new ArrayList<>();
+        List<UserFile> savedFiles =
+                new ArrayList<>(
+                        files.size()
+                );
 
-        long totalUploadedSize = 0;
+        List<Path> writtenPaths =
+                new ArrayList<>();
+
+        long totalUploadedSize = 0L;
 
         try {
 
             for (MultipartFile file : files) {
 
                 String originalName =
-                        sanitizeFilename(file.getOriginalFilename());
+                        sanitizeFilename(
+                                file.getOriginalFilename()
+                        );
 
                 String displayName =
                         generateUniqueFileName(
@@ -150,30 +172,51 @@ public class FileService {
                         );
 
                 String extension =
-                        getExtension(originalName);
+                        getExtension(
+                                originalName
+                        );
 
                 String storedFileName =
-                        UUID.randomUUID() + extension;
+                        UUID.randomUUID()
+                                + extension;
 
-                Path filePath = uploadPath
-                        .resolve(storedFileName)
-                        .normalize();
+                Path filePath =
+                        uploadPath
+                                .resolve(
+                                        storedFileName
+                                )
+                                .normalize();
 
-                validateResolvedPath(filePath, uploadPath);
+                validateResolvedPath(
+                        filePath,
+                        uploadPath
+                );
 
-                String mimeType = detectMimeType(file);
+                String mimeType =
+                        detectMimeType(
+                                file
+                        );
 
-                if (!ALLOWED_MIME_TYPES.contains(mimeType)) {
+                if (!ALLOWED_MIME_TYPES
+                        .contains(mimeType)) {
 
                     throw new InvalidFileException(
-                            "File type not allowed: " + mimeType
+                            "File type not allowed: "
+                                    + mimeType
                     );
                 }
 
-                storeFile(file, filePath);
+                // Store physical file
+                storeFile(
+                        file,
+                        filePath
+                );
 
-                writtenPaths.add(filePath);
+                writtenPaths.add(
+                        filePath
+                );
 
+                // Generate preview
                 String previewPath =
                         generatePreviewSafely(
                                 filePath,
@@ -184,27 +227,48 @@ public class FileService {
                 if (previewPath != null) {
 
                     writtenPaths.add(
-                            Paths.get(uploadDir)
-                                    .resolve(previewPath)
+                            baseUploadPath
+                                    .resolve(
+                                            previewPath
+                                    )
                     );
                 }
 
-                UserFile userFile = UserFile.builder()
-                        .name(displayName)
-                        .storedName(storedFileName)
-                        .path(filePath.toString())
-                        .mimeType(mimeType)
-                        .type(FileType.fromMimeType(mimeType))
-                        .size(file.getSize())
-                        .previewPath(previewPath)
-                        .isDeleted(false)
-                        .isStarred(false)
-                        .user(user)
-                        .build();
+                UserFile userFile =
+                        UserFile.builder()
+                                .name(displayName)
+                                .storedName(
+                                        storedFileName
+                                )
+                                .path(
+                                        filePath.toString()
+                                )
+                                .mimeType(
+                                        mimeType
+                                )
+                                .type(
+                                        FileType
+                                                .fromMimeType(
+                                                        mimeType
+                                                )
+                                )
+                                .size(
+                                        file.getSize()
+                                )
+                                .previewPath(
+                                        previewPath
+                                )
+                                .isDeleted(false)
+                                .isStarred(false)
+                                .user(user)
+                                .build();
 
-                savedFiles.add(userFile);
+                savedFiles.add(
+                        userFile
+                );
 
-                totalUploadedSize += file.getSize();
+                totalUploadedSize +=
+                        file.getSize();
             }
 
         } catch (Exception e) {
@@ -215,23 +279,39 @@ public class FileService {
                     e
             );
 
-            cleanupWrittenFiles(writtenPaths);
+            cleanupWrittenFiles(
+                    writtenPaths
+            );
 
             throw e;
         }
 
-        fileRepository.saveAll(savedFiles);
-
-        for (UserFile saved : savedFiles) {
-            activityLogService.log(user, "UPLOAD", saved.getName(),
-                    "by " + user.getFirstName());
-        }
-
-        user.setStorageUsed(
-                user.getStorageUsed() + totalUploadedSize
+        // Save all files at once
+        fileRepository.saveAll(
+                savedFiles
         );
 
-        userRepository.save(user);
+        // Log upload activity
+        for (UserFile saved : savedFiles) {
+
+            activityLogService.log(
+                    user,
+                    "UPLOAD",
+                    saved.getName(),
+                    "by "
+                            + user.getFirstName()
+            );
+        }
+
+        // Update storage usage once
+        user.setStorageUsed(
+                user.getStorageUsed()
+                        + totalUploadedSize
+        );
+
+        userRepository.save(
+                user
+        );
 
         log.info(
                 "{} file(s) uploaded successfully by userId={}",
@@ -245,7 +325,6 @@ public class FileService {
                 null
         );
     }
-
     public ResponseEntity<ResponseStructure<Page<FileResponse>>>
     getUserFiles(
             int page,
