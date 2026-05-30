@@ -58,6 +58,7 @@ function FolderFileList({
   onSearchClear,
   onRemove,
   onView,
+  onShare,
   page,
   totalPages,
   pageSize,
@@ -92,6 +93,7 @@ function FolderFileList({
                 file={file}
                 onRemove={() => onRemove(file)}
                 onView={() => onView(file)}
+                onShare={() => onShare(file)}
               />
             ))}
           </div>

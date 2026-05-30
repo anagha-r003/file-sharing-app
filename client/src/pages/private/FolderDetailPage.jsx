@@ -8,6 +8,7 @@ import Toast from "../../components/sharedlink/Toast";
 import FileViewModal from "../../components/myfiles/FileViewModal";
 import { downloadFiles } from "../../services/fileService";
 import { usePageSettings } from "../../context/LayoutContext";
+import ShareModal from "../../components/myfiles/ShareModal/ShareModal";
 
 import {
   getFolderById,
@@ -37,6 +38,8 @@ function FolderDetailPage() {
 
   const [viewingFile, setViewingFile] = useState(null);
 
+  const [sharingFile, setSharingFile] = useState(null);
+
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -48,7 +51,7 @@ function FolderDetailPage() {
   // Fetch folder
   useEffect(() => {
     fetchFolder();
-  }, [id,page]);
+  }, [id, page]);
 
   function showToast(message, type = "success") {
     setToast({
@@ -69,33 +72,18 @@ function FolderDetailPage() {
     setLoading(true);
 
     try {
-      const response =
-  await getFolderById(
-    id,
-    page - 1,
-    pageSize,
-  );
+      const response = await getFolderById(id, page - 1, pageSize);
 
       // actual folder object
-      const folderData =
-  response.data;
+      const folderData = response.data;
 
-setFolder(folderData);
+      setFolder(folderData);
 
-setFiles(
-  folderData.files || [],
-);
+      setFiles(folderData.files || []);
 
-setTotalItems(
-  folderData.filesCount || 0,
-);
+      setTotalItems(folderData.filesCount || 0);
 
-setTotalPages(
-  Math.ceil(
-    folderData.filesCount /
-      pageSize,
-  ),
-);
+      setTotalPages(Math.ceil(folderData.filesCount / pageSize));
     } catch (err) {
       showToast("Failed to load folder", "error");
     } finally {
@@ -111,16 +99,11 @@ setTotalPages(
 
       showToast(`"${file.name}" removed from folder`);
 
-      if (
-  files.length === 1 &&
-  page > 1
-) {
-  setPage(
-    (prev) => prev - 1,
-  );
-} else {
-  fetchFolder();
-}
+      if (files.length === 1 && page > 1) {
+        setPage((prev) => prev - 1);
+      } else {
+        fetchFolder();
+      }
     } catch (err) {
       showToast("Failed to remove file", "error");
     }
@@ -135,24 +118,21 @@ setTotalPages(
       <div className="flex flex-col gap-4 md:gap-5 max-w-4xl">
         <FolderDetailHeader folder={folder} fileCount={files.length} />
 
-       <FolderFileList
-  files={filtered}
-  loading={loading}
-  search={search}
-  onSearchChange={(e) =>
-    setSearch(e.target.value)
-  }
-  onSearchClear={() =>
-    setSearch("")
-  }
-  onRemove={setRemoveTarget}
-  onView={setViewingFile}
-  page={page}
-  totalPages={totalPages}
-  pageSize={pageSize}
-  totalItems={totalItems}
-  onPageChange={setPage}
-/>
+        <FolderFileList
+          files={filtered}
+          loading={loading}
+          search={search}
+          onSearchChange={(e) => setSearch(e.target.value)}
+          onSearchClear={() => setSearch("")}
+          onRemove={setRemoveTarget}
+          onView={setViewingFile}
+          onShare={setSharingFile}
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={totalItems}
+          onPageChange={setPage}
+        />
       </div>
 
       {removeTarget && (
@@ -175,6 +155,10 @@ setTotalPages(
           onClose={() => setViewingFile(null)}
           onDownload={() => downloadFiles([viewingFile.id])}
         />
+      )}
+
+      {sharingFile && (
+        <ShareModal file={sharingFile} onClose={() => setSharingFile(null)} />
       )}
     </>
   );

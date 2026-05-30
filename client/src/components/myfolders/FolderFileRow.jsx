@@ -1,7 +1,7 @@
 import { downloadFiles } from "../../services/fileService";
 import { getFileMeta, formatSize, formatDate } from "../../utils/fileUtils";
 
-function FolderFileRow({ file, onRemove, onView }) {
+function FolderFileRow({ file, onRemove, onView, onShare }) {
   const { icon, color, badge } = getFileMeta(file.name);
 
   async function handleDownload(e) {
@@ -42,19 +42,46 @@ function FolderFileRow({ file, onRemove, onView }) {
         </div>
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-        title="Remove from vault"
-        className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full
-                   bg-white/[0.06] hover:bg-red-500/20 text-white/35 hover:text-red-400
-                   border border-white/5 hover:border-red-500/20
-                   opacity-0 group-hover:opacity-100 transition-all"
+      <div
+        className="
+    flex items-center gap-2
+    opacity-100 md:opacity-0
+    md:group-hover:opacity-100
+    transition-all
+  "
       >
-        <span className="material-symbols-outlined text-sm">close</span>
-      </button>
+        {/* Share */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onShare();
+          }}
+          title="Share file"
+          className="w-7 h-7 flex items-center justify-center rounded-full
+               bg-white/[0.06] hover:bg-violet-500/20
+               text-white/35 hover:text-violet-400
+               border border-white/5 hover:border-violet-500/20
+               transition-all"
+        >
+          <span className="material-symbols-outlined text-sm">share</span>
+        </button>
+
+        {/* Remove */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          title="Remove from vault"
+          className="w-7 h-7 flex items-center justify-center rounded-full
+               bg-white/[0.06] hover:bg-red-500/20
+               text-white/35 hover:text-red-400
+               border border-white/5 hover:border-red-500/20
+               transition-all"
+        >
+          <span className="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
     </div>
   );
 }
