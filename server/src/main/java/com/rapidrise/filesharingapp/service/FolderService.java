@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -275,7 +276,9 @@ public class FolderService {
             ResponseStructure<
                     FolderResponse>>
     getFolderById(
-            Long folderId
+            Long folderId,
+            int page,
+            int size
     ) {
 
         User user =
@@ -294,22 +297,40 @@ public class FolderService {
                                 )
                         );
 
+        Pageable pageable =
+                PageRequest.of(
+                        page,
+                        size
+                );
+
+        Page<UserFile> files =
+                fileRepository
+                        .findFolderFiles(
+                                folderId,
+                                pageable
+                        );
+
         FolderResponse response =
                 FolderResponse
                         .builder()
                         .id(folder.getId())
                         .name(folder.getName())
                         .color(folder.getColor())
+
+                        // only paginated files
                         .files(
-                                folder.getFiles()
+                                new HashSet<>(
+                                        files.getContent()
+                                )
                         )
+
                         .createdAt(
                                 folder.getCreatedAt()
                         )
+
+                        // total files count
                         .filesCount(
-                                (long) folder
-                                        .getFiles()
-                                        .size()
+                                files.getTotalElements()
                         )
                         .build();
 

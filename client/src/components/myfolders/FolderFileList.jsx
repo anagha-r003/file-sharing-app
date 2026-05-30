@@ -1,6 +1,7 @@
 import Card from "../../common/ui/Card";
 import SearchInput from "../../common/ui/SearchInput";
 import FolderFileRow from "./FolderFileRow";
+import Pagination from "../../common/ui/Pagination";
 
 function FileListSkeleton() {
   return (
@@ -57,6 +58,11 @@ function FolderFileList({
   onSearchClear,
   onRemove,
   onView,
+  page,
+  totalPages,
+  pageSize,
+  totalItems,
+  onPageChange,
 }) {
   return (
     <Card className="!p-0 overflow-hidden">
@@ -78,16 +84,27 @@ function FolderFileList({
       ) : files.length === 0 ? (
         <EmptyFiles search={search} onClear={onSearchClear} />
       ) : (
-        <div className="divide-y divide-white/[0.05]">
-          {files.map((file) => (
-            <FolderFileRow
-              key={file.id}
-              file={file}
-              onRemove={() => onRemove(file)}
-              onView={() => onView(file)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="divide-y divide-white/[0.05]">
+            {files.map((file) => (
+              <FolderFileRow
+                key={file.id}
+                file={file}
+                onRemove={() => onRemove(file)}
+                onView={() => onView(file)}
+              />
+            ))}
+          </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={totalItems}
+            itemLabel="files"
+            onPageChange={onPageChange}
+          />
+        </>
       )}
     </Card>
   );

@@ -192,5 +192,19 @@ AND f.isDeleted = true
 """)
     void deleteRecycleBinFiles(Long userId);
 
+    @Query("""
+SELECT f
+FROM UserFile f
+JOIN f.folders folder
+WHERE folder.id = :folderId
+AND f.isDeleted = false
+ORDER BY f.uploadedAt DESC
+""")
+    Page<UserFile> findFolderFiles(
+            @Param("folderId")
+            Long folderId,
+            Pageable pageable
+    );
+
 
 }

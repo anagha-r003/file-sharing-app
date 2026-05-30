@@ -38,8 +38,20 @@ export const removeFileFromFolder = async (folderId, fileId) => {
   return response.data;
 };
 
-export const getFolderById = async (folderId) => {
-  const response = await api.get(`/folders/${folderId}`);
+export const getFolderById = async (
+  id,
+  page = 0,
+  size = 5,
+) => {
+  const response = await api.get(
+    `/folders/${id}`,
+    {
+      params: {
+        page,
+        size,
+      },
+    },
+  );
 
   return response.data;
 };

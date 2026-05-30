@@ -21,6 +21,14 @@ function FolderDetailPage() {
 
   const [files, setFiles] = useState([]);
 
+  const [page, setPage] = useState(1);
+
+  const [pageSize] = useState(5);
+
+  const [totalItems, setTotalItems] = useState(0);
+
+  const [totalPages, setTotalPages] = useState(1);
+
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -40,7 +48,7 @@ function FolderDetailPage() {
   // Fetch folder
   useEffect(() => {
     fetchFolder();
-  }, [id]);
+  }, [id,page]);
 
   function showToast(message, type = "success") {
     setToast({
@@ -61,16 +69,33 @@ function FolderDetailPage() {
     setLoading(true);
 
     try {
-      const response = await getFolderById(id);
-
-      console.log("Folder response:", response);
+      const response =
+  await getFolderById(
+    id,
+    page - 1,
+    pageSize,
+  );
 
       // actual folder object
-      const folderData = response.data;
+      const folderData =
+  response.data;
 
-      setFolder(folderData);
+setFolder(folderData);
 
-      setFiles(folderData.files || []);
+setFiles(
+  folderData.files || [],
+);
+
+setTotalItems(
+  folderData.filesCount || 0,
+);
+
+setTotalPages(
+  Math.ceil(
+    folderData.filesCount /
+      pageSize,
+  ),
+);
     } catch (err) {
       showToast("Failed to load folder", "error");
     } finally {
@@ -86,7 +111,16 @@ function FolderDetailPage() {
 
       showToast(`"${file.name}" removed from folder`);
 
-      fetchFolder();
+      if (
+  files.length === 1 &&
+  page > 1
+) {
+  setPage(
+    (prev) => prev - 1,
+  );
+} else {
+  fetchFolder();
+}
     } catch (err) {
       showToast("Failed to remove file", "error");
     }
@@ -101,15 +135,24 @@ function FolderDetailPage() {
       <div className="flex flex-col gap-4 md:gap-5 max-w-4xl">
         <FolderDetailHeader folder={folder} fileCount={files.length} />
 
-        <FolderFileList
-          files={filtered}
-          loading={loading}
-          search={search}
-          onSearchChange={(e) => setSearch(e.target.value)}
-          onSearchClear={() => setSearch("")}
-          onRemove={setRemoveTarget}
-          onView={setViewingFile}
-        />
+       <FolderFileList
+  files={filtered}
+  loading={loading}
+  search={search}
+  onSearchChange={(e) =>
+    setSearch(e.target.value)
+  }
+  onSearchClear={() =>
+    setSearch("")
+  }
+  onRemove={setRemoveTarget}
+  onView={setViewingFile}
+  page={page}
+  totalPages={totalPages}
+  pageSize={pageSize}
+  totalItems={totalItems}
+  onPageChange={setPage}
+/>
       </div>
 
       {removeTarget && (
