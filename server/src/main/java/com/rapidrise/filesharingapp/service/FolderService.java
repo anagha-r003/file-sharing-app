@@ -172,10 +172,9 @@ public class FolderService {
                                 user.getId()
                         )
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new FolderNotFoundException(
                                         "Folder not found"
-                                )
-                        );
+                                ));
 
         List<UserFile> files =
                 fileRepository
@@ -183,8 +182,13 @@ public class FolderService {
                                 fileIds
                         );
 
+        boolean singleFileRequest =
+                fileIds.size() == 1;
+
         for (UserFile file : files) {
 
+            // Prevent adding
+            // someone else's file
             if (!file.getUser()
                     .getId()
                     .equals(user.getId())) {
@@ -196,24 +200,32 @@ public class FolderService {
             if (folder.getFiles()
                     .contains(file)) {
 
-                throw new FileAlreadyAddedException(
-                        file.getName()
-                                + " already exists in folder"
-                );
+                if (singleFileRequest) {
+
+                    throw new FileAlreadyAddedException(
+                            file.getName()
+                                    + " already exists in folder"
+                    );
+                }
+
+                // Skip duplicates
+                // for bulk add
+                continue;
             }
 
             folder.getFiles()
                     .add(file);
         }
 
-        folderRepository.save(folder);
+        folderRepository.save(
+                folder
+        );
 
-        return ResponseBuilder
-                .build(
-                        HttpStatus.OK,
-                        "Files added successfully",
-                        null
-                );
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Files added successfully",
+                "Success"
+        );
     }
 
     @Transactional
