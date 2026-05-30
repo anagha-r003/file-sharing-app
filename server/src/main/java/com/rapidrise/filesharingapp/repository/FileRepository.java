@@ -206,5 +206,16 @@ ORDER BY f.uploadedAt DESC
             Pageable pageable
     );
 
+    @Query("""
+SELECT 
+    COALESCE(SUM(CASE WHEN f.type = 'DOCUMENT' THEN 1 ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN f.type = 'IMAGE' THEN 1 ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN f.type = 'VIDEO' THEN 1 ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN f.type IN ('AUDIO', 'ARCHIVE', 'OTHER') THEN 1 ELSE 0 END), 0)
+FROM UserFile f
+WHERE f.user.id = :userId AND f.isDeleted = false
+""")
+    List<Object[]> getFileCountStats(@Param("userId") Long userId);
 
 }
+

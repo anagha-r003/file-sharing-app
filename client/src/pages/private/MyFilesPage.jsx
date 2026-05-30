@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import FileTable from "../../components/myfiles/FileTable";
-import { getFiles,downloadFiles } from "../../services/fileService";
+import { getFiles, downloadFiles, getFileStats } from "../../services/fileService";
 import FileViewModal from "../../components/myfiles/FileViewModal";
 import { usePageSettings } from "../../context/LayoutContext";
 
 function MyFilesPage() {
   const [files, setFiles] = useState(null);
+  const [fileStats, setFileStats] = useState(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -22,10 +23,16 @@ function MyFilesPage() {
 
     try {
       const filesRes = await getFiles(currentPage, currentSize);
-
       setFiles(filesRes);
+
+      try {
+        const statsRes = await getFileStats();
+        setFileStats(statsRes);
+      } catch (statsErr) {
+        console.error("Failed to fetch file stats:", statsErr);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch files:", err);
     } finally {
       setLoading(false);
     }
@@ -51,6 +58,7 @@ const handleFileUpdate = (updatedFile) => {
       ) : (
         <FileTable
           files={files}
+          stats={fileStats}
           page={page}
           setPage={setPage}
           pageSize={pageSize}

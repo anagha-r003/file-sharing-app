@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,6 +50,11 @@ public class FileController {
                 page,
                 size
         );
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ResponseStructure<Map<String, Long>>> getFileStats() {
+        return fileService.getFileStats();
     }
 
     @PostMapping("/download")

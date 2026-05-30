@@ -1,16 +1,15 @@
 import { useRef, useState } from "react";
 import { uploadFiles as uploadFilesApi } from "../../services/fileService";
-
 import { ALLOWED_FILE_EXTS } from "../../common/constants/fileTypes";
 
 function QuickUploadCard({ onUploadComplete }) {
   const fileInputRef = useRef();
+  const dragCounter = useRef(0); // tracks drag depth to avoid flicker on child elements
 
   const [uploading, setUploading] = useState(false);
-
   const [progress, setProgress] = useState(0);
-
   const [results, setResults] = useState([]);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const uploadFiles = async (fileList) => {
     const files = Array.from(fileList);
@@ -20,7 +19,6 @@ function QuickUploadCard({ onUploadComplete }) {
     setProgress(0);
 
     const validFiles = [];
-
     const newResults = [];
 
     // Frontend Validation
@@ -34,7 +32,6 @@ function QuickUploadCard({ onUploadComplete }) {
           ok: false,
           message: "Unsupported file type",
         });
-
         continue;
       }
 
@@ -45,28 +42,25 @@ function QuickUploadCard({ onUploadComplete }) {
           ok: false,
           message: "Empty file is not allowed",
         });
-
         continue;
       }
 
       // Invalid file name validation
       const invalidFileNameRegex = /[<>:"/\\|?*]/;
-
       const fileNameWithoutExtension =
         file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
 
       if (
-        !fileNameWithoutExtension.trim() || // empty or only spaces
-        invalidFileNameRegex.test(file.name) || // invalid symbols
-        file.name.startsWith(".") || // hidden file
-        file.name.length > 255 // too long
+        !fileNameWithoutExtension.trim() ||
+        invalidFileNameRegex.test(file.name) ||
+        file.name.startsWith(".") ||
+        file.name.length > 255
       ) {
         newResults.push({
           name: file.name,
           ok: false,
           message: "Invalid file name",
         });
-
         continue;
       }
 
@@ -77,7 +71,6 @@ function QuickUploadCard({ onUploadComplete }) {
           ok: false,
           message: "File exceeds 100MB limit",
         });
-
         continue;
       }
 
@@ -87,9 +80,7 @@ function QuickUploadCard({ onUploadComplete }) {
     // Stop if all invalid
     if (validFiles.length === 0) {
       setResults(newResults);
-
       setUploading(false);
-
       return;
     }
 
@@ -101,35 +92,55 @@ function QuickUploadCard({ onUploadComplete }) {
 
       // Success results
       validFiles.forEach((file) => {
-        newResults.push({
-          name: file.name,
-          ok: true,
-        });
+        newResults.push({ name: file.name, ok: true });
       });
     } catch (err) {
       const message = err.response?.data?.message || "Upload failed";
-
       validFiles.forEach((file) => {
-        newResults.push({
-          name: file.name,
-          ok: false,
-          message,
-        });
+        newResults.push({ name: file.name, ok: false, message });
       });
     }
 
     setResults(newResults);
-
     setProgress(0);
     setUploading(false);
-
     onUploadComplete?.();
   };
 
-  const handleDrop = (e) => {
+  // Drag handlers — use dragCounter to avoid isDragActive flickering when
+  // the cursor moves over child elements inside the drop zone.
+  const handleDragEnter = (e) => {
+    if (uploading) return;
     e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    setIsDragActive(true);
+  };
 
-    if (e.dataTransfer.files.length > 0) {
+  const handleDragOver = (e) => {
+    if (uploading) return;
+    e.preventDefault(); // required to allow dropping
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e) => {
+    if (uploading) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    if (uploading) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0; // reset for next drag session
+    setIsDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       uploadFiles(e.dataTransfer.files);
     }
   };
@@ -141,25 +152,36 @@ function QuickUploadCard({ onUploadComplete }) {
         <span className="material-symbols-outlined text-violet-400">
           cloud_upload
         </span>
-
         <h3 className="text-base md:text-lg font-bold text-white font-['Space_Grotesk']">
           Quick Upload
         </h3>
       </div>
 
-      {/* Drop zone */}
+      {/*
+        Drop zone wrapper — handles drag-and-drop as additional functionality.
+        The original Upload Files button inside is completely unchanged.
+        No overlay div — dragCounter ref handles child-element flicker instead.
+      */}
       <div
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        className={`group border-2 border-dashed rounded-xl p-6 md:p-12 flex flex-col items-center justify-center bg-white/[0.02] transition-all ${
+        className={`relative group border-2 border-dashed rounded-xl p-6 md:p-12 flex flex-col items-center justify-center transition-all ${
           uploading
-            ? "border-violet-500/50 cursor-not-allowed"
-            : "border-white/10 hover:border-violet-500/50"
+            ? "border-violet-500/50 bg-white/[0.02] cursor-not-allowed"
+            : isDragActive
+              ? "border-violet-500 bg-violet-500/10 shadow-[0_0_20px_rgba(139,92,246,0.15)] scale-[1.01]"
+              : "border-white/10 bg-white/[0.02] hover:border-violet-500/50"
         }`}
       >
         <div className="h-12 w-12 rounded-full bg-slate-800 flex items-center justify-center mb-4">
           <span className="material-symbols-outlined text-slate-400 group-hover:text-violet-400">
-            {uploading ? "hourglass_empty" : "upload"}
+            {uploading
+              ? "hourglass_empty"
+              : isDragActive
+                ? "file_download"
+                : "upload"}
           </span>
         </div>
 
@@ -168,23 +190,27 @@ function QuickUploadCard({ onUploadComplete }) {
             <p className="text-slate-300 font-medium text-sm md:text-base">
               Uploading... {progress}%
             </p>
-
             <div className="w-full max-w-xs mt-3 bg-slate-800 rounded-full h-1.5">
               <div
                 className="bg-violet-500 h-1.5 rounded-full transition-all"
-                style={{
-                  width: `${progress}%`,
-                }}
+                style={{ width: `${progress}%` }}
               />
             </div>
           </>
+        ) : isDragActive ? (
+          /* Drag-active overlay hint — shown only while dragging */
+          <p className="text-violet-300 font-medium text-sm md:text-base pointer-events-none">
+            Drop files to upload
+          </p>
         ) : (
+          /* ── Original upload UI — unchanged ── */
           <>
             <p className="text-slate-400 text-sm mb-4 text-center">
               Drag & drop files, or choose below
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
+              {/* Original upload button — untouched */}
               <button
                 onClick={() => fileInputRef.current.click()}
                 disabled={uploading}
@@ -203,6 +229,7 @@ function QuickUploadCard({ onUploadComplete }) {
           </>
         )}
 
+        {/* Hidden file input — original, untouched */}
         <input
           type="file"
           multiple
@@ -214,7 +241,7 @@ function QuickUploadCard({ onUploadComplete }) {
         />
       </div>
 
-      {/* Results */}
+      {/* Results — original, untouched */}
       {results.length > 0 && (
         <div className="mt-4 space-y-1">
           {results.map((r, i) => (
@@ -227,9 +254,7 @@ function QuickUploadCard({ onUploadComplete }) {
               <span className="material-symbols-outlined text-base">
                 {r.ok ? "check_circle" : "error"}
               </span>
-
               <span className="truncate">{r.name}</span>
-
               {!r.ok && (
                 <span className="text-red-500 shrink-0">— {r.message}</span>
               )}

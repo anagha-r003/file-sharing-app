@@ -298,6 +298,30 @@ public class FileService {
         );
     }
 
+    public ResponseEntity<ResponseStructure<Map<String, Long>>> getFileStats() {
+        log.info("Fetching user file statistics");
+        User user = SecurityUtil.getCurrentUser();
+        List<Object[]> results = fileRepository.getFileCountStats(user.getId());
+        Map<String, Long> stats = new HashMap<>();
+        if (results != null && !results.isEmpty()) {
+            Object[] row = results.get(0);
+            stats.put("documents", ((Number) (row[0] != null ? row[0] : 0)).longValue());
+            stats.put("images", ((Number) (row[1] != null ? row[1] : 0)).longValue());
+            stats.put("videos", ((Number) (row[2] != null ? row[2] : 0)).longValue());
+            stats.put("others", ((Number) (row[3] != null ? row[3] : 0)).longValue());
+        } else {
+            stats.put("documents", 0L);
+            stats.put("images", 0L);
+            stats.put("videos", 0L);
+            stats.put("others", 0L);
+        }
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "File stats fetched successfully",
+                stats
+        );
+    }
+
     public ResponseEntity<Resource> downloadFiles(List<Long> fileIds) throws IOException {
 
         log.info("Download request for {} file(s)", fileIds.size());

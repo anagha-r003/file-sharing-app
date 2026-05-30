@@ -127,3 +127,9 @@ export const getStarredFiles = async (page = 0, size = 10) => {
 
   return response.data.data;
 };
+
+export const getFileStats = async () => {
+  const response = await api.get("/files/stats");
+  return response.data.data;
+};
+

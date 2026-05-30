@@ -27,6 +27,7 @@ function FileTable({
   onFileClick,
   onFileUpdate,
   showStats = true,
+  stats,
 }) {
   const [shareFile, setShareFile] = useState(null);
 
@@ -75,7 +76,7 @@ function FileTable({
   const somePageSelected = pageIds.some((id) => selectedIds.includes(id));
 
   // Statistics
-  const stats = useMemo(() => getFileStats(files?.content || []), [files]);
+  const finalStats = useMemo(() => stats || getFileStats(files?.content || []), [stats, files]);
 
   // Search handlers
   const handleSearch = (e) => {
@@ -198,7 +199,7 @@ const handleToggleStar = async (file) => {
   return (
     <>
       {/* Stats */}
-      {showStats && <FileTableStats stats={stats} />}
+      {showStats && <FileTableStats stats={finalStats} />}
 
       {/* Main container */}
       <div className="custom-card rounded-2xl flex flex-col">
