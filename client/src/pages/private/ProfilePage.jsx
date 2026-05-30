@@ -105,6 +105,10 @@ function PasswordInput({ value, onChange, placeholder }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        onCopy={(e) => e.preventDefault()}
+        onPaste={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
         autoComplete="new-password"
         className="w-full bg-[#1a1d23] border border-[#2a2d3a] rounded-xl px-3.5 pr-11 py-2.5
                    text-white text-sm placeholder-[#4a4d5a] outline-none
