@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import FileTable from "../../components/myfiles/FileTable";
-import { getFiles, downloadFiles, getFileStats } from "../../services/fileService";
+import {
+  getFiles,
+  downloadFiles,
+  getFileStats,
+  renameFile,
+} from "../../services/fileService";
 import FileViewModal from "../../components/myfiles/FileViewModal";
 import { usePageSettings } from "../../context/LayoutContext";
-
+import RenameModal from "../../common/ui/RenameModal";
+import Toast from "../../components/sharedlink/Toast";
 function MyFilesPage() {
   const [files, setFiles] = useState(null);
   const [fileStats, setFileStats] = useState(null);
@@ -16,7 +22,30 @@ function MyFilesPage() {
 
   const [viewingFile, setViewingFile] = useState(null);
 
+  const [renamingFile, setRenamingFile] = useState(null);
+
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
   usePageSettings({ title: "My Files" });
+
+  function showToast(message, type = "success") {
+    setToast({
+      visible: true,
+      message,
+      type,
+    });
+
+    setTimeout(() => {
+      setToast((t) => ({
+        ...t,
+        visible: false,
+      }));
+    }, 3000);
+  }
 
   const fetchData = async (currentPage = page, currentSize = pageSize) => {
     setLoading(true);
@@ -37,15 +66,33 @@ function MyFilesPage() {
       setLoading(false);
     }
   };
-const handleFileUpdate = (updatedFile) => {
-  setFiles((prev) => ({
-    ...prev,
-    content: prev.content.map((f) =>
-      f.id === updatedFile.id ? updatedFile : f
-    ),
-  }));
-};
+  const handleFileUpdate = (updatedFile) => {
+    setFiles((prev) => ({
+      ...prev,
+      content: prev.content.map((f) =>
+        f.id === updatedFile.id ? updatedFile : f,
+      ),
+    }));
+  };
 
+  const handleRename = async (file, newName) => {
+    try {
+      await renameFile(file.id, newName);
+
+      const updatedFile = {
+        ...file,
+        name: newName,
+      };
+
+      handleFileUpdate(updatedFile);
+
+      setRenamingFile(null);
+
+      showToast(`"${newName}" renamed successfully`, "success");
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Rename failed", "error");
+    }
+  };
   // Fetch data when page changes
   useEffect(() => {
     fetchData(page, pageSize);
@@ -65,7 +112,8 @@ const handleFileUpdate = (updatedFile) => {
           setPageSize={setPageSize}
           onRefresh={() => fetchData(page, pageSize)}
           onFileClick={setViewingFile}
-          onFileUpdate={handleFileUpdate} 
+          onFileUpdate={handleFileUpdate}
+          onRename={setRenamingFile}
         />
       )}
 
@@ -76,6 +124,20 @@ const handleFileUpdate = (updatedFile) => {
           onDownload={() => downloadFiles([viewingFile.id])}
         />
       )}
+      {renamingFile && (
+        <RenameModal
+          isOpen={!!renamingFile}
+          currentName={renamingFile.name}
+          type="file"
+          onClose={() => setRenamingFile(null)}
+          onSave={(newName) => handleRename(renamingFile, newName)}
+        />
+      )}
+      <Toast
+        message={toast.message}
+        visible={toast.visible}
+        type={toast.type}
+      />
     </>
   );
 }

@@ -59,6 +59,7 @@ function FileTableListView({
   onShare,
   onDelete,
   onFolder,
+  onRename,
 }) {
   const handleDownload = async (e, file) => {
     e.stopPropagation();
@@ -150,6 +151,7 @@ function FileTableListView({
                     {/* Name */}
                     <td className="py-3 px-6">
                       <div className="flex items-center gap-3 min-w-[180px]">
+                        {/* File icon */}
                         <div
                           className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${color}`}
                         >
@@ -157,16 +159,43 @@ function FileTableListView({
                             {icon}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="min-w-0">
+
+                        {/* File info */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 min-w-0">
                             <span
                               className="text-white font-medium truncate max-w-[160px] block"
                               title={file.name}
                             >
                               {file.name}
                             </span>
-                            <span className="text-slate-500 text-xs">You</span>
+
+                            {/* Rename */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+
+                                if (onRename) {
+                                  onRename(file);
+                                }
+                              }}
+                              className="
+            opacity-0
+            group-hover:opacity-100
+            transition
+            text-slate-500
+            hover:text-violet-400
+            flex-shrink-0
+          "
+                              title="Rename"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">
+                                edit
+                              </span>
+                            </button>
                           </div>
+
+                          <span className="text-slate-500 text-xs">You</span>
                         </div>
                       </div>
                     </td>
@@ -380,6 +409,31 @@ function FileTableListView({
                   >
                     <span className="material-symbols-outlined text-[16px]">
                       share
+                    </span>
+                  </button>
+                  {/* Rename */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      if (onRename) {
+                        onRename(file);
+                      }
+                    }}
+                    title="Rename"
+                    className="
+    w-8 h-8
+    flex items-center justify-center
+    rounded-lg
+    text-slate-500
+    hover:text-violet-400
+    hover:bg-violet-400/10
+    transition
+  "
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      edit
                     </span>
                   </button>
                   <button

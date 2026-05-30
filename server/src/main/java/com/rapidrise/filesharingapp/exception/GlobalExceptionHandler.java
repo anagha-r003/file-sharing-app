@@ -242,4 +242,21 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(
+            InvalidFolderException.class
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    handleInvalidFolderException(
+
+            InvalidFolderException ex
+    ) {
+
+        return ResponseBuilder.build(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                null
+        );
+    }
 }

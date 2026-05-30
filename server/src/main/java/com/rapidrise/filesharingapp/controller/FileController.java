@@ -1,6 +1,7 @@
 package com.rapidrise.filesharingapp.controller;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
+import com.rapidrise.filesharingapp.dto.request.RenameRequest;
 import com.rapidrise.filesharingapp.dto.response.FileResponse;
 import com.rapidrise.filesharingapp.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -122,6 +123,27 @@ public class FileController {
                 page,
                 size
         );
+    }
+
+    @PatchMapping(
+            "/rename/{fileId}"
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    renameFile(
+
+            @PathVariable
+            Long fileId,
+
+            @RequestBody
+            RenameRequest request
+    ) {
+
+        return fileService
+                .renameFile(
+                        fileId,
+                        request
+                );
     }
 
 

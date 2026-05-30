@@ -1,6 +1,7 @@
 package com.rapidrise.filesharingapp.service;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
+import com.rapidrise.filesharingapp.dto.request.RenameRequest;
 import com.rapidrise.filesharingapp.dto.response.FileResponse;
 import com.rapidrise.filesharingapp.entity.User;
 import com.rapidrise.filesharingapp.entity.UserFile;
@@ -725,6 +726,91 @@ public class FileService {
                 HttpStatus.OK,
                 "Starred files fetched successfully",
                 dtoPage
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<
+            ResponseStructure<String>>
+    renameFile(
+            Long fileId,
+            RenameRequest request
+    ) {
+
+        UserFile file =
+                getAuthorizedFile(
+                        fileId
+                );
+
+        String newName =
+                request.getName()
+                        .trim();
+
+        if (newName.isBlank()) {
+
+            throw new InvalidFileException(
+                    "File name cannot be empty"
+            );
+        }
+
+        int dotIndex =
+                file.getName()
+                        .lastIndexOf(
+                                "."
+                        );
+
+        String extension =
+                dotIndex != -1
+                        ? file.getName()
+                        .substring(dotIndex)
+                        : "";
+
+        if (
+                !extension.isBlank()
+                        &&
+                        newName.endsWith(
+                                extension
+                        )
+        ) {
+
+            newName =
+                    newName.substring(
+                            0,
+                            newName.length()
+                                    - extension.length()
+                    );
+        }
+
+        String finalName =
+                newName
+                        + extension;
+
+        if (
+                file.getName()
+                        .equals(
+                                finalName
+                        )
+        ) {
+
+            return ResponseBuilder.build(
+                    HttpStatus.OK,
+                    "File name unchanged",
+                    null
+            );
+        }
+
+        file.setName(
+                finalName
+        );
+
+        fileRepository.save(
+                file
+        );
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "File renamed successfully",
+                null
         );
     }
 

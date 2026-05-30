@@ -133,3 +133,18 @@ export const getFileStats = async () => {
   return response.data.data;
 };
 
+export const renameFile = async (
+  fileId,
+  name,
+) => {
+  const response =
+    await api.patch(
+      `/files/rename/${fileId}`,
+      {
+        name,
+      },
+    );
+
+  return response.data;
+};
+

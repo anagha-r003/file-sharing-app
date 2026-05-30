@@ -2,6 +2,7 @@ package com.rapidrise.filesharingapp.service;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.dto.request.CreateFolderRequest;
+import com.rapidrise.filesharingapp.dto.request.RenameRequest;
 import com.rapidrise.filesharingapp.dto.response.FolderResponse;
 import com.rapidrise.filesharingapp.entity.Folder;
 import com.rapidrise.filesharingapp.entity.User;
@@ -9,6 +10,7 @@ import com.rapidrise.filesharingapp.entity.UserFile;
 import com.rapidrise.filesharingapp.exception.FileAlreadyAddedException;
 import com.rapidrise.filesharingapp.exception.FileNotFoundException;
 import com.rapidrise.filesharingapp.exception.FolderNotFoundException;
+import com.rapidrise.filesharingapp.exception.InvalidFolderException;
 import com.rapidrise.filesharingapp.repository.FileRepository;
 import com.rapidrise.filesharingapp.repository.FolderRepository;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
@@ -350,6 +352,70 @@ public class FolderService {
                 HttpStatus.OK,
                 "Folder fetched successfully",
                 response
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<
+            ResponseStructure<String>>
+    renameFolder(
+            Long folderId,
+            RenameRequest request
+    ) {
+
+        User user =
+                SecurityUtil
+                        .getCurrentUser();
+
+        Folder folder =
+                folderRepository
+                        .findByIdAndUserId(
+                                folderId,
+                                user.getId()
+                        )
+                        .orElseThrow(() ->
+                                new FolderNotFoundException(
+                                        "Folder not found"
+                                )
+                        );
+
+        String newName =
+                request.getName()
+                        .trim();
+
+        if (newName.isBlank()) {
+
+            throw new InvalidFolderException(
+                    "Folder name cannot be empty"
+            );
+        }
+
+        if (
+                folder.getName()
+                        .equals(
+                                newName
+                        )
+        ) {
+
+            return ResponseBuilder.build(
+                    HttpStatus.OK,
+                    "Folder name unchanged",
+                    null
+            );
+        }
+
+        folder.setName(
+                newName
+        );
+
+        folderRepository.save(
+                folder
+        );
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Folder renamed successfully",
+                null
         );
     }
 }

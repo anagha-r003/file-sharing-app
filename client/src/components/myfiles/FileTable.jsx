@@ -4,6 +4,7 @@ import {
   downloadFiles,
   starFile,
   unstarFile,
+  renameFile,
 } from "../../services/fileService";
 
 import ShareModal from "./ShareModal/ShareModal";
@@ -24,6 +25,7 @@ function FileTable({
   pageSize,
   setPageSize,
   onRefresh,
+  onRename,
   onFileClick,
   onFileUpdate,
   showStats = true,
@@ -76,7 +78,10 @@ function FileTable({
   const somePageSelected = pageIds.some((id) => selectedIds.includes(id));
 
   // Statistics
-  const finalStats = useMemo(() => stats || getFileStats(files?.content || []), [stats, files]);
+  const finalStats = useMemo(
+    () => stats || getFileStats(files?.content || []),
+    [stats, files],
+  );
 
   // Search handlers
   const handleSearch = (e) => {
@@ -128,16 +133,29 @@ function FileTable({
   };
 
   // Star toggle
-const handleToggleStar = async (file) => {
-  try {
-    if (file.isStarred) await unstarFile(file.id);
-    else await starFile(file.id);
+  const handleToggleStar = async (file) => {
+    try {
+      if (file.isStarred) await unstarFile(file.id);
+      else await starFile(file.id);
 
-    onFileUpdate?.({ ...file, isStarred: !file.isStarred });
-  } catch (err) {
-    console.error("Star/unstar failed", err);
-  }
-};
+      onFileUpdate?.({ ...file, isStarred: !file.isStarred });
+    } catch (err) {
+      console.error("Star/unstar failed", err);
+    }
+  };
+
+  const handleRenameFile = async (file, newName) => {
+    try {
+      await renameFile(file.id, newName);
+
+      onFileUpdate?.({
+        ...file,
+        name: newName,
+      });
+    } catch (err) {
+      console.error("Rename failed", err);
+    }
+  };
 
   // Single selection
   const toggleSelect = (id, e) => {
@@ -238,6 +256,7 @@ const handleToggleStar = async (file) => {
             onShare={(file) => setShareFile(file)}
             onDelete={(file) => setDeleteTarget(file)}
             onFolder={(file) => setFolderFiles([file])}
+            onRename={onRename}
           />
         )}
 
