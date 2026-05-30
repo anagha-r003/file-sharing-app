@@ -58,6 +58,8 @@ const RegisterPage = () => {
       form.firstName.trim().length > 30
     ) {
       frontendErrors.firstName = "First name must be 2 to 30 characters";
+    } else if (!/^[A-Za-z_]+$/.test(form.firstName.trim())) {
+      frontendErrors.firstName = "Invalid first name";
     }
 
     // Last Name Validation
