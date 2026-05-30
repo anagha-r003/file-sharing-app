@@ -64,6 +64,7 @@ function FolderFileList({
   pageSize,
   totalItems,
   onPageChange,
+  onRename,
 }) {
   return (
     <Card className="!p-0 overflow-hidden">
@@ -94,6 +95,7 @@ function FolderFileList({
                 onRemove={() => onRemove(file)}
                 onView={() => onView(file)}
                 onShare={() => onShare(file)}
+                onRename={() => onRename(file)}
               />
             ))}
           </div>
