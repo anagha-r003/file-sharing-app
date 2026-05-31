@@ -50,7 +50,6 @@ const RegisterPage = () => {
 
     let frontendErrors = {};
 
-    // First Name Validation
     if (!form.firstName.trim()) {
       frontendErrors.firstName = "First name is required";
     } else if (
@@ -62,7 +61,6 @@ const RegisterPage = () => {
       frontendErrors.firstName = "Invalid first name";
     }
 
-    // Last Name Validation
     if (!form.lastName.trim()) {
       frontendErrors.lastName = "Last name is required";
     } else if (
@@ -72,14 +70,12 @@ const RegisterPage = () => {
       frontendErrors.lastName = "Last name must be 1 to 30 characters";
     }
 
-    // Email Validation
     if (!form.email.trim()) {
       frontendErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       frontendErrors.email = "Enter a valid email address";
     }
 
-    // Password Validation
     if (!form.password) {
       frontendErrors.password = "Password is required";
     } else {
@@ -93,29 +89,23 @@ const RegisterPage = () => {
       }
     }
 
-    // Confirm Password Validation
     if (!form.confirmPassword) {
       frontendErrors.confirmPassword = "Confirm password is required";
     } else if (form.password !== form.confirmPassword) {
       frontendErrors.confirmPassword = "Passwords do not match";
     }
 
-    // DOB Validation
     if (!form.dob) {
       frontendErrors.dob = "Date of birth is required";
     } else {
       const selectedDate = new Date(form.dob);
       const today = new Date();
-
-      // Remove time for accurate comparison
       today.setHours(0, 0, 0, 0);
-
       if (selectedDate >= today) {
         frontendErrors.dob = "Date of birth must be in the past";
       }
     }
 
-    // STOP API call if frontend validation fails
     if (Object.keys(frontendErrors).length > 0) {
       setErrors(frontendErrors);
       return;
@@ -142,11 +132,7 @@ const RegisterPage = () => {
       });
 
       setTimeout(() => {
-        setToastState((prev) => ({
-          ...prev,
-          visible: false,
-        }));
-
+        setToastState((prev) => ({ ...prev, visible: false }));
         navigate("/login");
       }, 2000);
 
@@ -160,7 +146,6 @@ const RegisterPage = () => {
         confirmPassword: "",
         dob: "",
       });
-
       setErrors({});
     } catch (error) {
       console.error(error);
@@ -169,7 +154,6 @@ const RegisterPage = () => {
 
       if (error.response) {
         const response = error.response.data;
-
         if (response.data && typeof response.data === "object") {
           backendErrors = response.data;
         } else {
@@ -188,50 +172,64 @@ const RegisterPage = () => {
       });
 
       setTimeout(() => {
-        setToastState((prev) => ({
-          ...prev,
-          visible: false,
-        }));
+        setToastState((prev) => ({ ...prev, visible: false }));
       }, 3000);
     }
   };
 
   return (
-    <div className="bg-[#0e0e0e] text-white min-h-screen flex flex-col">
+    <div className="bg-[#0a0a14] text-white min-h-screen flex flex-col">
       {/* Top Navbar */}
-      <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#0e0e0e]/70 backdrop-blur-xl">
-        <div className="text-xl font-bold tracking-tighter text-[#98a9ff]">
-          VaultLink
-        </div>
-
-        <div className="flex items-center gap-4">
-          <span className="text-[#adaaaa] hover:text-white transition-colors cursor-pointer">
-            ?
-          </span>
-          <span className="text-[#adaaaa] hover:text-white transition-colors cursor-pointer">
-            i
+      <header className="absolute top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-transparent">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/40">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M7 1L12 4V10L7 13L2 10V4L7 1Z"
+                stroke="white"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              <circle cx="7" cy="7" r="2" fill="white" />
+            </svg>
+          </div>
+          <span className="font-bold text-base tracking-tight text-white">
+            VaultLink
           </span>
         </div>
       </header>
 
       {/* Main Section */}
-      <main className="relative flex-grow flex items-center justify-center px-4 pt-24 pb-12 overflow-hidden bg-[radial-gradient(circle_at_top_left,_#1a1a1a_0%,_#0e0e0e_100%)]">
+      <main className="relative flex-grow flex items-center justify-center px-4 pt-24 pb-12 overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full"
+            style={{
+              background:
+                "radial-gradient(ellipse 80% 60% at 50% 10%, rgba(109,40,217,0.25) 0%, rgba(79,48,160,0.1) 40%, transparent 70%)",
+            }}
+          />
+        </div>
+
         {/* Background Grid */}
-        <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(152,169,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(152,169,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+        <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(139,92,246,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.04)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
         {/* Glow Orb */}
         <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none translate-x-1/4 translate-y-1/4">
-          <div className="w-96 h-96 rounded-full bg-[#98a9ff] blur-[120px]"></div>
+          <div
+            className="w-96 h-96 rounded-full blur-[120px]"
+            style={{ background: "#7c3aed" }}
+          />
         </div>
 
-        {/* Glass Card — max-w-lg is the key width reduction */}
-        <div className="relative z-10 w-full max-w-lg p-6 md:p-8 rounded-xl bg-[#1a1a1a]/60 backdrop-blur-2xl">
+        {/* Card */}
+        <div className="relative z-10 w-full max-w-lg p-6 md:p-8 rounded-xl bg-[#111118]/60 backdrop-blur-2xl border border-white/5">
           {/* Heading */}
-          <div className="mb-6 text-center max-w-lg mx-auto">
+          <div className="mb-6 text-center">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-3">
               Create Your Vault
             </h1>
-
             <p className="text-gray-400 text-sm md:text-base leading-relaxed">
               Securely store, manage, and share your files from one protected
               workspace.
@@ -245,7 +243,7 @@ const RegisterPage = () => {
             className="grid grid-cols-1 sm:grid-cols-2 gap-4"
           >
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
                 First Name
               </label>
               <input
@@ -254,7 +252,7 @@ const RegisterPage = () => {
                 value={form.firstName}
                 placeholder="Alex"
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#16161f] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
               />
               {errors.firstName && (
                 <p className="text-red-400 text-xs mt-1">{errors.firstName}</p>
@@ -262,7 +260,7 @@ const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
                 Last Name
               </label>
               <input
@@ -271,7 +269,7 @@ const RegisterPage = () => {
                 value={form.lastName}
                 placeholder="Vance"
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#16161f] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
               />
               {errors.lastName && (
                 <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>
@@ -279,7 +277,7 @@ const RegisterPage = () => {
             </div>
 
             <div className="sm:col-span-2 space-y-2">
-              <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
                 Secure Email Address
               </label>
               <input
@@ -288,7 +286,7 @@ const RegisterPage = () => {
                 value={form.email}
                 placeholder="vance@obsidian.network"
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#16161f] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
               />
               {errors.email && (
                 <p className="text-red-400 text-xs mt-1">{errors.email}</p>
@@ -296,10 +294,9 @@ const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
                 Vault Password
               </label>
-
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -311,12 +308,11 @@ const RegisterPage = () => {
                   onPaste={(e) => e.preventDefault()}
                   onCut={(e) => e.preventDefault()}
                   onContextMenu={(e) => e.preventDefault()}
-                  className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
+                  className="w-full bg-[#16161f] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
                 />
                 {errors.password && (
                   <p className="text-red-400 text-xs mt-1">{errors.password}</p>
                 )}
-
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -328,10 +324,9 @@ const RegisterPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
                 Confirm Vault Password
               </label>
-
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -343,15 +338,13 @@ const RegisterPage = () => {
                   onPaste={(e) => e.preventDefault()}
                   onCut={(e) => e.preventDefault()}
                   onContextMenu={(e) => e.preventDefault()}
-                  className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
+                  className="w-full bg-[#16161f] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
                 />
-
                 {errors.confirmPassword && (
                   <p className="text-red-400 text-xs mt-1">
                     {errors.confirmPassword}
                   </p>
                 )}
-
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -371,7 +364,6 @@ const RegisterPage = () => {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   Password Requirements
                 </p>
-
                 <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
                   <p
                     className={
@@ -415,21 +407,16 @@ const RegisterPage = () => {
                     • One special char
                   </p>
                 </div>
-
-                {/* Strength Bar */}
                 <div>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((level) => (
                       <div
                         key={level}
-                        className={`h-1 flex-1 rounded-full ${
-                          strengthScore >= level ? "bg-cyan-400" : "bg-gray-700"
-                        }`}
-                      ></div>
+                        className={`h-1 flex-1 rounded-full ${strengthScore >= level ? "bg-violet-500" : "bg-gray-700"}`}
+                      />
                     ))}
                   </div>
-
-                  <p className="text-[10px] text-cyan-400 mt-2 uppercase">
+                  <p className="text-[10px] text-violet-400 mt-2 uppercase">
                     Strength: {strengthText}
                   </p>
                 </div>
@@ -437,7 +424,7 @@ const RegisterPage = () => {
             )}
 
             <div className="sm:col-span-2 space-y-2">
-              <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
                 Date of Birth
               </label>
               <input
@@ -445,17 +432,31 @@ const RegisterPage = () => {
                 name="dob"
                 value={form.dob}
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#16161f] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
               />
               {errors.dob && (
                 <p className="text-red-400 text-xs mt-1">{errors.dob}</p>
               )}
             </div>
 
+            {errors.general && (
+              <p className="sm:col-span-2 text-red-400 text-sm font-medium">
+                {errors.general}
+              </p>
+            )}
+
             <div className="sm:col-span-2 mt-2">
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-br from-[#98a9ff] to-[#4065ff] text-white font-extrabold text-base rounded-xl hover:shadow-[0_0_25px_rgba(152,169,255,0.4)] transition-all active:scale-95"
+                className="w-full py-3 text-white font-extrabold text-base rounded-xl transition-all active:scale-95"
+                style={{
+                  background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.boxShadow =
+                    "0 0 25px rgba(139,92,246,0.4)")
+                }
+                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
               >
                 Join the Vault
               </button>
@@ -468,22 +469,20 @@ const RegisterPage = () => {
               Already have an account?
               <Link
                 to="/login"
-                className="text-cyan-400 font-bold hover:underline ml-1"
+                className="text-violet-400 font-bold hover:underline ml-1"
               >
                 Secure Login
               </Link>
             </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4 border-t border-zinc-700/30">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4 border-t border-white/5">
               <div className="flex items-center gap-2">
-                <span className="text-cyan-400">✔</span>
+                <span className="text-violet-400">✔</span>
                 <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
                   End-to-End Encrypted
                 </span>
               </div>
-
               <div className="flex items-center gap-2">
-                <span className="text-cyan-400">🔒</span>
+                <span className="text-violet-400">🔒</span>
                 <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
                   Zero-Trust Protocol
                 </span>
@@ -494,19 +493,18 @@ const RegisterPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-6 bg-black flex flex-col items-center px-6 gap-4 md:flex-row md:justify-between md:px-12">
-        <div className="text-xs tracking-wide text-gray-400 uppercase text-center md:text-left">
+      <footer className="w-full py-6 bg-[#080810] flex flex-col items-center px-6 gap-4 md:flex-row md:justify-between md:px-12 border-t border-white/5">
+        <div className="text-xs tracking-wide text-gray-500 uppercase text-center md:text-left">
           © 2026 VaultLink. Protected storage. Trusted sharing.
         </div>
-
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:flex-nowrap md:gap-8">
-          <a className="text-xs tracking-wide text-gray-400 uppercase hover:text-cyan-400 transition-all">
+          <a className="text-xs tracking-wide text-gray-500 uppercase hover:text-violet-400 transition-all cursor-pointer">
             Privacy Policy
           </a>
-          <a className="text-xs tracking-wide text-gray-400 uppercase hover:text-cyan-400 transition-all">
+          <a className="text-xs tracking-wide text-gray-500 uppercase hover:text-violet-400 transition-all cursor-pointer">
             Terms of Service
           </a>
-          <a className="text-xs tracking-wide text-gray-400 uppercase hover:text-cyan-400 transition-all">
+          <a className="text-xs tracking-wide text-gray-500 uppercase hover:text-violet-400 transition-all cursor-pointer">
             Security Architecture
           </a>
         </nav>

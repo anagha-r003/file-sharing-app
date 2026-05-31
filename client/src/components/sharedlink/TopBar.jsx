@@ -20,12 +20,24 @@ export default function TopBar({
       }}
     >
       {/* Logo */}
-      <div
-        className="flex items-center gap-2 font-extrabold text-lg tracking-tight"
-        style={{ color: "#c084fc" }}
-      >
-        <LockIcon />
-        VaultLink
+      <div className="flex items-center gap-3 shrink-0">
+        {/* Logo icon */}
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M7 1L12 4V10L7 13L2 10V4L7 1Z"
+              stroke="white"
+              strokeWidth="1.5"
+              fill="none"
+            />
+            <circle cx="7" cy="7" r="2" fill="white" />
+          </svg>
+        </div>
+
+        {/* Title */}
+        <span className="font-bold text-lg tracking-tight text-white">
+          VaultLink
+        </span>
       </div>
 
       {/* Right side */}

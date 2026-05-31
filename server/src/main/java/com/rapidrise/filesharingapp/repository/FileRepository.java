@@ -217,5 +217,22 @@ WHERE f.user.id = :userId AND f.isDeleted = false
 """)
     List<Object[]> getFileCountStats(@Param("userId") Long userId);
 
+    @Query("""
+SELECT f FROM UserFile f
+WHERE f.user.id = :userId AND f.isDeleted = false
+ORDER BY f.size DESC
+""")
+    List<UserFile> findActiveFilesByUserOrderBySizeDesc(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
+    @Query("""
+SELECT f FROM UserFile f
+WHERE f.user.id = :userId AND f.isDeleted = false
+ORDER BY f.size DESC, f.uploadedAt DESC
+""")
+    List<UserFile> findAllActiveByUserId(@Param("userId") Long userId);
+
 }
 

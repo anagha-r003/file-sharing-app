@@ -103,7 +103,7 @@ function FileTableListView({
               <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 Uploaded On
               </th>
-              <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap text-right">
+              <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap text-right pr-18">
                 Actions
               </th>
             </tr>

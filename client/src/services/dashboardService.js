@@ -14,3 +14,8 @@ export const getRecentActivity = async () => {
   const res = await api.get("/dashboard/activity");
   return res.data.data;
 };
+
+export const getCleanupData = async () => {
+  const res = await api.get("/dashboard/cleanup");
+  return res.data.data;
+};
