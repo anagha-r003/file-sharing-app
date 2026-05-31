@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-
+import { useNavigate } from "react-router-dom";
 const features = [
   {
     icon: "📁",
     title: "My Files",
     desc: "Upload and manage all your documents, images and videos in one place.",
-    color: "from-blue-500/20 to-blue-500/5",
-    border: "border-blue-500/20",
-    text: "text-blue-400",
+    color: "from-violet-500/20 to-violet-500/5",
+    border: "border-violet-500/20",
+    text: "text-violet-400",
   },
   {
     icon: "🗄️",
@@ -21,33 +21,33 @@ const features = [
     icon: "🔗",
     title: "Shared Links",
     desc: "Generate links to share files instantly and track all your active shares.",
-    color: "from-indigo-500/20 to-indigo-500/5",
-    border: "border-indigo-500/20",
-    text: "text-indigo-400",
+    color: "from-orange-500/20 to-orange-500/5",
+    border: "border-orange-500/20",
+    text: "text-orange-400",
   },
   {
     icon: "👥",
     title: "Shared With Me",
     desc: "Access everything others have shared directly with you.",
-    color: "from-sky-500/20 to-sky-500/5",
-    border: "border-sky-500/20",
-    text: "text-sky-400",
+    color: "from-emerald-500/20 to-emerald-500/5",
+    border: "border-emerald-500/20",
+    text: "text-emerald-400",
   },
   {
     icon: "⭐",
     title: "Starred",
     desc: "Pin your most-used files for instant access without searching.",
-    color: "from-blue-400/20 to-blue-400/5",
-    border: "border-blue-400/20",
-    text: "text-blue-300",
+    color: "from-amber-500/20 to-amber-500/5",
+    border: "border-amber-500/20",
+    text: "text-amber-400",
   },
   {
     icon: "🗑️",
     title: "Recycle Bin",
     desc: "Nothing is gone for good. Restore any deleted file whenever you need.",
-    color: "from-slate-500/20 to-slate-500/5",
-    border: "border-slate-500/20",
-    text: "text-slate-400",
+    color: "from-red-500/20 to-red-500/5",
+    border: "border-red-500/20",
+    text: "text-red-400",
   },
 ];
 
@@ -70,12 +70,12 @@ function FloatingIcon({ icon, top, left, right, rotate, delay }) {
         right,
         width: "52px",
         height: "52px",
-        background: "rgba(59,130,246,0.08)",
-        border: "1px solid rgba(59,130,246,0.15)",
+        background: "rgba(139,92,246,0.12)",
+        border: "1px solid rgba(139,92,246,0.2)",
         backdropFilter: "blur(8px)",
         transform: `rotate(${rotate})`,
         animation: `floatIcon 4s ease-in-out ${delay} infinite`,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
       }}
     >
       {icon}
@@ -133,6 +133,7 @@ function FeatureCard({ icon, title, desc, color, border, text, index }) {
 export default function VaultLinkLanding() {
   const [scrolled, setScrolled] = useState(false);
   const [heroVisible, setHeroVisible] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -146,7 +147,7 @@ export default function VaultLinkLanding() {
 
   return (
     <div
-      className="min-h-screen bg-[#0d0d0d] text-white overflow-x-hidden"
+      className="min-h-screen bg-[#0a0a14] text-white overflow-x-hidden"
       style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
     >
       <style>{`
@@ -158,41 +159,51 @@ export default function VaultLinkLanding() {
 
       {/* NAV */}
       <nav
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#0d0d0d]/90 backdrop-blur-md border-b border-white/[0.06]" : ""}`}
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#0a0a14]/90 backdrop-blur-md border-b border-white/[0.06]" : ""}`}
       >
-        <div className="max-w-6xl mx-auto px-6 sm:px-14 h-14 flex items-center justify-between border-b border-white/[0.06]">
-          <span className="font-bold text-base tracking-tight text-white">
-            VaultLink
-          </span>
+        <div className="max-w-6xl mx-auto px-6 sm:px-14 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/40">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M7 1L12 4V10L7 13L2 10V4L7 1Z"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  fill="none"
+                />
+                <circle cx="7" cy="7" r="2" fill="white" />
+              </svg>
+            </div>
+            <span className="font-bold text-base tracking-tight">
+              VaultLink
+            </span>
+          </div>
           <div className="flex items-center gap-3">
-            <a
-              href="#"
-              className="hidden sm:inline-flex px-5 py-2 text-sm text-gray-400 hover:text-white transition-colors duration-200"
+            <button
+              onClick={() => navigate("/login")}
+              className="hidden sm:inline-flex px-5 py-2 text-sm text-gray-400 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/5"
             >
               Log in
-            </a>
-            <a
-              href="#"
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-lg transition-opacity"
-              style={{
-                background: "linear-gradient(135deg, #6366f1, #3b82f6)",
-              }}
+            </button>
+            <button
+              onClick={() => navigate("/register")}
+              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90 transition-opacity shadow-lg shadow-violet-900/30"
             >
               Get started
-            </a>
+            </button>
           </div>
         </div>
       </nav>
 
       {/* HERO */}
-      <section className="relative flex flex-col items-center justify-center text-center min-h-screen px-6 sm:px-14 pt-14 overflow-hidden">
-        {/* Very subtle dark glow — matches register page atmosphere */}
+      <section className="relative flex flex-col items-center justify-center text-center min-h-screen px-6 sm:px-14 pt-16 overflow-hidden">
+        {/* Deep purple background glow */}
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px]"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full"
             style={{
               background:
-                "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(59,130,246,0.07) 0%, transparent 70%)",
+                "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(109,40,217,0.35) 0%, rgba(79,48,160,0.15) 40%, transparent 70%)",
             }}
           />
         </div>
@@ -202,7 +213,7 @@ export default function VaultLinkLanding() {
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+              "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
             backgroundSize: "44px 44px",
             maskImage:
               "radial-gradient(ellipse 90% 90% at 50% 40%, black 20%, transparent 75%)",
@@ -227,11 +238,8 @@ export default function VaultLinkLanding() {
         >
           {/* Badge */}
           <div
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-medium mb-7"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-medium mb-7"
             style={{
-              borderColor: "rgba(59,130,246,0.3)",
-              background: "rgba(59,130,246,0.08)",
-              color: "#93c5fd",
               opacity: heroVisible ? 1 : 0,
               transition: "opacity 0.6s ease 0.1s",
             }}
@@ -251,14 +259,7 @@ export default function VaultLinkLanding() {
           >
             <span className="text-white">Store your files.</span>
             <br />
-            <span
-              style={{
-                background: "linear-gradient(90deg, #818cf8, #60a5fa)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
+            <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
               Build your vault.
             </span>
             <br />
@@ -284,28 +285,24 @@ export default function VaultLinkLanding() {
               transition: "opacity 0.7s ease 0.5s",
             }}
           >
-            <a
-              href="#"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-lg text-white font-bold text-sm transition-opacity hover:opacity-90"
-              style={{
-                background: "linear-gradient(135deg, #6366f1, #3b82f6)",
-                boxShadow: "0 8px 24px rgba(99,102,241,0.3)",
-              }}
+            <button
+              onClick={() => navigate("/register")}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90 transition-opacity shadow-xl shadow-violet-900/40"
             >
               Get started →
-            </a>
+            </button>
             <a
               href="#"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-lg text-gray-300 text-sm font-medium border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl text-gray-300 text-sm font-medium border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
             >
               See how it works
             </a>
           </div>
 
           <p
-            className="mt-14 text-gray-700 text-xs uppercase tracking-widest"
+            className="mt-14 text-gray-600 text-xs uppercase tracking-widest"
             style={{
-              opacity: heroVisible ? 1 : 0,
+              opacity: heroVisible ? 0.5 : 0,
               transition: "opacity 1s ease 1.2s",
             }}
           >
