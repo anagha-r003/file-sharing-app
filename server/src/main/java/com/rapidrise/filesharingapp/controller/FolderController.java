@@ -2,6 +2,7 @@ package com.rapidrise.filesharingapp.controller;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.dto.request.CreateFolderRequest;
+import com.rapidrise.filesharingapp.dto.request.RenameRequest;
 import com.rapidrise.filesharingapp.dto.response.FolderResponse;
 import com.rapidrise.filesharingapp.service.FolderService;
 import lombok.RequiredArgsConstructor;
@@ -112,13 +113,47 @@ public class FolderController {
             ResponseStructure<
                     FolderResponse>>
     getFolderById(
+
             @PathVariable
-            Long folderId
+            Long folderId,
+
+            @RequestParam(
+                    defaultValue = "0"
+            )
+            int page,
+
+            @RequestParam(
+                    defaultValue = "5"
+            )
+            int size
     ) {
 
         return folderService
                 .getFolderById(
-                        folderId
+                        folderId,
+                        page,
+                        size
+                );
+    }
+
+    @PatchMapping(
+            "/rename/{folderId}"
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    renameFolder(
+
+            @PathVariable
+            Long folderId,
+
+            @RequestBody
+            RenameRequest request
+    ) {
+
+        return folderService
+                .renameFolder(
+                        folderId,
+                        request
                 );
     }
 }

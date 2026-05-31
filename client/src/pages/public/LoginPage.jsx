@@ -104,6 +104,10 @@ function LoginPage() {
               value={formData.email}
               onChange={handleChange}
               className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+              onCopy={(e) => e.preventDefault()}
+              onPaste={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
             />
             {errors.email && (
               <p className="text-red-400 text-xs mt-1">{errors.email}</p>
@@ -122,6 +126,10 @@ function LoginPage() {
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
+                onCopy={(e) => e.preventDefault()}
+                onPaste={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
                 className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
               />
 

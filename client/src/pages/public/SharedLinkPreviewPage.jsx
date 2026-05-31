@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import "../../App.css";
 
@@ -9,11 +9,14 @@ import FilePreviewCard from "../../components/sharedlink/FilePreviewCard";
 import PageFooter from "../../components/sharedlink/PageFooter";
 import Toast from "../../components/sharedlink/Toast";
 import LinkExpired from "../../components/sharedlink/LinkExpired";
+import AccessRevoked from "../../components/sharedlink/AccessRevoked";
 import OtpModal from "../../components/restrictedshare/OtpModal";
 import { maskEmail } from "../../utils/formatUtils";
+import { handleResource404 } from "../../utils/handleResource404";
 
 export default function SharedLinkPreviewPage() {
   const { token } = useParams();
+  const navigate = useNavigate();
   const [fileData, setFileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({
@@ -36,8 +39,7 @@ export default function SharedLinkPreviewPage() {
   const [otpError, setOtpError] = useState("");
 
   const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
-
-
+  const [linkError, setLinkError] = useState(null); // "expired" | "revoked"
 
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
@@ -61,15 +63,18 @@ export default function SharedLinkPreviewPage() {
             // Shared directly to account — verify with session token
             const sessionToken = localStorage.getItem("accessToken");
             if (sessionToken) {
-              const fileRes = await fetch(`http://localhost:8080/share/view/${token}`, {
-                headers: { Authorization: `Bearer ${sessionToken}` },
-              });
+              const fileRes = await fetch(
+                `http://localhost:8080/share/view/${token}`,
+                {
+                  headers: { Authorization: `Bearer ${sessionToken}` },
+                },
+              );
               if (fileRes.ok) {
                 const blob = await fileRes.blob();
                 const blobUrl = URL.createObjectURL(blob);
                 setPreviewBlobUrl(blobUrl);
                 setAccessGranted(true);
-                showToast("Access granted via account session!");
+                showToast("Access granted!");
               } else {
                 setAccessGranted(false);
                 showToast("Please log in to the correct account.", "error");
@@ -82,10 +87,17 @@ export default function SharedLinkPreviewPage() {
           setAccessGranted(true); // public — no gate
         }
       } catch (error) {
-        showToast(
-          error.response?.data?.message || "Failed to load shared file",
-          "error",
-        );
+        if (handleResource404(error, navigate)) {
+          return;
+        }
+
+        const message = (error.response?.data?.message || "").toLowerCase();
+
+        if (message.includes("expired")) {
+          setLinkError("expired");
+        } else {
+          setLinkError("revoked");
+        }
       } finally {
         setLoading(false);
       }
@@ -166,7 +178,7 @@ export default function SharedLinkPreviewPage() {
   }
 
   if (!fileData) {
-    return <LinkExpired />;
+    return linkError === "expired" ? <LinkExpired /> : <AccessRevoked />;
   }
 
   return (
@@ -288,9 +300,15 @@ export default function SharedLinkPreviewPage() {
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Direct Account Share</h3>
+                    <h3 className="text-lg font-bold text-white">
+                      Direct Account Share
+                    </h3>
                     <p className="text-slate-400 text-xs leading-relaxed mt-2">
-                      This file is restricted to the account of <span className="text-violet-400 font-semibold">{maskEmail(fileData.recipientEmail)}</span>. Please log in to your account to view it.
+                      This file is restricted to the account of{" "}
+                      <span className="text-violet-400 font-semibold">
+                        {maskEmail(fileData.recipientEmail)}
+                      </span>
+                      . Please log in to your account to view it.
                     </p>
                   </div>
                   <button

@@ -86,6 +86,11 @@ public interface FileRepository extends JpaRepository<UserFile,Long> {
     @Query("SELECT COALESCE(SUM(f.downloadCount), 0) FROM UserFile f WHERE f.user.id = :userId")
     long sumDownloadCountByUserId(@Param("userId") Long userId);
 
+    boolean existsByNameAndUserId(
+            String name,
+            Long userId
+    );
+
 
 
     // Storage statistics
@@ -178,10 +183,6 @@ AND f.isDeleted = true
             Long userId
     );
 
-    long countByFolderId(
-            Long folderId
-    );
-
 
     @Modifying
     @Query("""
@@ -191,5 +192,30 @@ AND f.isDeleted = true
 """)
     void deleteRecycleBinFiles(Long userId);
 
+    @Query("""
+SELECT f
+FROM UserFile f
+JOIN f.folders folder
+WHERE folder.id = :folderId
+AND f.isDeleted = false
+ORDER BY f.uploadedAt DESC
+""")
+    Page<UserFile> findFolderFiles(
+            @Param("folderId")
+            Long folderId,
+            Pageable pageable
+    );
+
+    @Query("""
+SELECT 
+    COALESCE(SUM(CASE WHEN f.type = 'DOCUMENT' THEN 1 ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN f.type = 'IMAGE' THEN 1 ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN f.type = 'VIDEO' THEN 1 ELSE 0 END), 0),
+    COALESCE(SUM(CASE WHEN f.type IN ('AUDIO', 'ARCHIVE', 'OTHER') THEN 1 ELSE 0 END), 0)
+FROM UserFile f
+WHERE f.user.id = :userId AND f.isDeleted = false
+""")
+    List<Object[]> getFileCountStats(@Param("userId") Long userId);
 
 }
+

@@ -112,7 +112,7 @@ export function OtpModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      //onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
@@ -151,8 +151,9 @@ export function OtpModal({
         <div className="text-sm text-slate-400 mb-6 leading-relaxed">
           {otpRequested ? (
             <>
-              We sent a 6-digit code to <span className="text-violet-400 font-medium">{maskedEmail}</span>.
-              Enter it below to access the file.
+              We sent a 6-digit code to{" "}
+              <span className="text-violet-400 font-medium">{maskedEmail}</span>
+              . Enter it below to access the file.
             </>
           ) : (
             <>
@@ -191,7 +192,9 @@ export function OtpModal({
               </div>
 
               <div className="flex items-center justify-center mt-4 mb-6">
-                <span className="text-xs text-slate-500">Didn't receive it?</span>
+                <span className="text-xs text-slate-500">
+                  Didn't receive it?
+                </span>
                 <button
                   type="button"
                   onClick={() => {
@@ -227,7 +230,9 @@ export function OtpModal({
             <button
               type={otpRequested ? "submit" : "button"}
               onClick={!otpRequested ? handleSend : undefined}
-              disabled={otpRequested ? isLoading || otp.join("").length < 6 : isSending}
+              disabled={
+                otpRequested ? isLoading || otp.join("").length < 6 : isSending
+              }
               className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-white transition flex items-center justify-center gap-2"
               style={{
                 background: otpRequested
@@ -239,7 +244,13 @@ export function OtpModal({
                   : isSending
                     ? "#4c3a9e"
                     : "#7c5fe6",
-                opacity: otpRequested ? (isLoading ? 0.8 : 1) : isSending ? 0.8 : 1,
+                opacity: otpRequested
+                  ? isLoading
+                    ? 0.8
+                    : 1
+                  : isSending
+                    ? 0.8
+                    : 1,
               }}
             >
               {otpRequested ? (
@@ -250,7 +261,9 @@ export function OtpModal({
                   </>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    <span className="material-symbols-outlined text-sm">
+                      arrow_forward
+                    </span>
                     Verify
                   </>
                 )
@@ -261,7 +274,9 @@ export function OtpModal({
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  <span className="material-symbols-outlined text-sm">
+                    arrow_forward
+                  </span>
                   Send OTP
                 </>
               )}

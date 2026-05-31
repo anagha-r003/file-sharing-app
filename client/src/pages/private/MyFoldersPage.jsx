@@ -1,24 +1,31 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import PageLayout from "../../layout/PageLayout";
 import FolderToolbar from "../../components/myfolders/FolderToolbar";
 import FolderGrid from "../../components/myfolders/FolderGrid";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import CreateFolderModal from "../../components/myfolders/CreateFolderModal";
 import Toast from "../../components/sharedlink/Toast";
-import { getFolders, deleteFolder } from "../../services/folderService";
+import RenameModal from "../../common/ui/RenameModal";
+import {
+  getFolders,
+  deleteFolder,
+  renameFolder,
+} from "../../services/folderService";
 import Pagination from "../../common/ui/Pagination";
+import { usePageSettings } from "../../context/LayoutContext";
 
 function MyFoldersPage() {
   const navigate = useNavigate();
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [folders, setFolders] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
+
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+
+  const [selectedFolder, setSelectedFolder] = useState(null);
 
   const [page, setPage] = useState(1);
 
@@ -38,18 +45,7 @@ function MyFoldersPage() {
     type: "success",
   });
 
-  // Responsive sidebar
-  useEffect(() => {
-    const handleResize = () => {
-      setSidebarOpen(window.innerWidth >= 1024);
-    };
-
-    handleResize();
-
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  usePageSettings({ title: "My Vaults" });
 
   // Fetch folders
   useEffect(() => {
@@ -107,17 +103,28 @@ function MyFoldersPage() {
     }
   }
 
+  async function handleFolderRename(newName) {
+    try {
+      await renameFolder(selectedFolder.id, newName);
+
+      setRenameModalOpen(false);
+
+      setSelectedFolder(null);
+
+      showToast(`"${newName}" renamed`);
+
+      fetchFolders();
+    } catch (err) {
+      showToast("Failed to rename folder", "error");
+    }
+  }
+
   const filtered = folders.filter((folder) =>
     folder.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
   return (
-    <PageLayout
-      title="My Vaults"
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      onMenuClick={() => setSidebarOpen((prev) => !prev)}
-    >
+    <>
       <div className="flex flex-col gap-4 md:gap-6">
         <FolderToolbar
           search={search}
@@ -139,6 +146,11 @@ function MyFoldersPage() {
           onCreate={() => setShowCreate(true)}
           onOpen={(folder) => navigate(`/my-folders/${folder.id}`)}
           onDelete={setDeleteTarget}
+          onRename={(folder) => {
+            setSelectedFolder(folder);
+
+            setRenameModalOpen(true);
+          }}
         />
 
         <Pagination
@@ -179,7 +191,17 @@ function MyFoldersPage() {
         visible={toast.visible}
         type={toast.type}
       />
-    </PageLayout>
+      <RenameModal
+        isOpen={renameModalOpen}
+        currentName={selectedFolder?.name}
+        type="folder"
+        onClose={() => {
+          setRenameModalOpen(false);
+          setSelectedFolder(null);
+        }}
+        onSave={handleFolderRename}
+      />
+    </>
   );
 }
 

@@ -21,7 +21,10 @@ function SkeletonGrid() {
 function EmptyState({ search, onClear, onCreate }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-      <span className="material-symbols-outlined text-slate-700" style={{ fontSize: 56 }}>
+      <span
+        className="material-symbols-outlined text-slate-700"
+        style={{ fontSize: 56 }}
+      >
         folder_open
       </span>
       {search ? (
@@ -38,13 +41,17 @@ function EmptyState({ search, onClear, onCreate }) {
         </>
       ) : (
         <>
-          <p className="text-slate-400 text-sm">You haven't created any vaults yet</p>
+          <p className="text-slate-400 text-sm">
+            You haven't created any vaults yet
+          </p>
           <button
             onClick={onCreate}
             className="flex items-center gap-2 px-4 py-2 bg-violet-600
                        hover:bg-violet-500 rounded-xl text-white text-sm font-semibold transition"
           >
-            <span className="material-symbols-outlined text-base">create_new_folder</span>
+            <span className="material-symbols-outlined text-base">
+              create_new_folder
+            </span>
             New vault
           </button>
         </>
@@ -53,7 +60,16 @@ function EmptyState({ search, onClear, onCreate }) {
   );
 }
 
-function FolderGrid({ folders, loading, search, onClear, onCreate, onOpen, onDelete }) {
+function FolderGrid({
+  folders,
+  loading,
+  search,
+  onClear,
+  onCreate,
+  onOpen,
+  onDelete,
+  onRename,
+}) {
   return (
     <Card className="!p-4 md:!p-6">
       {loading ? (
@@ -68,6 +84,7 @@ function FolderGrid({ folders, loading, search, onClear, onCreate, onOpen, onDel
               folder={folder}
               onClick={() => onOpen(folder)}
               onDelete={() => onDelete(folder)}
+              onRename={() => onRename(folder)}
             />
           ))}
         </div>

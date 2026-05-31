@@ -58,6 +58,8 @@ const RegisterPage = () => {
       form.firstName.trim().length > 30
     ) {
       frontendErrors.firstName = "First name must be 2 to 30 characters";
+    } else if (!/^[A-Za-z_]+$/.test(form.firstName.trim())) {
+      frontendErrors.firstName = "Invalid first name";
     }
 
     // Last Name Validation
@@ -305,6 +307,10 @@ const RegisterPage = () => {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="••••••••"
+                  onCopy={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  onCut={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
                   className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
                 />
                 {errors.password && (
@@ -333,6 +339,10 @@ const RegisterPage = () => {
                   value={form.confirmPassword}
                   onChange={handleChange}
                   placeholder="••••••••"
+                  onCopy={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  onCut={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
                   className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
                 />
 

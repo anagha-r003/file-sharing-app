@@ -103,10 +103,10 @@ public class UserFile {
 
     private LocalDateTime lastDownloadedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "folder_id")
+    @ManyToMany(mappedBy = "files")
     @JsonIgnore
-    private Folder folder;
+    private Set<Folder> folders =
+            new HashSet<>();
 
 
     // File owner

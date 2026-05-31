@@ -1,6 +1,6 @@
 import { useState } from "react";
-import PageLayout from "../../layout/PageLayout";
 import { sendSupportMessage } from "../../services/supportService";
+import { usePageSettings } from "../../context/LayoutContext";
 import {
   MessageCircle,
   ChevronDown,
@@ -347,8 +347,9 @@ function ContactCard() {
 // SupportPage
 // ─────────────────────────────────────────────────────────────────────────────
 export default function SupportPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  usePageSettings({ title: "Support" });
 
   // Filter FAQ questions across all categories by search term
   const filteredFAQs = FAQ_ITEMS.map((cat) => ({
@@ -362,12 +363,7 @@ export default function SupportPage() {
   })).filter((cat) => cat.questions.length > 0);
 
   return (
-    <PageLayout
-      title="Support"
-      sidebarOpen={sidebarOpen}
-      onMenuClick={() => setSidebarOpen(true)}
-      setSidebarOpen={setSidebarOpen}
-    >
+    <>
       <div className="max-w-5xl mx-auto w-full space-y-6">
         {/* ── Page heading ── */}
         <div>
@@ -480,6 +476,6 @@ export default function SupportPage() {
           </div>
         </div>
       </div>
-    </PageLayout>
+    </>
   );
 }

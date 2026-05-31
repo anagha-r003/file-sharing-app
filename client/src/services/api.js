@@ -1,6 +1,26 @@
 import axios from "axios";
+import { isAccessTokenExpired } from "../utils/tokenUtils";
 
 let refreshPromise = null;
+let onSessionExpired = null;
+
+const REFRESH_LOCK_KEY = "auth_refresh_lock";
+const REFRESH_LOCK_TTL_MS = 15000;
+
+// ─────────────────────────────────────────────
+// Session expiry callback (registered by AuthContext)
+// ─────────────────────────────────────────────
+export const setSessionExpiredHandler = (handler) => {
+  onSessionExpired = handler;
+};
+
+const clearSession = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("user");
+  onSessionExpired?.();
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ─────────────────────────────────────────────
 // Device ID
@@ -14,6 +34,110 @@ const getOrCreateDeviceId = () => {
   }
 
   return deviceId;
+};
+
+const getRefreshHeaders = () => ({
+  "X-Device-Id": getOrCreateDeviceId(),
+});
+
+// ─────────────────────────────────────────────
+// Cross-tab refresh coordination
+// ─────────────────────────────────────────────
+const isRefreshLockHeld = () => {
+  const lockTs = localStorage.getItem(REFRESH_LOCK_KEY);
+  if (!lockTs) return false;
+  return Date.now() - Number(lockTs) < REFRESH_LOCK_TTL_MS;
+};
+
+const waitForCrossTabRefresh = async (tokenBefore) => {
+  for (let i = 0; i < 100; i++) {
+    await sleep(100);
+
+    const currentToken = localStorage.getItem("accessToken");
+    if (
+      currentToken &&
+      currentToken !== tokenBefore &&
+      !isAccessTokenExpired(currentToken, 0)
+    ) {
+      return currentToken;
+    }
+
+    if (!isRefreshLockHeld()) {
+      break;
+    }
+  }
+
+  const finalToken = localStorage.getItem("accessToken");
+  if (finalToken && !isAccessTokenExpired(finalToken, 0)) {
+    return finalToken;
+  }
+
+  return null;
+};
+
+const callRefreshEndpoint = async () => {
+  const res = await axios.post(
+    "http://localhost:8080/auth/refresh",
+    {},
+    {
+      withCredentials: true,
+      headers: getRefreshHeaders(),
+    },
+  );
+
+  const newAccessToken = res.data.data.accessToken;
+  localStorage.setItem("accessToken", newAccessToken);
+  return newAccessToken;
+};
+
+const performRefresh = async () => {
+  const tokenBefore = localStorage.getItem("accessToken");
+
+  if (isRefreshLockHeld()) {
+    const tokenFromOtherTab = await waitForCrossTabRefresh(tokenBefore);
+    if (tokenFromOtherTab) {
+      return tokenFromOtherTab;
+    }
+  }
+
+  localStorage.setItem(REFRESH_LOCK_KEY, String(Date.now()));
+
+  try {
+    return await callRefreshEndpoint();
+  } finally {
+    localStorage.removeItem(REFRESH_LOCK_KEY);
+  }
+};
+
+const refreshWithRetry = async () => {
+  try {
+    return await performRefresh();
+  } catch (firstError) {
+    // Another tab may have rotated the refresh token — wait and retry once
+    await sleep(300);
+
+    const existingToken = localStorage.getItem("accessToken");
+    if (existingToken && !isAccessTokenExpired(existingToken, 0)) {
+      return existingToken;
+    }
+
+    try {
+      return await callRefreshEndpoint();
+    } catch {
+      clearSession();
+      throw firstError;
+    }
+  }
+};
+
+export const refreshAccessToken = async () => {
+  if (!refreshPromise) {
+    refreshPromise = refreshWithRetry().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
 };
 
 // ─────────────────────────────────────────────
@@ -48,48 +172,20 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    // No config → reject
     if (!original) {
       return Promise.reject(error);
     }
 
-    // Skip refresh logic for auth endpoints
     const isAuthRoute =
       original.url?.includes("/auth/login") ||
       original.url?.includes("/auth/logout") ||
       original.url?.includes("/auth/refresh");
 
-    // Only refresh for protected APIs
     if (error.response?.status === 401 && !original._retry && !isAuthRoute) {
       original._retry = true;
 
-      // If no refresh in flight, start one — otherwise all requests share the existing promise
-      if (!refreshPromise) {
-        refreshPromise = axios
-          .post(
-            "http://localhost:8080/auth/refresh",
-            {},
-            { withCredentials: true },
-          )
-          .then((res) => {
-            const newAccessToken = res.data.data.accessToken;
-            localStorage.setItem("accessToken", newAccessToken);
-            return newAccessToken;
-          })
-          .catch((err) => {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("user");
-            window.location.href = "/login";
-            return Promise.reject(err);
-          })
-          .finally(() => {
-            refreshPromise = null; // reset so next expiry starts fresh
-          });
-      }
-
       try {
-        // All concurrent 401s await the same promise — only 1 HTTP call fires
-        const newAccessToken = await refreshPromise;
+        const newAccessToken = await refreshAccessToken();
         original.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(original);
       } catch (err) {

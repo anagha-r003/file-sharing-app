@@ -44,11 +44,7 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
             String recipientEmail
     );
 
-    Optional<ShareLink>
-    findTopByFileIdAndRecipientEmailAndActiveTrueOrderByCreatedAtDesc(
-            Long fileId,
-            String recipientEmail
-    );
+
     @Query("""
         SELECT s FROM ShareLink s
         WHERE s.recipientEmail = :recipientEmail

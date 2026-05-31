@@ -1,27 +1,37 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
-import PageLayout from "../../layout/PageLayout";
 import FolderDetailHeader from "../../components/myfolders/FolderDetailHeader";
 import FolderFileList from "../../components/myfolders/FolderFileList";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import Toast from "../../components/sharedlink/Toast";
 import FileViewModal from "../../components/myfiles/FileViewModal";
 import { downloadFiles } from "../../services/fileService";
-
+import { usePageSettings } from "../../context/LayoutContext";
+import ShareModal from "../../components/myfiles/ShareModal/ShareModal";
+import RenameModal from "../../common/ui/RenameModal";
+import { handleResource404 } from "../../utils/handleResource404";
 import {
   getFolderById,
   removeFileFromFolder,
 } from "../../services/folderService";
 
+import { renameFile } from "../../services/fileService";
+
 function FolderDetailPage() {
   const { id } = useParams();
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [folder, setFolder] = useState(null);
 
   const [files, setFiles] = useState([]);
+
+  const [page, setPage] = useState(1);
+
+  const [pageSize] = useState(5);
+
+  const [totalItems, setTotalItems] = useState(0);
+
+  const [totalPages, setTotalPages] = useState(1);
 
   const [loading, setLoading] = useState(true);
 
@@ -31,29 +41,23 @@ function FolderDetailPage() {
 
   const [viewingFile, setViewingFile] = useState(null);
 
+  const [sharingFile, setSharingFile] = useState(null);
+
+  const [renamingFile, setRenamingFile] = useState(null);
+
   const [toast, setToast] = useState({
     visible: false,
     message: "",
     type: "success",
   });
+  const navigate = useNavigate();
 
-  // Responsive sidebar
-  useEffect(() => {
-    const handleResize = () => {
-      setSidebarOpen(window.innerWidth >= 1024);
-    };
-
-    handleResize();
-
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  usePageSettings({ title: folder?.name ?? "Folder" });
 
   // Fetch folder
   useEffect(() => {
     fetchFolder();
-  }, [id]);
+  }, [id, page]);
 
   function showToast(message, type = "success") {
     setToast({
@@ -74,9 +78,7 @@ function FolderDetailPage() {
     setLoading(true);
 
     try {
-      const response = await getFolderById(id);
-
-      console.log("Folder response:", response);
+      const response = await getFolderById(id, page - 1, pageSize);
 
       // actual folder object
       const folderData = response.data;
@@ -84,7 +86,15 @@ function FolderDetailPage() {
       setFolder(folderData);
 
       setFiles(folderData.files || []);
+
+      setTotalItems(folderData.filesCount || 0);
+
+      setTotalPages(Math.ceil(folderData.filesCount / pageSize));
     } catch (err) {
+      if (handleResource404(err, navigate)) {
+        return;
+      }
+
       showToast("Failed to load folder", "error");
     } finally {
       setLoading(false);
@@ -99,23 +109,45 @@ function FolderDetailPage() {
 
       showToast(`"${file.name}" removed from folder`);
 
-      fetchFolder();
+      if (files.length === 1 && page > 1) {
+        setPage((prev) => prev - 1);
+      } else {
+        fetchFolder();
+      }
     } catch (err) {
       showToast("Failed to remove file", "error");
     }
   }
+
+  const handleRename = async (file, newName) => {
+    try {
+      await renameFile(file.id, newName);
+
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === file.id
+            ? {
+                ...f,
+                name: newName,
+              }
+            : f,
+        ),
+      );
+
+      setRenamingFile(null);
+
+      showToast(`"${newName}" renamed successfully`, "success");
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Rename failed", "error");
+    }
+  };
 
   const filtered = files.filter((file) =>
     file.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
   return (
-    <PageLayout
-      title={folder?.name ?? "Folder"}
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      onMenuClick={() => setSidebarOpen((prev) => !prev)}
-    >
+    <>
       <div className="flex flex-col gap-4 md:gap-5 max-w-4xl">
         <FolderDetailHeader folder={folder} fileCount={files.length} />
 
@@ -127,6 +159,13 @@ function FolderDetailPage() {
           onSearchClear={() => setSearch("")}
           onRemove={setRemoveTarget}
           onView={setViewingFile}
+          onShare={setSharingFile}
+          onRename={setRenamingFile}
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={totalItems}
+          onPageChange={setPage}
         />
       </div>
 
@@ -151,7 +190,21 @@ function FolderDetailPage() {
           onDownload={() => downloadFiles([viewingFile.id])}
         />
       )}
-    </PageLayout>
+
+      {sharingFile && (
+        <ShareModal file={sharingFile} onClose={() => setSharingFile(null)} />
+      )}
+
+      {renamingFile && (
+        <RenameModal
+          isOpen={true}
+          type="file"
+          currentName={renamingFile.name}
+          onClose={() => setRenamingFile(null)}
+          onSave={(newName) => handleRename(renamingFile, newName)}
+        />
+      )}
+    </>
   );
 }
 

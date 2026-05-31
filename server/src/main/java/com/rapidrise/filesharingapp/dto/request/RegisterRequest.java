@@ -10,6 +10,12 @@ public class RegisterRequest {
 
     @NotBlank(message = "First name is required")
     @Size(min = 2, max = 30, message = "First name must be 2 to 30 characters")
+    @Pattern(
+            regexp =
+                    "^[A-Za-z_]+$",
+            message =
+                    "First name can only contain letters and underscore"
+    )
     private String firstName;
 
     @NotBlank(message = "Last name is required")

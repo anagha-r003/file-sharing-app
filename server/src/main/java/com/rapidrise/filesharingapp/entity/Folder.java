@@ -6,8 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -54,13 +54,20 @@ public class Folder {
     @JsonIgnore
     private User user;
 
-    // One folder -> many files
-    @OneToMany(
-            mappedBy = "folder"
+    @ManyToMany
+    @JoinTable(
+            name = "folder_files",
+            joinColumns = @JoinColumn(
+                    name = "folder_id"
+            ),
+            inverseJoinColumns =
+            @JoinColumn(
+                    name = "file_id"
+            )
     )
     @JsonIgnore
-    private List<UserFile> files =
-            new ArrayList<>();
+    private Set<UserFile> files =
+            new HashSet<>();
 
     @PrePersist
     public void onCreate() {

@@ -1,6 +1,7 @@
 package com.rapidrise.filesharingapp.service;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
+import com.rapidrise.filesharingapp.dto.request.RenameRequest;
 import com.rapidrise.filesharingapp.dto.response.FileResponse;
 import com.rapidrise.filesharingapp.entity.User;
 import com.rapidrise.filesharingapp.entity.UserFile;
@@ -111,7 +112,9 @@ public class FileService {
     );
 
     @Transactional
-    public ResponseEntity<ResponseStructure<String>> uploadFiles(
+    public ResponseEntity<
+            ResponseStructure<String>>
+    uploadFiles(
             List<MultipartFile> files
     ) {
 
@@ -120,54 +123,101 @@ public class FileService {
                 files.size()
         );
 
-        User user = SecurityUtil.getCurrentUser();
+        User user =
+                SecurityUtil
+                        .getCurrentUser();
 
-        log.info("Current user = {}", user.getEmail());
+        log.info(
+                "Current user = {}",
+                user.getEmail()
+        );
 
-        initializeUserStorage(user);
+        initializeUserStorage(
+                user
+        );
 
-        validateUploadRequest(files, user);
+        validateUploadRequest(
+                files,
+                user
+        );
 
-        Path uploadPath = createUploadDirectories();
+        Path uploadPath =
+                createUploadDirectories();
 
-        List<UserFile> savedFiles = new ArrayList<>();
+        Path baseUploadPath =
+                Paths.get(uploadDir);
 
-        List<Path> writtenPaths = new ArrayList<>();
+        List<UserFile> savedFiles =
+                new ArrayList<>(
+                        files.size()
+                );
 
-        long totalUploadedSize = 0;
+        List<Path> writtenPaths =
+                new ArrayList<>();
+
+        long totalUploadedSize = 0L;
 
         try {
 
             for (MultipartFile file : files) {
 
                 String originalName =
-                        sanitizeFilename(file.getOriginalFilename());
+                        sanitizeFilename(
+                                file.getOriginalFilename()
+                        );
+
+                String displayName =
+                        generateUniqueFileName(
+                                originalName,
+                                user
+                        );
 
                 String extension =
-                        getExtension(originalName);
+                        getExtension(
+                                originalName
+                        );
 
                 String storedFileName =
-                        UUID.randomUUID() + extension;
+                        UUID.randomUUID()
+                                + extension;
 
-                Path filePath = uploadPath
-                        .resolve(storedFileName)
-                        .normalize();
+                Path filePath =
+                        uploadPath
+                                .resolve(
+                                        storedFileName
+                                )
+                                .normalize();
 
-                validateResolvedPath(filePath, uploadPath);
+                validateResolvedPath(
+                        filePath,
+                        uploadPath
+                );
 
-                String mimeType = detectMimeType(file);
+                String mimeType =
+                        detectMimeType(
+                                file
+                        );
 
-                if (!ALLOWED_MIME_TYPES.contains(mimeType)) {
+                if (!ALLOWED_MIME_TYPES
+                        .contains(mimeType)) {
 
                     throw new InvalidFileException(
-                            "File type not allowed: " + mimeType
+                            "File type not allowed: "
+                                    + mimeType
                     );
                 }
 
-                storeFile(file, filePath);
+                // Store physical file
+                storeFile(
+                        file,
+                        filePath
+                );
 
-                writtenPaths.add(filePath);
+                writtenPaths.add(
+                        filePath
+                );
 
+                // Generate preview
                 String previewPath =
                         generatePreviewSafely(
                                 filePath,
@@ -178,27 +228,48 @@ public class FileService {
                 if (previewPath != null) {
 
                     writtenPaths.add(
-                            Paths.get(uploadDir)
-                                    .resolve(previewPath)
+                            baseUploadPath
+                                    .resolve(
+                                            previewPath
+                                    )
                     );
                 }
 
-                UserFile userFile = UserFile.builder()
-                        .name(originalName)
-                        .storedName(storedFileName)
-                        .path(filePath.toString())
-                        .mimeType(mimeType)
-                        .type(FileType.fromMimeType(mimeType))
-                        .size(file.getSize())
-                        .previewPath(previewPath)
-                        .isDeleted(false)
-                        .isStarred(false)
-                        .user(user)
-                        .build();
+                UserFile userFile =
+                        UserFile.builder()
+                                .name(displayName)
+                                .storedName(
+                                        storedFileName
+                                )
+                                .path(
+                                        filePath.toString()
+                                )
+                                .mimeType(
+                                        mimeType
+                                )
+                                .type(
+                                        FileType
+                                                .fromMimeType(
+                                                        mimeType
+                                                )
+                                )
+                                .size(
+                                        file.getSize()
+                                )
+                                .previewPath(
+                                        previewPath
+                                )
+                                .isDeleted(false)
+                                .isStarred(false)
+                                .user(user)
+                                .build();
 
-                savedFiles.add(userFile);
+                savedFiles.add(
+                        userFile
+                );
 
-                totalUploadedSize += file.getSize();
+                totalUploadedSize +=
+                        file.getSize();
             }
 
         } catch (Exception e) {
@@ -209,23 +280,39 @@ public class FileService {
                     e
             );
 
-            cleanupWrittenFiles(writtenPaths);
+            cleanupWrittenFiles(
+                    writtenPaths
+            );
 
             throw e;
         }
 
-        fileRepository.saveAll(savedFiles);
-
-        for (UserFile saved : savedFiles) {
-            activityLogService.log(user, "UPLOAD", saved.getName(),
-                    "by " + user.getFirstName());
-        }
-
-        user.setStorageUsed(
-                user.getStorageUsed() + totalUploadedSize
+        // Save all files at once
+        fileRepository.saveAll(
+                savedFiles
         );
 
-        userRepository.save(user);
+        // Log upload activity
+        for (UserFile saved : savedFiles) {
+
+            activityLogService.log(
+                    user,
+                    "UPLOAD",
+                    saved.getName(),
+                    "by "
+                            + user.getFirstName()
+            );
+        }
+
+        // Update storage usage once
+        user.setStorageUsed(
+                user.getStorageUsed()
+                        + totalUploadedSize
+        );
+
+        userRepository.save(
+                user
+        );
 
         log.info(
                 "{} file(s) uploaded successfully by userId={}",
@@ -239,7 +326,6 @@ public class FileService {
                 null
         );
     }
-
     public ResponseEntity<ResponseStructure<Page<FileResponse>>>
     getUserFiles(
             int page,
@@ -289,6 +375,30 @@ public class FileService {
                 HttpStatus.OK,
                 "Files fetched successfully",
                 dtoPage
+        );
+    }
+
+    public ResponseEntity<ResponseStructure<Map<String, Long>>> getFileStats() {
+        log.info("Fetching user file statistics");
+        User user = SecurityUtil.getCurrentUser();
+        List<Object[]> results = fileRepository.getFileCountStats(user.getId());
+        Map<String, Long> stats = new HashMap<>();
+        if (results != null && !results.isEmpty()) {
+            Object[] row = results.get(0);
+            stats.put("documents", ((Number) (row[0] != null ? row[0] : 0)).longValue());
+            stats.put("images", ((Number) (row[1] != null ? row[1] : 0)).longValue());
+            stats.put("videos", ((Number) (row[2] != null ? row[2] : 0)).longValue());
+            stats.put("others", ((Number) (row[3] != null ? row[3] : 0)).longValue());
+        } else {
+            stats.put("documents", 0L);
+            stats.put("images", 0L);
+            stats.put("videos", 0L);
+            stats.put("others", 0L);
+        }
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "File stats fetched successfully",
+                stats
         );
     }
 
@@ -480,22 +590,67 @@ public class FileService {
                 .body(resource);
     }
 
-    public ResponseEntity<Resource> viewFile(Long fileId) throws IOException {
-        UserFile file = fileRepository.findById(fileId)
-                .orElseThrow(() -> new FileNotFoundException("File not found"));
+    public ResponseEntity<Resource>
+    viewFile(Long fileId)
+            throws IOException {
 
-        Path path = Paths.get(file.getPath()).toAbsolutePath().normalize();
-        Resource resource = new UrlResource(path.toUri());
+        User user =
+                SecurityUtil.getCurrentUser();
 
-        if (!resource.exists()) {
-            return ResponseEntity.notFound().build();
+        // SECURITY FIX
+        UserFile file =
+                getAuthorizedFile(
+                        fileId
+                );
+
+        Path path =
+                Paths.get(
+                                file.getPath()
+                        )
+                        .toAbsolutePath()
+                        .normalize();
+
+        log.info(
+                "Checking file path: {}",
+                path
+        );
+
+        // CHECK PHYSICAL FILE EXISTS
+        if (!Files.exists(path)) {
+
+            log.error(
+                    "Physical file missing: {}",
+                    path
+            );
+
+            throw new FileNotFoundException(
+                    "File no longer exists in storage"
+            );
         }
 
+        Resource resource =
+                new UrlResource(
+                        path.toUri()
+                );
+
+        String contentType =
+                file.getMimeType() != null
+                        ? file.getMimeType()
+                        : "application/octet-stream";
+
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(file.getMimeType()))
-                // ✅ inline = browser displays it, not downloads it
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + file.getName() + "\"")
+                .contentType(
+                        MediaType.parseMediaType(
+                                contentType
+                        )
+                )
+                .header(
+                        HttpHeaders
+                                .CONTENT_DISPOSITION,
+                        "inline; filename=\""
+                                + file.getName()
+                                + "\""
+                )
                 .body(resource);
     }
 
@@ -571,6 +726,91 @@ public class FileService {
                 HttpStatus.OK,
                 "Starred files fetched successfully",
                 dtoPage
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<
+            ResponseStructure<String>>
+    renameFile(
+            Long fileId,
+            RenameRequest request
+    ) {
+
+        UserFile file =
+                getAuthorizedFile(
+                        fileId
+                );
+
+        String newName =
+                request.getName()
+                        .trim();
+
+        if (newName.isBlank()) {
+
+            throw new InvalidFileException(
+                    "File name cannot be empty"
+            );
+        }
+
+        int dotIndex =
+                file.getName()
+                        .lastIndexOf(
+                                "."
+                        );
+
+        String extension =
+                dotIndex != -1
+                        ? file.getName()
+                        .substring(dotIndex)
+                        : "";
+
+        if (
+                !extension.isBlank()
+                        &&
+                        newName.endsWith(
+                                extension
+                        )
+        ) {
+
+            newName =
+                    newName.substring(
+                            0,
+                            newName.length()
+                                    - extension.length()
+                    );
+        }
+
+        String finalName =
+                newName
+                        + extension;
+
+        if (
+                file.getName()
+                        .equals(
+                                finalName
+                        )
+        ) {
+
+            return ResponseBuilder.build(
+                    HttpStatus.OK,
+                    "File name unchanged",
+                    null
+            );
+        }
+
+        file.setName(
+                finalName
+        );
+
+        fileRepository.save(
+                file
+        );
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "File renamed successfully",
+                null
         );
     }
 
@@ -682,6 +922,22 @@ public class FileService {
 
             throw new InvalidFileException(
                     "Invalid filename"
+            );
+        }
+
+        if (filename.matches(
+                ".*[<>:\"/\\\\|?*].*"
+        )) {
+
+            throw new InvalidFileException(
+                    "Invalid file name"
+            );
+        }
+
+        if (filename.startsWith(".")) {
+
+            throw new InvalidFileException(
+                    "Hidden files are not allowed"
             );
         }
     }
@@ -844,5 +1100,47 @@ public class FileService {
                 );
             }
         }
+    }
+
+    private String generateUniqueFileName(
+            String originalName,
+            User user
+    ) {
+
+        int dotIndex = originalName.lastIndexOf(".");
+
+        String baseName;
+        String extension = "";
+
+        if (dotIndex > 0) {
+            baseName =
+                    originalName.substring(0, dotIndex);
+
+            extension =
+                    originalName.substring(dotIndex);
+        } else {
+            baseName = originalName;
+        }
+
+        String finalName = originalName;
+
+        int count = 1;
+
+        while (
+                fileRepository.existsByNameAndUserId(
+                        finalName,
+                        user.getId()
+                )
+        ) {
+
+            finalName =
+                    baseName +
+                            "(" + count + ")" +
+                            extension;
+
+            count++;
+        }
+
+        return finalName;
     }
 }
