@@ -58,7 +58,7 @@ export default function StorageAlertCard({ refreshKey }) {
         >
           {isCritical
             ? "Storage critically full. Delete unnecessary files to continue uploading."
-            : "Storage almost full. Clean up unused files to avoid upload issues."}
+            : "Clean up unused files to avoid upload issues."}
         </p>
       </div>
     </div>
