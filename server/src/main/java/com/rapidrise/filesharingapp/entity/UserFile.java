@@ -7,6 +7,8 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -101,10 +103,11 @@ public class UserFile {
 
     private LocalDateTime lastDownloadedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "folder_id")
+    @ManyToMany(mappedBy = "files")
     @JsonIgnore
-    private Folder folder;
+    private Set<Folder> folders =
+            new HashSet<>();
+
 
     // File owner
     @ManyToOne(fetch = FetchType.LAZY)

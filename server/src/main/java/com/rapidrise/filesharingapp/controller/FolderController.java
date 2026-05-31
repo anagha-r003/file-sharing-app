@@ -2,9 +2,11 @@ package com.rapidrise.filesharingapp.controller;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.dto.request.CreateFolderRequest;
+import com.rapidrise.filesharingapp.dto.request.RenameRequest;
 import com.rapidrise.filesharingapp.dto.response.FolderResponse;
 import com.rapidrise.filesharingapp.service.FolderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,12 +35,26 @@ public class FolderController {
 
     @GetMapping
     public ResponseEntity<
-                ResponseStructure<
-                        List<FolderResponse>>>
-    getFolders() {
+            ResponseStructure<
+                    Page<FolderResponse>>>
+    getFolders(
+
+            @RequestParam(
+                    defaultValue = "0"
+            )
+            int page,
+
+            @RequestParam(
+                    defaultValue = "8"
+            )
+            int size
+    ) {
 
         return folderService
-                .getFolders();
+                .getFolders(
+                        page,
+                        size
+                );
     }
 
     @DeleteMapping("/{folderId}")
@@ -97,13 +113,47 @@ public class FolderController {
             ResponseStructure<
                     FolderResponse>>
     getFolderById(
+
             @PathVariable
-            Long folderId
+            Long folderId,
+
+            @RequestParam(
+                    defaultValue = "0"
+            )
+            int page,
+
+            @RequestParam(
+                    defaultValue = "5"
+            )
+            int size
     ) {
 
         return folderService
                 .getFolderById(
-                        folderId
+                        folderId,
+                        page,
+                        size
+                );
+    }
+
+    @PatchMapping(
+            "/rename/{folderId}"
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    renameFolder(
+
+            @PathVariable
+            Long folderId,
+
+            @RequestBody
+            RenameRequest request
+    ) {
+
+        return folderService
+                .renameFolder(
+                        folderId,
+                        request
                 );
     }
 }

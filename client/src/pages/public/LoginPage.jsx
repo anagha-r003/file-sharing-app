@@ -11,7 +11,7 @@ function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -19,22 +19,57 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    setErrors({});
+
+    let frontendErrors = {};
+
+    // Email Validation
+    if (!formData.email.trim()) {
+      frontendErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      frontendErrors.email = "Enter a valid email address";
+    }
+
+    // Password Validation
+    if (!formData.password.trim()) {
+      frontendErrors.password = "Password is required";
+    }
+
+    // STOP API if validation fails
+    if (Object.keys(frontendErrors).length > 0) {
+      setErrors(frontendErrors);
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
-    setError("");
 
     try {
-      const response = await loginUser(formData);
+      const payload = {
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      };
 
-      // Debug: log response to see exact field names from your backend
+      const response = await loginUser(payload);
+
       console.log("Login response:", response);
 
       login(response.data);
-      navigate("/dashboard");
+
+      const params = new URLSearchParams(window.location.search);
+
+      const redirect = params.get("redirect");
+
+      const isShareRedirect = redirect && redirect.startsWith("/public/share/");
+
+      navigate(isShareRedirect ? "/shared-with-me" : redirect || "/dashboard");
     } catch (err) {
       console.error("Login error:", err);
-      const message =
-        err.response?.data?.message || "Invalid email or password";
-      setError(message);
+
+      setErrors({
+        general: err.response?.data?.message || "Invalid email or password",
+      });
     } finally {
       setLoading(false);
     }
@@ -68,9 +103,15 @@ function LoginPage() {
               placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
-              required
               className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+              onCopy={(e) => e.preventDefault()}
+              onPaste={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
             />
+            {errors.email && (
+              <p className="text-red-400 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -85,7 +126,10 @@ function LoginPage() {
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
-                required
+                onCopy={(e) => e.preventDefault()}
+                onPaste={(e) => e.preventDefault()}
+                onCut={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
                 className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
               />
 
@@ -97,8 +141,10 @@ function LoginPage() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-red-400 text-xs mt-1">{errors.password}</p>
+            )}
 
-           
             <div className="flex justify-end">
               <Link
                 to="/forgot-password"
@@ -109,7 +155,9 @@ function LoginPage() {
             </div>
           </div>
 
-          {error && <p className="text-red-400 text-sm font-medium">{error}</p>}
+          {errors.general && (
+            <p className="text-red-400 text-sm font-medium">{errors.general}</p>
+          )}
 
           <button
             type="submit"

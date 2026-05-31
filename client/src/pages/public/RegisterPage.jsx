@@ -1,13 +1,20 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { registerUser } from "../../services/authService";
-import { toast } from "react-toastify";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Toast from "../../components/sharedlink/Toast";
 
 const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
+
+  const [toastState, setToastState] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
 
   const [form, setForm] = useState({
     firstName: "",
@@ -40,20 +47,87 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({});
 
     let frontendErrors = {};
 
-    // frontend UX validation
-    if (form.password !== form.confirmPassword) {
+    // First Name Validation
+    if (!form.firstName.trim()) {
+      frontendErrors.firstName = "First name is required";
+    } else if (
+      form.firstName.trim().length < 2 ||
+      form.firstName.trim().length > 30
+    ) {
+      frontendErrors.firstName = "First name must be 2 to 30 characters";
+    } else if (!/^[A-Za-z_]+$/.test(form.firstName.trim())) {
+      frontendErrors.firstName = "Invalid first name";
+    }
+
+    // Last Name Validation
+    if (!form.lastName.trim()) {
+      frontendErrors.lastName = "Last name is required";
+    } else if (
+      form.lastName.trim().length < 1 ||
+      form.lastName.trim().length > 30
+    ) {
+      frontendErrors.lastName = "Last name must be 1 to 30 characters";
+    }
+
+    // Email Validation
+    if (!form.email.trim()) {
+      frontendErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      frontendErrors.email = "Enter a valid email address";
+    }
+
+    // Password Validation
+    if (!form.password) {
+      frontendErrors.password = "Password is required";
+    } else {
+      if (form.password.length < 8 || form.password.length > 20) {
+        frontendErrors.password = "Password must be 8 to 20 characters";
+      } else if (
+        !/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).*$/.test(form.password)
+      ) {
+        frontendErrors.password =
+          "Password must contain uppercase, lowercase, special character and number";
+      }
+    }
+
+    // Confirm Password Validation
+    if (!form.confirmPassword) {
+      frontendErrors.confirmPassword = "Confirm password is required";
+    } else if (form.password !== form.confirmPassword) {
       frontendErrors.confirmPassword = "Passwords do not match";
     }
 
+    // DOB Validation
+    if (!form.dob) {
+      frontendErrors.dob = "Date of birth is required";
+    } else {
+      const selectedDate = new Date(form.dob);
+      const today = new Date();
+
+      // Remove time for accurate comparison
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate >= today) {
+        frontendErrors.dob = "Date of birth must be in the past";
+      }
+    }
+
+    // STOP API call if frontend validation fails
+    if (Object.keys(frontendErrors).length > 0) {
+      setErrors(frontendErrors);
+      return;
+    }
+
+    setErrors({});
+
     try {
       const payload = {
-        firstName: form.firstName,
-        lastName: form.lastName,
-        email: form.email,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
         password: form.password,
         confirmPassword: form.confirmPassword,
         dob: form.dob,
@@ -61,13 +135,21 @@ const RegisterPage = () => {
 
       const response = await registerUser(payload);
 
-      toast.success("Registration successful", {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: true,
-        className:
-          "!bg-[#0e0e0e] !text-white !border !border-emerald-500/30 !rounded-xl !shadow-lg",
+      setToastState({
+        visible: true,
+        message: "Registration successful! ",
+        type: "success",
       });
+
+      setTimeout(() => {
+        setToastState((prev) => ({
+          ...prev,
+          visible: false,
+        }));
+
+        navigate("/login");
+      }, 2000);
+
       console.log("Success:", response);
 
       setForm({
@@ -91,37 +173,29 @@ const RegisterPage = () => {
         if (response.data && typeof response.data === "object") {
           backendErrors = response.data;
         } else {
-          const message = response.message;
-
-          if (message.toLowerCase().includes("email")) {
-            backendErrors.email = message;
-          } else if (
-            message.toLowerCase().includes("password") ||
-            message.toLowerCase().includes("match")
-          ) {
-            backendErrors.confirmPassword = message;
-          } else {
-            backendErrors.general = message;
-          }
+          backendErrors.general = response.message || "Something went wrong";
         }
       } else {
         backendErrors.general = "Something went wrong";
       }
 
-      setErrors({
-        ...backendErrors,
-        ...frontendErrors,
-      });
-    }
+      setErrors(backendErrors);
 
-    // If only frontend error exists but backend succeeds
-    if (Object.keys(frontendErrors).length > 0) {
-      setErrors((prev) => ({
-        ...prev,
-        ...frontendErrors,
-      }));
+      setToastState({
+        visible: true,
+        message: backendErrors.general || "Registration failed",
+        type: "error",
+      });
+
+      setTimeout(() => {
+        setToastState((prev) => ({
+          ...prev,
+          visible: false,
+        }));
+      }, 3000);
     }
   };
+
   return (
     <div className="bg-[#0e0e0e] text-white min-h-screen flex flex-col">
       {/* Top Navbar */}
@@ -150,15 +224,15 @@ const RegisterPage = () => {
           <div className="w-96 h-96 rounded-full bg-[#98a9ff] blur-[120px]"></div>
         </div>
 
-        {/* Glass Card */}
-        <div className="relative z-10 w-full max-w-2xl p-8 md:p-12 rounded-xl bg-[#1a1a1a]/60 backdrop-blur-2xl">
+        {/* Glass Card — max-w-lg is the key width reduction */}
+        <div className="relative z-10 w-full max-w-lg p-6 md:p-8 rounded-xl bg-[#1a1a1a]/60 backdrop-blur-2xl">
           {/* Heading */}
-          <div className="mb-12 text-center max-w-lg mx-auto">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
+          <div className="mb-6 text-center max-w-lg mx-auto">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-3">
               Create Your Vault
             </h1>
 
-            <p className="text-gray-400 text-base md:text-lg leading-relaxed">
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
               Securely store, manage, and share your files from one protected
               workspace.
             </p>
@@ -168,7 +242,7 @@ const RegisterPage = () => {
           <form
             onSubmit={handleSubmit}
             noValidate
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
           >
             <div className="space-y-2">
               <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
@@ -180,7 +254,7 @@ const RegisterPage = () => {
                 value={form.firstName}
                 placeholder="Alex"
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
               />
               {errors.firstName && (
                 <p className="text-red-400 text-xs mt-1">{errors.firstName}</p>
@@ -197,14 +271,14 @@ const RegisterPage = () => {
                 value={form.lastName}
                 placeholder="Vance"
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
               />
               {errors.lastName && (
                 <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>
               )}
             </div>
 
-            <div className="md:col-span-2 space-y-2">
+            <div className="sm:col-span-2 space-y-2">
               <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
                 Secure Email Address
               </label>
@@ -214,7 +288,7 @@ const RegisterPage = () => {
                 value={form.email}
                 placeholder="vance@obsidian.network"
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
               />
               {errors.email && (
                 <p className="text-red-400 text-xs mt-1">{errors.email}</p>
@@ -233,7 +307,11 @@ const RegisterPage = () => {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
+                  onCopy={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  onCut={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
                 />
                 {errors.password && (
                   <p className="text-red-400 text-xs mt-1">{errors.password}</p>
@@ -261,7 +339,11 @@ const RegisterPage = () => {
                   value={form.confirmPassword}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
+                  onCopy={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  onCut={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
                 />
 
                 {errors.confirmPassword && (
@@ -285,7 +367,7 @@ const RegisterPage = () => {
             </div>
 
             {form.password && (
-              <div className="px-1 py-1 space-y-3">
+              <div className="sm:col-span-2 px-1 py-1 space-y-3">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   Password Requirements
                 </p>
@@ -354,7 +436,7 @@ const RegisterPage = () => {
               </div>
             )}
 
-            <div className="md:col-span-2 space-y-2">
+            <div className="sm:col-span-2 space-y-2">
               <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
                 Date of Birth
               </label>
@@ -363,17 +445,17 @@ const RegisterPage = () => {
                 name="dob"
                 value={form.dob}
                 onChange={handleChange}
-                className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                className="w-full bg-[#131313] rounded-xl text-white py-2 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
               />
               {errors.dob && (
                 <p className="text-red-400 text-xs mt-1">{errors.dob}</p>
               )}
             </div>
 
-            <div className="md:col-span-2 mt-4">
+            <div className="sm:col-span-2 mt-2">
               <button
                 type="submit"
-                className="w-full py-4 bg-gradient-to-br from-[#98a9ff] to-[#4065ff] text-white font-extrabold text-lg rounded-xl hover:shadow-[0_0_25px_rgba(152,169,255,0.4)] transition-all active:scale-95"
+                className="w-full py-3 bg-gradient-to-br from-[#98a9ff] to-[#4065ff] text-white font-extrabold text-base rounded-xl hover:shadow-[0_0_25px_rgba(152,169,255,0.4)] transition-all active:scale-95"
               >
                 Join the Vault
               </button>
@@ -381,7 +463,7 @@ const RegisterPage = () => {
           </form>
 
           {/* Bottom Info */}
-          <div className="mt-10 text-center space-y-4">
+          <div className="mt-6 text-center space-y-3">
             <p className="text-gray-400 text-sm">
               Already have an account?
               <Link
@@ -392,7 +474,7 @@ const RegisterPage = () => {
               </Link>
             </p>
 
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 pt-6 border-t border-zinc-700/30">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4 border-t border-zinc-700/30">
               <div className="flex items-center gap-2">
                 <span className="text-cyan-400">✔</span>
                 <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
@@ -412,12 +494,12 @@ const RegisterPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-8 bg-black flex flex-col md:flex-row justify-between items-center px-12 gap-4">
-        <div className="text-xs tracking-wide text-gray-400 uppercase">
+      <footer className="w-full py-6 bg-black flex flex-col items-center px-6 gap-4 md:flex-row md:justify-between md:px-12">
+        <div className="text-xs tracking-wide text-gray-400 uppercase text-center md:text-left">
           © 2026 VaultLink. Protected storage. Trusted sharing.
         </div>
 
-        <nav className="flex gap-8">
+        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 md:flex-nowrap md:gap-8">
           <a className="text-xs tracking-wide text-gray-400 uppercase hover:text-cyan-400 transition-all">
             Privacy Policy
           </a>
@@ -429,6 +511,12 @@ const RegisterPage = () => {
           </a>
         </nav>
       </footer>
+
+      <Toast
+        message={toastState.message}
+        visible={toastState.visible}
+        type={toastState.type}
+      />
     </div>
   );
 };

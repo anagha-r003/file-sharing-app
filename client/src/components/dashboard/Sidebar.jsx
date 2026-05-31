@@ -1,12 +1,11 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 
 const navItems = [
   { label: "Dashboard", icon: "grid_view", path: "/dashboard" },
   { label: "My Files", icon: "description", path: "/my-files" },
-  { label: "My Collections", icon: "folder", path: "/my-folders" },
+  { label: "My Vaults", icon: "folder", path: "/my-folders" },
+  { label: "Shared With Me", icon: "folder_shared", path: "/shared-with-me" },
   { label: "Shared Links", icon: "share", path: "/shared-links" },
-  { label: "Analytics", icon: "bar_chart", path: "/analytics" },
   { label: "Starred", icon: "star", path: "/starred" },
   { label: "Recycle Bin", icon: "delete", path: "/recycle-bin" },
 ];

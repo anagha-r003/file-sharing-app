@@ -338,13 +338,26 @@ public class RecycleBinService {
     public ResponseEntity<ResponseStructure<Map<String, Object>>>
     emptyRecycleBin() throws IOException {
 
+        log.info("Empty recycle bin request received");
+
         User user = SecurityUtil.getCurrentUser();
+
+        log.info(
+                "Current user: {} (id={})",
+                user.getEmail(),
+                user.getId()
+        );
 
         List<UserFile> files =
                 fileRepository
                         .findAllByUserIdAndIsDeletedTrue(
                                 user.getId()
                         );
+
+        log.info(
+                "{} deleted file(s) found in recycle bin",
+                files.size()
+        );
 
         long totalFreedStorage = 0;
 
@@ -353,9 +366,23 @@ public class RecycleBinService {
 
         for (UserFile file : files) {
 
+            log.info(
+                    "Processing file: {} (id={})",
+                    file.getName(),
+                    file.getId()
+            );
+
+            // Fetch share links
             List<ShareLink> shares =
                     shareLinkRepository.findByFile(file);
 
+            log.info(
+                    "{} share link(s) found for file={}",
+                    shares.size(),
+                    file.getName()
+            );
+
+            // Save share history
             for (ShareLink share : shares) {
 
                 historyList.add(
@@ -375,35 +402,120 @@ public class RecycleBinService {
                 );
             }
 
+            // Delete share links
             shareLinkRepository.deleteAll(shares);
 
-            Files.deleteIfExists(
-                    Paths.get(file.getPath())
+            log.info(
+                    "Deleted {} share link(s) for file={}",
+                    shares.size(),
+                    file.getName()
             );
 
+            // Delete actual file
+            Path filePath =
+                    Paths.get(file.getPath())
+                            .normalize();
+
+            log.info(
+                    "Deleting physical file: {}",
+                    filePath.toAbsolutePath()
+            );
+
+            boolean fileDeleted =
+                    Files.deleteIfExists(filePath);
+
+            log.info(
+                    "Physical file deleted = {}",
+                    fileDeleted
+            );
+
+            // Delete preview file
             if (file.getPreviewPath() != null) {
 
-                Files.deleteIfExists(
-                        Paths.get(file.getPreviewPath())
+                Path previewPath =
+                        Paths.get(
+                                uploadDir,
+                                file.getPreviewPath()
+                        ).normalize();
+
+                log.info(
+                        "Deleting preview file: {}",
+                        previewPath.toAbsolutePath()
+                );
+
+                boolean previewDeleted =
+                        Files.deleteIfExists(
+                                previewPath
+                        );
+
+                log.info(
+                        "Preview deleted = {}",
+                        previewDeleted
+                );
+            } else {
+
+                log.info(
+                        "No preview file for {}",
+                        file.getName()
                 );
             }
 
-            totalFreedStorage += file.getSize();
+            totalFreedStorage +=
+                    file.getSize();
+
+            log.info(
+                    "Freed {} bytes from file={}",
+                    file.getSize(),
+                    file.getName()
+            );
         }
 
-        shareHistoryRepository.saveAll(historyList);
+        // Save share history
+        if (!historyList.isEmpty()) {
 
-        fileRepository.deleteAll(files);
+            shareHistoryRepository
+                    .saveAll(historyList);
 
-        user.setStorageUsed(
+            log.info(
+                    "{} share history record(s) saved",
+                    historyList.size()
+            );
+        }
+
+        // Delete DB records
+        fileRepository.deleteRecycleBinFiles(
+                user.getId()
+        );
+
+        fileRepository.flush();
+
+        log.info(
+                "Deleted recycle bin DB records for userId={}",
+                user.getId()
+        );
+
+        // Update storage
+        long oldStorage =
+                user.getStorageUsed();
+
+        long updatedStorage =
                 Math.max(
                         0,
-                        user.getStorageUsed()
+                        oldStorage
                                 - totalFreedStorage
-                )
+                );
+
+        user.setStorageUsed(
+                updatedStorage
         );
 
         userRepository.save(user);
+
+        log.info(
+                "Storage updated: {} -> {} bytes",
+                oldStorage,
+                updatedStorage
+        );
 
         Map<String, Object> response =
                 new HashMap<>();
@@ -413,13 +525,22 @@ public class RecycleBinService {
                 files.size()
         );
 
+        response.put(
+                "freedStorageBytes",
+                totalFreedStorage
+        );
+
+        log.info(
+                "Recycle bin cleared successfully. Deleted {} file(s)",
+                files.size()
+        );
+
         return ResponseBuilder.build(
                 HttpStatus.OK,
                 "Recycle bin cleared successfully",
                 response
         );
     }
-
     public ResponseEntity<ResponseStructure<RecycleBinStatsResponse>>
     getRecycleBinStats() {
 

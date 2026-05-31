@@ -9,10 +9,12 @@ import com.rapidrise.filesharingapp.entity.UserFile;
 import com.rapidrise.filesharingapp.enums.ShareType;
 import com.rapidrise.filesharingapp.exception.BadRequestException;
 import com.rapidrise.filesharingapp.exception.FileNotFoundException;
+import com.rapidrise.filesharingapp.exception.ShareLinkNotFoundException;
 import com.rapidrise.filesharingapp.exception.UnauthorizedAccessException;
 import com.rapidrise.filesharingapp.jwt.JwtService;
 import com.rapidrise.filesharingapp.repository.FileRepository;
 import com.rapidrise.filesharingapp.repository.ShareLinkRepository;
+import com.rapidrise.filesharingapp.repository.UserRepository;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
 import com.rapidrise.filesharingapp.util.SecurityUtil;
 import jakarta.transaction.Transactional;
@@ -35,9 +37,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.nio.file.Files;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,9 @@ public class ShareService {
     private final FileRepository fileRepository;
     private final EmailService emailService;
     private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
 
     @Value("${app.base-url}")
@@ -95,27 +98,32 @@ public class ShareService {
         List<ShareLinkResponse> responseList =
                 new ArrayList<>();
 
+        // Validate duplicate recipient emails
+        Set<String> uniqueEmails = new HashSet<>();
+
+        for (String email : request.getRecipientEmails()) {
+
+            String normalizedEmail =
+                    email.trim().toLowerCase();
+
+            if (!uniqueEmails.add(normalizedEmail)) {
+                throw new BadRequestException(
+                        "Duplicate recipient emails are not allowed: "
+                                + email
+                );
+            }
+        }
+
         for (String recipientEmail
                 : request.getRecipientEmails()) {
 
-            // Find existing active share
-            ShareLink existingShareLink =
-                    shareLinkRepository
-                            .findTopByFileIdAndRecipientEmailAndActiveTrueOrderByCreatedAtDesc(
-                                    file.getId(),
-                                    recipientEmail
-                            )
-                            .orElse(null);
-
-            // deactivate old active link
-            if (existingShareLink != null) {
-
-                existingShareLink
-                        .setActive(false);
-
-                shareLinkRepository
-                        .save(existingShareLink);
+            if (recipientEmail.equalsIgnoreCase(user.getEmail())) {
+                throw new BadRequestException(
+                        "You cannot share files with yourself"
+                );
             }
+
+            boolean recipientHasAccount = userRepository.findByEmail(recipientEmail).isPresent();
 
             // Generate token
             String token =
@@ -151,6 +159,7 @@ public class ShareService {
                             .requiresOtp(
                                     request.getShareType()
                                             == ShareType.RESTRICTED
+                                            && !recipientHasAccount
                             )
 
                             .file(file)
@@ -194,6 +203,11 @@ public class ShareService {
                             .requiresOtp(
                                     request.getShareType()
                                             == ShareType.RESTRICTED
+                                            && !recipientHasAccount
+                            )
+
+                            .shareType(
+                                    request.getShareType().name()
                             )
 
                             .sharedByName(
@@ -234,7 +248,7 @@ public class ShareService {
                 shareLinks
         );
 
-        // Activity log
+        // Activity log and automatic notification
         for (ShareLink shareLink
                 : shareLinks) {
 
@@ -246,6 +260,37 @@ public class ShareService {
                             + shareLink
                             .getRecipientEmail()
             );
+
+            userRepository.findByEmail(shareLink.getRecipientEmail())
+                    .ifPresent(recipient -> {
+                        notificationService.notifyFileShared(
+                                recipient,
+                                user,
+                                file,
+                                shareLink
+                        );
+
+                        if (shareLink.getShareType() == ShareType.RESTRICTED) {
+                            try {
+                                String shareUrl =
+                                        frontendUrl
+                                                + "/public/share/"
+                                                + shareLink.getToken();
+                                emailService.sendShareLinkEmail(
+                                        shareLink.getRecipientEmail(),
+                                        user.getFirstName(),
+                                        shareUrl,
+                                        shareLink.getMessage()
+                                );
+                            } catch (Exception e) {
+                                log.error(
+                                        "Failed to send automatic direct-share notification to {}: {}",
+                                        shareLink.getRecipientEmail(),
+                                        e.getMessage()
+                                );
+                            }
+                        }
+                    });
         }
 
         return ResponseBuilder.build(
@@ -330,6 +375,32 @@ public class ShareService {
         ShareLink shareLink =
                 getValidShareLink(token);
 
+        // Check physical file existence
+        Path filePath =
+                Paths.get(
+                        shareLink
+                                .getFile()
+                                .getPath()
+                ).normalize();
+
+        log.info(
+                "Checking shared file path: {}",
+                filePath.toAbsolutePath()
+        );
+
+        if (!Files.exists(filePath)) {
+
+            log.error(
+                    "Shared file missing: {}",
+                    filePath.toAbsolutePath()
+            );
+
+            throw new FileNotFoundException(
+                    "Shared file no longer exists"
+            );
+        }
+
+        shareLink.setAccessed(true);
         shareLinkRepository.save(shareLink);
 
         User owner = shareLink.getCreatedBy();
@@ -377,8 +448,11 @@ public class ShareService {
                         // NEW
                         .requiresOtp(
                                 shareLink
-                                        .getShareType()
-                                        == ShareType.RESTRICTED
+                                        .getRequiresOtp()
+                        )
+                        .shareType(
+                                shareLink
+                                        .getShareType() != null ? shareLink.getShareType().name() : null
                         );
 
 
@@ -481,47 +555,59 @@ public class ShareService {
                         pageable
                 );
 
-        LocalDateTime now = LocalDateTime.now();
-
-        // Check and update expired links
-        sharedFiles.forEach(shareLink -> {
-
-            if (Boolean.TRUE.equals(shareLink.getActive())
-                    && shareLink.getExpiresAt() != null
-                    && shareLink.getExpiresAt().isBefore(now)) {
-
-                shareLink.setActive(false);
-
-                shareLinkRepository.save(shareLink);
-            }
-        });
+        Set<String> accessedShareKeys = activityLogService.getAccessedShareKeys(
+                user.getId(),
+                sharedFiles.getContent()
+        );
 
         Page<ShareLinkResponse> response =
-                sharedFiles.map(shareLink ->
-                        ShareLinkResponse.builder()
-                                .id(shareLink.getId())
-                                .shareUrl(
-                                        frontendUrl
-                                                + "/public/share/"
-                                                + shareLink.getToken()
-                                )
-                                .recipientEmail(
-                                        shareLink.getRecipientEmail()
-                                )
-                                .fileName(
-                                        shareLink.getFile().getName()
-                                )
-                                .active(
-                                        shareLink.getActive()
-                                )
-                                .expiresAt(
-                                        shareLink.getExpiresAt()
-                                )
-                                .downloadCount(
-                                        shareLink.getDownloadCount()
-                                )
-                                .build()
-                );
+                sharedFiles.map(shareLink -> {
+
+                    String status= getShareStatus(shareLink);
+                    String fileName = shareLink.getFile().getName();
+                    String recipientEmail = shareLink.getRecipientEmail();
+                    boolean accessed = Boolean.TRUE.equals(shareLink.getAccessed())
+                            || accessedShareKeys.contains(
+                                    ActivityLogService.shareAccessKey(fileName, recipientEmail)
+                            );
+
+                    return ShareLinkResponse.builder()
+                            .id(shareLink.getId())
+                            .shareUrl(
+                                    frontendUrl
+                                            + "/public/share/"
+                                            + shareLink.getToken()
+                            )
+                            .recipientEmail(
+                                    shareLink.getRecipientEmail()
+                            )
+                            .fileName(
+                                    shareLink.getFile().getName()
+                            )
+                            .active(
+                                    shareLink.getActive()
+                            )
+                            .expiresAt(
+                                    shareLink.getExpiresAt()
+                            )
+                            .downloadCount(
+                                    shareLink.getDownloadCount()
+                            )
+                            .requiresOtp(
+                                    shareLink.getRequiresOtp()
+                            )
+                            .shareType(
+                                    shareLink.getShareType() != null
+                                            ? shareLink.getShareType().name()
+                                            : null
+                            )
+                            .fileId(
+                                    shareLink.getFile().getId()
+                            )
+                            .status(status)
+                            .accessed(accessed)
+                            .build();
+                });
 
         return ResponseBuilder.build(
                 HttpStatus.OK,
@@ -541,7 +627,7 @@ public class ShareService {
         ShareLink shareLink =
                 shareLinkRepository.findById(shareId)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ShareLinkNotFoundException(
                                         "Share link not found"
                                 ));
 
@@ -591,7 +677,7 @@ public class ShareService {
 
         if (!resource.exists()) {
 
-            throw new RuntimeException(
+            throw new FileNotFoundException(
                     "File not found"
             );
         }
@@ -659,8 +745,26 @@ public class ShareService {
                         accessToken
                 )) {
 
+            // Check if it is a valid regular user access token
+            if (jwtService.isTokenValid(accessToken)) {
+                String userEmail = jwtService.extractUsername(accessToken);
+                log.info(
+                        "LOGGED USER EMAIL = {}",
+                        userEmail
+                );
+
+                log.info(
+                        "RECIPIENT EMAIL = {}",
+                        shareLink.getRecipientEmail()
+                );
+                if (userEmail != null && userEmail.equalsIgnoreCase(shareLink.getRecipientEmail())) {
+                    log.info("ACCESS GRANTED via recipient user account login session");
+                    return;
+                }
+            }
+
             throw new UnauthorizedAccessException(
-                    "Invalid share access token"
+                    "Invalid share access token or user session"
             );
         }
 
@@ -719,13 +823,13 @@ public class ShareService {
         ShareLink shareLink =
                 shareLinkRepository.findByToken(token)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ShareLinkNotFoundException(
                                         "Invalid share link"
                                 ));
 
         if (!shareLink.getActive()) {
 
-            throw new RuntimeException(
+            throw new BadRequestException(
                     "Share link is inactive"
             );
         }
@@ -733,12 +837,150 @@ public class ShareService {
         if (shareLink.getExpiresAt()
                 .isBefore(LocalDateTime.now())) {
 
-            throw new RuntimeException(
+            throw new BadRequestException(
                     "Share link expired"
             );
         }
 
         return shareLink;
+    }
+
+
+    public ResponseEntity<ResponseStructure<Page<ShareLinkResponse>>>
+    getFilesSharedWithMe(int page, int size) {
+
+        log.info("Fetching files shared with me");
+
+        User user = SecurityUtil.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+
+        Page<ShareLink> sharedFiles =
+                shareLinkRepository
+                        .findAllSharedWithMe(
+                                user.getEmail(),
+                                pageable
+                        );
+
+        Page<ShareLinkResponse> response =
+                sharedFiles.map(shareLink -> {
+
+                    String status=getShareStatus(shareLink);
+
+                    return ShareLinkResponse.builder()
+                            .id(shareLink.getId())
+                            .shareUrl(
+                                    frontendUrl
+                                            + "/public/share/"
+                                            + shareLink.getToken()
+                            )
+                            .recipientEmail(
+                                    shareLink.getRecipientEmail()
+                            )
+                            .fileName(
+                                    shareLink.getFile().getName()
+                            )
+                            .active(
+                                    shareLink.getActive()
+                            )
+                            .expiresAt(
+                                    shareLink.getExpiresAt()
+                            )
+                            .downloadCount(
+                                    shareLink.getDownloadCount()
+                            )
+                            .sharedByName(
+                                    shareLink.getCreatedBy()
+                                            .getFirstName()
+                                            + " "
+                                            + shareLink.getCreatedBy()
+                                            .getLastName()
+                            )
+                            .sharedByEmail(
+                                    shareLink.getCreatedBy()
+                                            .getEmail()
+                            )
+                            .requiresOtp(
+                                    shareLink.getRequiresOtp()
+                            )
+                            .shareType(
+                                    shareLink.getShareType() != null
+                                            ? shareLink.getShareType().name()
+                                            : null
+                            )
+                            .status(status) // THIS WAS MISSING
+                            .build();
+                });
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Files shared with you fetched successfully",
+                response
+        );
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseStructure<String>>
+    dismissFromSharedWithMe(Long shareId) {
+
+        log.info("Dismissing shared file from recipient list: {}", shareId);
+
+        User user = SecurityUtil.getCurrentUser();
+
+        ShareLink shareLink =
+                shareLinkRepository.findById(shareId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Share link not found"
+                                ));
+
+        if (!shareLink.getRecipientEmail()
+                .equalsIgnoreCase(user.getEmail())) {
+
+            throw new UnauthorizedAccessException(
+                    "Unauthorized access"
+            );
+        }
+
+        shareLink.setHiddenByRecipient(true);
+
+        shareLinkRepository.save(shareLink);
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Shared file removed from your list",
+                null
+        );
+    }
+
+    private String getShareStatus(
+            ShareLink shareLink
+    ) {
+
+        if (!Boolean.TRUE.equals(
+                shareLink.getActive()
+        )) {
+
+            return "REVOKED";
+        }
+
+        if (
+                shareLink.getExpiresAt() != null
+                        &&
+                        shareLink.getExpiresAt()
+                                .isBefore(
+                                        LocalDateTime.now()
+                                )
+        ) {
+
+            return "EXPIRED";
+        }
+
+        return "ACTIVE";
     }
 
 

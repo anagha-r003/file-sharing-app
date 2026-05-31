@@ -1,6 +1,7 @@
 package com.rapidrise.filesharingapp.controller;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
+import com.rapidrise.filesharingapp.dto.request.RenameRequest;
 import com.rapidrise.filesharingapp.dto.response.FileResponse;
 import com.rapidrise.filesharingapp.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,6 +51,11 @@ public class FileController {
                 page,
                 size
         );
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ResponseStructure<Map<String, Long>>> getFileStats() {
+        return fileService.getFileStats();
     }
 
     @PostMapping("/download")
@@ -100,6 +107,43 @@ public class FileController {
     @PatchMapping("/unstar/{fileId}")
     public ResponseEntity<ResponseStructure<String>> unstarFile(@PathVariable Long fileId) {
         return fileService.unstarFile(fileId);
+    }
+
+    @GetMapping("/starred")
+    public ResponseEntity<ResponseStructure<Page<FileResponse>>> getStarredFiles(
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+
+        return fileService.getStarredFiles(
+                page,
+                size
+        );
+    }
+
+    @PatchMapping(
+            "/rename/{fileId}"
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    renameFile(
+
+            @PathVariable
+            Long fileId,
+
+            @RequestBody
+            RenameRequest request
+    ) {
+
+        return fileService
+                .renameFile(
+                        fileId,
+                        request
+                );
     }
 
 

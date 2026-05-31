@@ -27,7 +27,7 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
 
     long countByCreatedById(Long userId);
 
-    long countByCreatedByIdAndExpiresAtAfter(
+    long countByCreatedByIdAndActiveTrueAndExpiresAtAfter(
             Long userId,
             LocalDateTime now
     );
@@ -44,9 +44,20 @@ public interface ShareLinkRepository extends JpaRepository<ShareLink,Long> {
             String recipientEmail
     );
 
-    Optional<ShareLink>
-    findTopByFileIdAndRecipientEmailAndActiveTrueOrderByCreatedAtDesc(
-            Long fileId,
-            String recipientEmail
+
+    @Query("""
+        SELECT s FROM ShareLink s
+        WHERE s.recipientEmail = :recipientEmail
+        AND (
+            s.hiddenByRecipient IS NULL
+            OR s.hiddenByRecipient = false
+        )
+        ORDER BY s.createdAt DESC
+        """)
+    Page<ShareLink> findAllSharedWithMe(
+            @Param("recipientEmail")
+            String recipientEmail,
+
+            Pageable pageable
     );
 }

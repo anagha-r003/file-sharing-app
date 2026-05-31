@@ -9,11 +9,12 @@ import {
   X,
 } from "lucide-react";
 
-import PageLayout from "../../layout/PageLayout";
 import DaysBar from "../../components/recyclebin/DayBar";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import Pagination from "../../common/ui/Pagination";
 import { SearchInput } from "../../common/ui";
+import Toast from "../../components/sharedlink/Toast";
+import { usePageSettings } from "../../context/LayoutContext";
 
 import {
   getDeletedFiles,
@@ -25,7 +26,6 @@ import {
 } from "../../services/recyclebinService";
 
 function RecycleBinPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [files, setFiles] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,14 +34,25 @@ function RecycleBinPage() {
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [statsData, setStatsData] = useState(null); //storage in recycle bin
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
+
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, visible: false }));
+    }, 3000);
+  };
   const pageSize = 10;
 
-  useEffect(() => {
-    const handleResize = () => setSidebarOpen(window.innerWidth >= 1024);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  usePageSettings({
+    title: "Trash",
+    contentClassName: "space-y-4 md:space-y-5",
+  });
 
   const filtered = useMemo(() => {
     return files.filter((f) =>
@@ -163,8 +174,10 @@ function RecycleBinPage() {
       await restoreFiles([id]);
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       await fetchDeletedFiles(page);
+      showToast("File restored successfully", "success");
     } catch (err) {
       console.error("Restore failed", err);
+      showToast("Restore failed", "error");
     }
   };
 
@@ -173,29 +186,56 @@ function RecycleBinPage() {
       await permanentlyDeleteFiles([id]);
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       await fetchDeletedFiles(page);
+      showToast("File permanently deleted", "success");
     } catch (err) {
       console.error("Delete failed", err);
+      showToast("Delete failed", "error");
     }
   };
 
   const handleConfirm = async () => {
     if (!modal) return;
+
     try {
-      if (modal.type === "delete") await permDelete(modal.id);
+      if (modal.type === "delete") {
+        await permDelete(modal.id);
+      }
+
       if (modal.type === "deleteBulk") {
         await permanentlyDeleteFiles(selectedIds);
         setSelectedIds([]);
+        showToast(`${selectedIds.length} files permanently deleted`, "success");
       }
-      if (modal.type === "emptyBin") await emptyRecycleBin();
-      if (modal.type === "restoreAll") await restoreAllFiles();
+
+      if (modal.type === "emptyBin") {
+        await emptyRecycleBin();
+
+        // clear UI immediately
+        setFiles([]);
+        setSelectedIds([]);
+        setTotalElements(0);
+        showToast("Recycle bin emptied", "success");
+      }
+
+      if (modal.type === "restoreAll") {
+        await restoreAllFiles();
+        showToast("All files restored", "success");
+      }
+
       if (modal.type === "restoreBulk") {
         await restoreFiles(selectedIds);
         setSelectedIds([]);
+        showToast(`${selectedIds.length} files restored`, "success");
       }
+
       setPage(0);
+
+      // refresh latest data
       await fetchDeletedFiles(0);
+      await fetchRecycleBinStats();
     } catch (err) {
       console.error("Action failed", err);
+      showToast("Action failed", "error");
     } finally {
       setModal(null);
     }
@@ -237,13 +277,7 @@ function RecycleBinPage() {
   ];
 
   return (
-    <PageLayout
-      title="Recycle Bin"
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      onMenuClick={() => setSidebarOpen((prev) => !prev)}
-      contentClassName="space-y-4 md:space-y-5"
-    >
+    <>
       {/* Warning Banner */}
       <div className="flex items-start sm:items-center gap-3 bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3">
         <AlertTriangle
@@ -612,7 +646,12 @@ function RecycleBinPage() {
           onCancel={() => setModal(null)}
         />
       )}
-    </PageLayout>
+      <Toast
+        message={toast.message}
+        visible={toast.visible}
+        type={toast.type}
+      />
+    </>
   );
 }
 

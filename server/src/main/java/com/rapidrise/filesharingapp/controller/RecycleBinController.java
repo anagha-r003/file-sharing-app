@@ -73,6 +73,7 @@ public class RecycleBinController {
     @DeleteMapping("/recycle-bin/empty")
     public ResponseEntity<ResponseStructure<Map<String, Object>>>
     emptyRecycleBin() throws IOException {
+        System.out.println("EMPTY BIN API HIT");
 
         return recycleBinService.emptyRecycleBin();
     }

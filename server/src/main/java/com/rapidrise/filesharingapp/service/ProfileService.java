@@ -51,6 +51,7 @@ public class ProfileService {
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
                         .email(user.getEmail())
+                        .dob(user.getDob())
                         .build();
 
         log.info(
@@ -91,6 +92,7 @@ public class ProfileService {
 
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        user.setDob(request.getDob());
 
         userRepository.save(user);
 
@@ -99,6 +101,7 @@ public class ProfileService {
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
                         .email(user.getEmail())
+                        .dob(user.getDob())
                         .build();
 
         log.info(

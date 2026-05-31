@@ -35,10 +35,14 @@ public class ShareLink {
 
     private Integer downloadCount = 0;
 
+    private Boolean accessed = false;
+
     @Enumerated(EnumType.STRING)
     private ShareType shareType;
 
     private Boolean requiresOtp;
+
+    private Boolean hiddenByRecipient = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "file_id", nullable = false)

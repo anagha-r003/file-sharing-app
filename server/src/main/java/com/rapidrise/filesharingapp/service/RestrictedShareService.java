@@ -78,6 +78,32 @@ public class RestrictedShareService {
             );
         }
 
+        RestrictedShareOtp latestOtp =
+                otpRepository
+                        .findTopByShareLinkIdAndEmailOrderByCreatedAtDesc(
+                                shareLink.getId(),
+                                recipientEmail
+                        )
+                        .orElse(null);
+
+        if (latestOtp != null
+                && latestOtp.getCreatedAt()
+                .isAfter(LocalDateTime.now().minusSeconds(30))) {
+
+            long secondsLeft =
+                    java.time.Duration.between(
+                            LocalDateTime.now(),
+                            latestOtp.getCreatedAt()
+                                    .plusSeconds(30)
+                    ).getSeconds();
+
+            throw new BadRequestException(
+                    "Please wait "
+                            + secondsLeft
+                            + " seconds before requesting another OTP"
+            );
+        }
+
         // remove old OTP
         otpRepository
                 .deleteAllByShareLinkIdAndEmail(
@@ -201,7 +227,7 @@ public class RestrictedShareService {
         }
 
         // attempts exceeded
-        if (storedOtp.getAttempts() >= 5) {
+        if (storedOtp.getAttempts() >= 3) {
 
             throw new BadRequestException(
                     "Too many invalid attempts"

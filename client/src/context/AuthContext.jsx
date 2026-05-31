@@ -5,27 +5,58 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../services/authService";
+import { refreshAccessToken, setSessionExpiredHandler } from "../services/api";
+import { isAccessTokenExpired } from "../utils/tokenUtils";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    setSessionExpiredHandler(() => {
+      setUser(null);
+      navigate("/login", { replace: true });
+    });
+  }, [navigate]);
 
-    if (storedUser) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrapSession() {
+      const storedUser = localStorage.getItem("user");
+      const accessToken = localStorage.getItem("accessToken");
+
+      if (!storedUser) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
+
       try {
-        setUser(JSON.parse(storedUser));
+        const userData = JSON.parse(storedUser);
+        if (!cancelled) setUser(userData);
+
+        if (!accessToken || isAccessTokenExpired(accessToken)) {
+          await refreshAccessToken();
+        }
       } catch {
-        // Corrupted JSON in storage — clear it
+        localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
 
-    setLoading(false);
+    bootstrapSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = useCallback((loginResponseData) => {
@@ -36,7 +67,6 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }, []);
 
-  // ─────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
       await logoutUser();
@@ -44,9 +74,7 @@ export function AuthProvider({ children }) {
       console.error("Logout failed", err);
     } finally {
       localStorage.removeItem("accessToken");
-
       localStorage.removeItem("user");
-
       setUser(null);
     }
   }, []);
@@ -64,18 +92,17 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  // ─────────────────────────────────────────────
   const isAuthenticated = user !== null;
 
   return (
     <AuthContext.Provider
       value={{
-        user, // { email, firstName, lastName } or null
-        login, // (loginResponseData) => void
-        logout, // async () => void
-        loading, // true while checking localStorage on mount
-        isAuthenticated, // boolean — use this in ProtectedRoute
-        updateUser, // (updatedData) => void
+        user,
+        login,
+        logout,
+        loading,
+        isAuthenticated,
+        updateUser,
       }}
     >
       {children}

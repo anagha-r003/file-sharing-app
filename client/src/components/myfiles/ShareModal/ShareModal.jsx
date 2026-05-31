@@ -94,7 +94,14 @@ function ShareModal({ file, onClose }) {
       return generatedLink;
     } catch (err) {
       console.error(err);
-      showToast("Failed to create sharelink", "error");
+
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to create sharelink";
+
+      showToast(errorMessage, "error");
+
       return null;
     } finally {
       setIsGenerating(false);
@@ -141,7 +148,7 @@ function ShareModal({ file, onClose }) {
       // NEW API CALL
       await sendShareLink(requestBody);
 
-      showToast("Emails sent successfully!");
+      showToast("File sent successfully!");
 
       setTimeout(() => {
         onClose();

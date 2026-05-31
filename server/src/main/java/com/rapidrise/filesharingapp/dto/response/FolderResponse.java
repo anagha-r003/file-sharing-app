@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -21,5 +21,5 @@ public class FolderResponse {
 
     private LocalDateTime createdAt;
 
-    private List<UserFile> files;
+    private Set<UserFile> files;
 }

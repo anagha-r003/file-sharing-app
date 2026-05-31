@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Bell, ChevronDown } from "lucide-react";
-import ProfileDropdown from "./ProfileDropdown"; // Import the dropdown component we designed
+import { ChevronDown } from "lucide-react";
+import ProfileDropdown from "./ProfileDropdown";
+import NotificationDropdown from "./NotificationDropdown";
 
 function TopNavbar({ title, onMenuClick }) {
   const { user } = useAuth();
-  console.log("USER IN NAVBAR:", user);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -50,11 +50,7 @@ function TopNavbar({ title, onMenuClick }) {
 
       {/* Right — upload + notification + profile */}
       <div className="flex items-center gap-2 md:gap-3">
-        {/* Notification bell */}
-        <button className="relative p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
+        <NotificationDropdown />
 
         {/* Profile Container - Added relative position and ref */}
         <div className="relative" ref={dropdownRef}>

@@ -45,15 +45,15 @@ export default function CreateFolderModal({
     }
   }
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-[430px] rounded-2xl border border-white/[0.09] bg-[#1a1a2a] shadow-[0_20px_60px_rgba(0,0,0,0.55)] overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div className="w-[calc(100vw-32px)] max-w-[430px] border border-white/[0.09] bg-[#1a1a2a] shadow-[0_20px_60px_rgba(0,0,0,0.55)] overflow-hidden">
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-[18px] pb-[14px]">
           <div>
             <h2 className="text-[15px] font-semibold text-[#e8e8f0] mb-0.5">
-              Add to folder
+              Add to vault
             </h2>
-            <p className="text-[12px] text-white/30 truncate max-w-[320px]">
+            <p className="text-[12px] text-white/30 truncate max-w-[200px] sm:max-w-[320px]">
               {file?.name}
             </p>
           </div>
@@ -72,7 +72,7 @@ export default function CreateFolderModal({
           {/* Folder name */}
           <div>
             <label className="block text-[12px] text-white/45 mb-2">
-              Folder name
+              Vault name
             </label>
             <input
               type="text"
@@ -91,7 +91,7 @@ export default function CreateFolderModal({
             />
             {error && (
               <p className="text-[11px] text-red-400 mt-1.5">
-                Please enter a folder name.
+                Please enter a vault name.
               </p>
             )}
           </div>

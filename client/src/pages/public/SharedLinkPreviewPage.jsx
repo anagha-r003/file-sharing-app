@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import "../../App.css";
 
@@ -9,10 +9,14 @@ import FilePreviewCard from "../../components/sharedlink/FilePreviewCard";
 import PageFooter from "../../components/sharedlink/PageFooter";
 import Toast from "../../components/sharedlink/Toast";
 import LinkExpired from "../../components/sharedlink/LinkExpired";
+import AccessRevoked from "../../components/sharedlink/AccessRevoked";
 import OtpModal from "../../components/restrictedshare/OtpModal";
+import { maskEmail } from "../../utils/formatUtils";
+import { handleResource404 } from "../../utils/handleResource404";
 
 export default function SharedLinkPreviewPage() {
   const { token } = useParams();
+  const navigate = useNavigate();
   const [fileData, setFileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({
@@ -35,8 +39,7 @@ export default function SharedLinkPreviewPage() {
   const [otpError, setOtpError] = useState("");
 
   const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
-
-
+  const [linkError, setLinkError] = useState(null); // "expired" | "revoked"
 
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
@@ -52,17 +55,49 @@ export default function SharedLinkPreviewPage() {
         const data = response.data.data;
         setFileData(data);
 
-        // If restricted, open OTP modal immediately
-        if (data.requiresOtp) {
-          setOtpModalOpen(true);
+        if (data.shareType === "RESTRICTED") {
+          if (data.requiresOtp) {
+            // OTP verification required
+            setOtpModalOpen(true);
+          } else {
+            // Shared directly to account — verify with session token
+            const sessionToken = localStorage.getItem("accessToken");
+            if (sessionToken) {
+              const fileRes = await fetch(
+                `http://localhost:8080/share/view/${token}`,
+                {
+                  headers: { Authorization: `Bearer ${sessionToken}` },
+                },
+              );
+              if (fileRes.ok) {
+                const blob = await fileRes.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                setPreviewBlobUrl(blobUrl);
+                setAccessGranted(true);
+                showToast("Access granted!");
+              } else {
+                setAccessGranted(false);
+                showToast("Please log in to the correct account.", "error");
+              }
+            } else {
+              setAccessGranted(false);
+            }
+          }
         } else {
           setAccessGranted(true); // public — no gate
         }
       } catch (error) {
-        showToast(
-          error.response?.data?.message || "Failed to load shared file",
-          "error",
-        );
+        if (handleResource404(error, navigate)) {
+          return;
+        }
+
+        const message = (error.response?.data?.message || "").toLowerCase();
+
+        if (message.includes("expired")) {
+          setLinkError("expired");
+        } else {
+          setLinkError("revoked");
+        }
       } finally {
         setLoading(false);
       }
@@ -143,7 +178,7 @@ export default function SharedLinkPreviewPage() {
   }
 
   if (!fileData) {
-    return <LinkExpired />;
+    return linkError === "expired" ? <LinkExpired /> : <AccessRevoked />;
   }
 
   return (
@@ -213,12 +248,12 @@ export default function SharedLinkPreviewPage() {
                 fileType={fileData.fileName?.split(".").pop()}
                 expiryDate={fileData.expiresAt}
                 previewUrl={
-                  fileData.requiresOtp
+                  fileData.shareType === "RESTRICTED"
                     ? previewBlobUrl // ← blob URL for restricted
                     : fileData.viewUrl // ← direct URL for public
                 }
                 onDownload={() => {
-                  if (fileData.requiresOtp) {
+                  if (fileData.shareType === "RESTRICTED") {
                     // use previewBlobUrl for download too
                     const a = document.createElement("a");
                     a.href = previewBlobUrl;
@@ -231,7 +266,7 @@ export default function SharedLinkPreviewPage() {
                   }
                 }}
                 onPreview={() => {
-                  if (fileData.requiresOtp) {
+                  if (fileData.shareType === "RESTRICTED") {
                     window.open(previewBlobUrl, "_blank"); // ← open blob directly
                   } else {
                     window.open(fileData.viewUrl, "_blank");
@@ -249,22 +284,52 @@ export default function SharedLinkPreviewPage() {
           {/* Blur placeholder while waiting for access */}
           {!accessGranted && (
             <div
-              className="w-full rounded-2xl flex items-center justify-center"
+              className="w-full rounded-2xl flex items-center justify-center p-6 sm:p-10"
               style={{
                 maxWidth: 680,
-                height: 300,
+                minHeight: 300,
                 background: "#13131f",
                 border: "0.5px solid #2a2a3d",
               }}
             >
-              <div className="text-center">
-                <span className="material-symbols-outlined text-violet-400 text-4xl">
-                  lock
-                </span>
-                <p className="text-slate-500 text-sm mt-2">
-                  Verify your identity to view this file
-                </p>
-              </div>
+              {fileData.shareType === "RESTRICTED" && !fileData.requiresOtp ? (
+                <div className="text-center p-6 space-y-5 max-w-sm mx-auto">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-violet-500/10 rounded-2xl border border-violet-500/20 text-violet-400">
+                    <span className="material-symbols-outlined text-4xl">
+                      account_circle
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      Direct Account Share
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mt-2">
+                      This file is restricted to the account of{" "}
+                      <span className="text-violet-400 font-semibold">
+                        {maskEmail(fileData.recipientEmail)}
+                      </span>
+                      . Please log in to your account to view it.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                    }}
+                    className="w-full py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold transition shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30"
+                  >
+                    Log In to Your Account
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <span className="material-symbols-outlined text-violet-400 text-4xl">
+                    lock
+                  </span>
+                  <p className="text-slate-500 text-sm mt-2">
+                    Verify your identity to view this file
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </main>

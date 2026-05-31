@@ -1,8 +1,8 @@
 import { getFileMeta, formatSize, formatDate } from "../../utils/fileUtils";
 import { downloadFiles } from "../../services/fileService";
 
-const CB =
-  "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition relative";
+// const CB =
+//   "w-4 h-4 cursor-pointer appearance-none rounded border border-slate-500 checked:bg-violet-600 checked:border-violet-600 bg-transparent transition relative";
 
 // Custom checkbox with visible checkmark using a wrapper approach
 function Checkbox({ checked, onChange, className = "" }) {
@@ -59,6 +59,7 @@ function FileTableListView({
   onShare,
   onDelete,
   onFolder,
+  onRename,
 }) {
   const handleDownload = async (e, file) => {
     e.stopPropagation();
@@ -92,9 +93,7 @@ function FileTableListView({
               <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 Name
               </th>
-              <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                
-              </th>
+              <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap"></th>
               <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 Size
               </th>
@@ -102,7 +101,7 @@ function FileTableListView({
                 Type
               </th>
               <th className="text-left py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                Last Modified
+                Uploaded On
               </th>
               <th className="py-3 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap text-right">
                 Actions
@@ -152,6 +151,7 @@ function FileTableListView({
                     {/* Name */}
                     <td className="py-3 px-6">
                       <div className="flex items-center gap-3 min-w-[180px]">
+                        {/* File icon */}
                         <div
                           className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${color}`}
                         >
@@ -159,44 +159,71 @@ function FileTableListView({
                             {icon}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="min-w-0">
+
+                        {/* File info */}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 min-w-0">
                             <span
                               className="text-white font-medium truncate max-w-[160px] block"
                               title={file.name}
                             >
                               {file.name}
                             </span>
-                            <span className="text-slate-500 text-xs">You</span>
+
+                            {/* Rename */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+
+                                if (onRename) {
+                                  onRename(file);
+                                }
+                              }}
+                              className="
+            opacity-0
+            group-hover:opacity-100
+            transition
+            text-slate-500
+            hover:text-violet-400
+            flex-shrink-0
+          "
+                              title="Rename"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">
+                                edit
+                              </span>
+                            </button>
                           </div>
+
+                          <span className="text-slate-500 text-xs">You</span>
                         </div>
                       </div>
                     </td>
                     {/* Star */}
                     <td>
-                    <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleStar(file);
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleStar(file);
+                        }}
+                        title={file.isStarred ? "Unstar" : "Star"}
+                        className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-all ${
+                          file.isStarred
+                            ? "text-yellow-400"
+                            : "text-slate-700 hover:text-yellow-400"
+                        }`}
+                      >
+                        <span
+                          className="material-symbols-outlined text-[16px]"
+                          style={{
+                            fontVariationSettings: file.isStarred
+                              ? "'FILL' 1"
+                              : "'FILL' 0",
                           }}
-                          title={file.isStarred ? "Unstar" : "Star"}
-                          className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded transition-all ${
-                            file.isStarred
-                              ? "text-yellow-400"
-                              : "text-slate-700 hover:text-yellow-400"
-                          }`}
                         >
-                          <span
-                            className="material-symbols-outlined text-[16px]"
-                            style={{
-                              fontVariationSettings: file.isStarred
-                                ? "'FILL' 1"
-                                : "'FILL' 0",
-                            }}
-                          >
-                            star
-                          </span>
-                        </button>
+                          star
+                        </span>
+                      </button>
                     </td>
 
                     {/* Size */}
@@ -382,6 +409,31 @@ function FileTableListView({
                   >
                     <span className="material-symbols-outlined text-[16px]">
                       share
+                    </span>
+                  </button>
+                  {/* Rename */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      if (onRename) {
+                        onRename(file);
+                      }
+                    }}
+                    title="Rename"
+                    className="
+    w-8 h-8
+    flex items-center justify-center
+    rounded-lg
+    text-slate-500
+    hover:text-violet-400
+    hover:bg-violet-400/10
+    transition
+  "
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      edit
                     </span>
                   </button>
                   <button

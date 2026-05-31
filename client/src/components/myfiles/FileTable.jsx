@@ -2,9 +2,9 @@ import { useState, useMemo } from "react";
 import {
   deleteFile,
   downloadFiles,
-  viewFile,
   starFile,
   unstarFile,
+  renameFile,
 } from "../../services/fileService";
 
 import ShareModal from "./ShareModal/ShareModal";
@@ -25,16 +25,20 @@ function FileTable({
   pageSize,
   setPageSize,
   onRefresh,
+  onRename,
   onFileClick,
+  onFileUpdate,
+  showToast,
   showStats = true,
+  stats,
+  view = "list",
+  onViewChange = () => {},
 }) {
   const [shareFile, setShareFile] = useState(null);
 
   const [search, setSearch] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState(null);
-
-  const [view, setView] = useState("list");
 
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -75,7 +79,10 @@ function FileTable({
   const somePageSelected = pageIds.some((id) => selectedIds.includes(id));
 
   // Statistics
-  const stats = useMemo(() => getFileStats(files?.content || []), [files]);
+  const finalStats = useMemo(
+    () => stats || getFileStats(files?.content || []),
+    [stats, files],
+  );
 
   // Search handlers
   const handleSearch = (e) => {
@@ -97,14 +104,17 @@ function FileTable({
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
+    const fileName = deleteTarget.name;
     setDeleteTarget(null);
 
     try {
       await deleteFile([deleteTarget.id]);
 
       onRefresh();
+      showToast?.(`"${fileName}" deleted`, "success");
     } catch (err) {
       console.error("Delete failed:", err);
+      showToast?.("Delete failed", "error");
     }
   };
 
@@ -119,8 +129,10 @@ function FileTable({
       clearSelection();
 
       onRefresh();
+      showToast?.(`${selectedIds.length} files deleted`, "success");
     } catch (err) {
       console.error("Bulk delete failed:", err);
+      showToast?.("Bulk delete failed", "error");
     } finally {
       setBulkDeleting(false);
     }
@@ -132,9 +144,22 @@ function FileTable({
       if (file.isStarred) await unstarFile(file.id);
       else await starFile(file.id);
 
-      onRefresh();
+      onFileUpdate?.({ ...file, isStarred: !file.isStarred });
     } catch (err) {
       console.error("Star/unstar failed", err);
+    }
+  };
+
+  const handleRenameFile = async (file, newName) => {
+    try {
+      await renameFile(file.id, newName);
+
+      onFileUpdate?.({
+        ...file,
+        name: newName,
+      });
+    } catch (err) {
+      console.error("Rename failed", err);
     }
   };
 
@@ -198,7 +223,7 @@ function FileTable({
   return (
     <>
       {/* Stats */}
-      {showStats && <FileTableStats stats={stats} />}
+      {showStats && <FileTableStats stats={finalStats} />}
 
       {/* Main container */}
       <div className="custom-card rounded-2xl flex flex-col">
@@ -211,7 +236,7 @@ function FileTable({
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
           view={view}
-          onViewChange={setView}
+          onViewChange={onViewChange}
           onBulkDownload={handleBulkDownload}
           onBulkShare={handleBulkShare}
           onBulkDelete={handleBulkDelete}
@@ -237,6 +262,7 @@ function FileTable({
             onShare={(file) => setShareFile(file)}
             onDelete={(file) => setDeleteTarget(file)}
             onFolder={(file) => setFolderFiles([file])}
+            onRename={onRename}
           />
         )}
 

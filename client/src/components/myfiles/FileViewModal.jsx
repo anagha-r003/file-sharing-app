@@ -75,7 +75,47 @@ export default function FileViewModal({ file, onClose, onDownload }) {
       );
     }
 
-    if (!canPreview || error) {
+    if (error) {
+      const fileMissing =
+        error?.response?.status === 404 ||
+        error?.message?.includes("File no longer exists") ||
+        error?.response?.data?.message?.includes("File no longer exists");
+
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 px-6 text-center">
+          <span className="material-symbols-outlined text-6xl text-red-400">
+            error
+          </span>
+
+          <div>
+            <p className="text-base font-medium text-slate-200 mb-1">
+              {fileMissing
+                ? "File no longer available"
+                : "Unable to load preview"}
+            </p>
+
+            <p className="text-sm text-slate-500 max-w-md">
+              {fileMissing
+                ? "This file was deleted or removed from storage by the owner."
+                : "Something went wrong while loading the preview."}
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white transition"
+            style={{
+              background: "rgba(239,68,68,0.2)",
+              border: "1px solid rgba(239,68,68,0.4)",
+            }}
+          >
+            Close
+          </button>
+        </div>
+      );
+    }
+
+    if (!canPreview) {
       return (
         <div className="flex flex-col items-center justify-center h-full gap-4 px-6 text-center">
           <span className="material-symbols-outlined text-6xl text-slate-600">
@@ -177,7 +217,6 @@ export default function FileViewModal({ file, onClose, onDownload }) {
           style={{ background: "#000" }}
         >
           <div className="flex items-center justify-center w-full h-full">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               src={blobUrl}
               controls
@@ -194,7 +233,7 @@ export default function FileViewModal({ file, onClose, onDownload }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
       style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
@@ -203,8 +242,8 @@ export default function FileViewModal({ file, onClose, onDownload }) {
         style={{
           background: "#13131f",
           border: "1px solid rgba(255,255,255,0.08)",
-          width: "85vw",
-          height: "82vh",
+          width: "100%",
+          height: "90vh",
           maxWidth: "1200px",
           maxHeight: "850px",
         }}
@@ -212,11 +251,11 @@ export default function FileViewModal({ file, onClose, onDownload }) {
       >
         {/* ── Header ── */}
         <div
-          className="flex items-center justify-between px-5 py-3 flex-shrink-0"
+          className="flex items-center justify-between px-3 py-2 sm:px-5 sm:py-3 flex-shrink-0 gap-2"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`p-1.5 rounded-lg ${color}`}>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className={`p-1.5 rounded-lg flex-shrink-0 ${color}`}>
               <span
                 className="material-symbols-outlined"
                 style={{ fontSize: 18 }}
@@ -224,7 +263,7 @@ export default function FileViewModal({ file, onClose, onDownload }) {
                 {icon}
               </span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p
                 className="text-white text-sm font-medium truncate"
                 title={file.name}
@@ -237,10 +276,10 @@ export default function FileViewModal({ file, onClose, onDownload }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               onClick={() => openInNewTab(file.id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white transition"
               style={{
                 background: "rgba(255,255,255,0.05)",
                 border: "1px solid rgba(255,255,255,0.1)",
@@ -252,12 +291,12 @@ export default function FileViewModal({ file, onClose, onDownload }) {
               >
                 open_in_new
               </span>
-              Open
+              <span className="hidden sm:inline">Open</span>
             </button>
 
             <button
               onClick={onDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition"
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-white transition"
               style={{
                 background: "rgba(124,92,252,0.2)",
                 border: "1px solid rgba(124,92,252,0.4)",
@@ -275,7 +314,7 @@ export default function FileViewModal({ file, onClose, onDownload }) {
               >
                 download
               </span>
-              Download
+              <span className="hidden sm:inline">Download</span>
             </button>
 
             <button
@@ -294,10 +333,7 @@ export default function FileViewModal({ file, onClose, onDownload }) {
         </div>
 
         {/* ── Preview area ── */}
-        <div
-          className="flex-1 overflow-hidden"
-          style={{ minHeight: 0, height: "75vh" }}
-        >
+        <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
           {renderPreview()}
         </div>
       </div>

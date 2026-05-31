@@ -78,9 +78,9 @@ export const deleteFile = async (fileIds) => {
   return deleteFiles(fileIds);
 };
 
-export const uploadFile = async (file, onProgress) => {
-  return uploadFiles([file], onProgress);
-};
+// export const uploadFile = async (file, onProgress) => {
+//   return uploadFiles([file], onProgress);
+// };
 
 export const viewFile = async (fileId) => {
   const response = await api.get(`/files/${fileId}/view`);
@@ -116,3 +116,35 @@ export const unstarFile = async (fileId) => {
 
   return response.data;
 };
+
+export const getStarredFiles = async (page = 0, size = 10) => {
+  const response = await api.get("/files/starred", {
+    params: {
+      page,
+      size,
+    },
+  });
+
+  return response.data.data;
+};
+
+export const getFileStats = async () => {
+  const response = await api.get("/files/stats");
+  return response.data.data;
+};
+
+export const renameFile = async (
+  fileId,
+  name,
+) => {
+  const response =
+    await api.patch(
+      `/files/rename/${fileId}`,
+      {
+        name,
+      },
+    );
+
+  return response.data;
+};
+
