@@ -43,7 +43,7 @@ function LinkStatusBadges({ isActive, isExpired, isRevoked, accessed }) {
       : `${badgeClass} bg-red-500/15 text-red-400`;
 
   return (
-    <div className="inline-grid grid-cols-2 gap-x-2 items-center lg:mx-auto">
+    <div className="inline-grid grid-cols-2 gap-x-2 items-center xl:mx-auto">
       <span className={linkClass}>{linkLabel}</span>
 
       <span
@@ -114,149 +114,151 @@ function SharedLinksTable({
   };
 
   return (
-    <div className="text-slate-300">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-          Sharing history
-        </h1>
+    <div className="w-full flex justify-center px-4 py-6">
+      <div className="w-full max-w-5xl text-slate-300">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+            Sharing history
+          </h1>
 
-        <p className="text-sm text-slate-500">
-          Manage active and expired share links to your files.
-        </p>
-      </div>
-
-      {/* Search */}
-      <div className="mb-4">
-        <SearchInput
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onClear={() => setSearch("")}
-          placeholder="Search by file or recipient..."
-          className="w-full"
-        />
-      </div>
-
-      {/* Table */}
-      <div className="bg-[#111114] border border-white/[0.06] rounded-2xl overflow-hidden">
-        {filtered.length > 0 && (
-          <div className="hidden lg:grid grid-cols-[minmax(0,1fr)_232px_minmax(0,1fr)] gap-4 px-5 py-3 border-b border-white/[0.05] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            <span>File</span>
-            <span className="text-center">Status</span>
-            <span className="text-right">Actions</span>
-          </div>
-        )}
-
-        <div className="divide-y divide-white/[0.05]">
-          {filtered.length > 0 ? (
-            filtered.map((link) => {
-              const isActive = link.status === "ACTIVE";
-
-              const isExpired = link.status === "EXPIRED";
-
-              const isRevoked = link.status === "REVOKED";
-
-              return (
-                <div
-                  key={link.id}
-                  className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_232px_minmax(0,1fr)] gap-3 lg:gap-4 lg:items-center px-5 py-4 hover:bg-white/[0.02] transition-colors"
-                >
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <span className="text-white font-semibold text-base truncate">
-                      {link.fileName}
-                    </span>
-
-                    <p className="text-xs text-slate-500">
-                      Shared with{" "}
-                      <span className="text-slate-400 font-medium">
-                        {link.recipientEmail}
-                      </span>
-                      {" · "}
-                      {isRevoked
-                        ? `Revoked ${formatDate(link.expiryDate)}`
-                        : isExpired
-                          ? `Expired ${formatDate(link.expiryDate)}`
-                          : `Expires ${formatDate(link.expiryDate)}`}
-                      {" · "}
-                      Created {formatRelative(link.createdAt)}
-                    </p>
-                  </div>
-
-                  <LinkStatusBadges
-                    isActive={isActive}
-                    isExpired={isExpired}
-                    isRevoked={isRevoked}
-                    accessed={link.accessed}
-                  />
-
-                  <div className="flex items-center gap-2 flex-shrink-0 lg:justify-end lg:col-start-3">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(link.shareUrl);
-
-                        showToast?.("Link copied!", "success");
-                      }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-[#26262b] hover:bg-[#303036] text-white text-xs font-medium rounded-lg transition-colors"
-                    >
-                      Copy
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        setPreviewFile({
-                          id: link.fileId,
-                          name: link.fileName,
-                          size: 0,
-                        })
-                      }
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
-                    >
-                      Open
-                    </button>
-
-                    <button
-                      disabled={!isActive}
-                      onClick={() => handleRevoke(link.id)}
-                      className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg transition-colors ${
-                        !isActive
-                          ? "text-slate-600 cursor-not-allowed opacity-40 bg-transparent"
-                          : "bg-[#2e1a1a] hover:bg-[#3d2222] text-red-400"
-                      }`}
-                    >
-                      Revoke
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="py-16 text-center text-slate-600 text-sm">
-              No shared links found.
-            </div>
-          )}
+          <p className="text-sm text-slate-500">
+            Manage active and expired share links to your files.
+          </p>
         </div>
 
-        {/* Pagination */}
-        <div className="border-t border-white/[0.05] px-5 py-3">
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            totalItems={totalItems}
-            itemLabel="links"
-            searchQuery={search}
-            onPageChange={onPageChange}
+        {/* Search */}
+        <div className="mb-4">
+          <SearchInput
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch("")}
+            placeholder="Search by file or recipient..."
+            className="w-full"
           />
         </div>
-      </div>
 
-      {previewFile && (
-        <FileViewModal
-          file={previewFile}
-          onClose={() => setPreviewFile(null)}
-          onDownload={() => downloadFiles([previewFile.id])}
-        />
-      )}
+        {/* Table */}
+        <div className="bg-[#111114] border border-white/[0.06] rounded-2xl overflow-hidden">
+          {filtered.length > 0 && (
+            <div className="hidden xl:grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-4 px-5 py-3 border-b border-white/[0.05] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              <span>File</span>
+              <span className="text-right">Status</span>
+              <span className="text-right">Actions</span>
+            </div>
+          )}
+
+          <div className="divide-y divide-white/[0.05]">
+            {filtered.length > 0 ? (
+              filtered.map((link) => {
+                const isActive = link.status === "ACTIVE";
+
+                const isExpired = link.status === "EXPIRED";
+
+                const isRevoked = link.status === "REVOKED";
+
+                return (
+                  <div
+                    key={link.id}
+                    className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-3 xl:gap-4 xl:items-center px-5 py-4 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="text-white font-semibold text-base truncate">
+                        {link.fileName}
+                      </span>
+
+                      <p className="text-xs text-slate-500">
+                        Shared with{" "}
+                        <span className="text-slate-400 font-medium">
+                          {link.recipientEmail}
+                        </span>
+                        {" · "}
+                        {isRevoked
+                          ? `Revoked ${formatDate(link.expiryDate)}`
+                          : isExpired
+                            ? `Expired ${formatDate(link.expiryDate)}`
+                            : `Expires ${formatDate(link.expiryDate)}`}
+                        {" · "}
+                        Created {formatRelative(link.createdAt)}
+                      </p>
+                    </div>
+
+                    <LinkStatusBadges
+                      isActive={isActive}
+                      isExpired={isExpired}
+                      isRevoked={isRevoked}
+                      accessed={link.accessed}
+                    />
+
+                    <div className="flex items-center gap-2 flex-shrink-0 xl:justify-end">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(link.shareUrl);
+
+                          showToast?.("Link copied!", "success");
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#26262b] hover:bg-[#303036] text-white text-xs font-medium rounded-lg transition-colors"
+                      >
+                        Copy
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          setPreviewFile({
+                            id: link.fileId,
+                            name: link.fileName,
+                            size: 0,
+                          })
+                        }
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
+                      >
+                        Open
+                      </button>
+
+                      <button
+                        disabled={!isActive}
+                        onClick={() => handleRevoke(link.id)}
+                        className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg transition-colors ${
+                          !isActive
+                            ? "text-slate-600 cursor-not-allowed opacity-40 bg-transparent"
+                            : "bg-[#2e1a1a] hover:bg-[#3d2222] text-red-400"
+                        }`}
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="py-16 text-center text-slate-600 text-sm">
+                No shared links found.
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          <div className="border-t border-white/[0.05] px-5 py-3">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalItems}
+              itemLabel="links"
+              searchQuery={search}
+              onPageChange={onPageChange}
+            />
+          </div>
+        </div>
+
+        {previewFile && (
+          <FileViewModal
+            file={previewFile}
+            onClose={() => setPreviewFile(null)}
+            onDownload={() => downloadFiles([previewFile.id])}
+          />
+        )}
+      </div>
     </div>
   );
 }

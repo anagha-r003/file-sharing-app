@@ -31,7 +31,7 @@ function Sidebar({ isOpen, setIsOpen }) {
         `}
       >
         {/* Logo */}
-        <div className="px-4 py-6 flex items-center justify-center lg:justify-start overflow-hidden">
+        <div className="px-4 py-6 flex items-center  lg:justify-start overflow-hidden">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Logo icon */}
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/40">
