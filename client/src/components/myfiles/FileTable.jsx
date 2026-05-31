@@ -31,14 +31,14 @@ function FileTable({
   showToast,
   showStats = true,
   stats,
+  view = "list",
+  onViewChange = () => {},
 }) {
   const [shareFile, setShareFile] = useState(null);
 
   const [search, setSearch] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState(null);
-
-  const [view, setView] = useState("list");
 
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -236,7 +236,7 @@ function FileTable({
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}
           view={view}
-          onViewChange={setView}
+          onViewChange={onViewChange}
           onBulkDownload={handleBulkDownload}
           onBulkShare={handleBulkShare}
           onBulkDelete={handleBulkDelete}

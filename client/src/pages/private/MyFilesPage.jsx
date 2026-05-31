@@ -24,6 +24,8 @@ function MyFilesPage() {
 
   const [renamingFile, setRenamingFile] = useState(null);
 
+  const [view, setView] = useState("list");
+
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -114,6 +116,8 @@ function MyFilesPage() {
           onFileClick={setViewingFile}
           onFileUpdate={handleFileUpdate}
           onRename={setRenamingFile}
+          view={view}
+          onViewChange={setView}
           showToast={showToast}
         />
       )}
