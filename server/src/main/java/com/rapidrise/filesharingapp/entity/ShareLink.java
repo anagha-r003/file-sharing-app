@@ -35,6 +35,8 @@ public class ShareLink {
 
     private Integer downloadCount = 0;
 
+    private Boolean accessed = false;
+
     @Enumerated(EnumType.STRING)
     private ShareType shareType;
 

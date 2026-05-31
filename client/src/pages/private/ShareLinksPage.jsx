@@ -56,6 +56,7 @@ function SharedLinksPage() {
         downloadCount: item.downloadCount,
         shareUrl: item.shareUrl, // backend builds this
         status: item.status,
+        accessed: item.accessed,
       }));
 
       setSharedLinks(formattedData);

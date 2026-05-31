@@ -399,6 +399,7 @@ public class ShareService {
             );
         }
 
+        shareLink.setAccessed(true);
         shareLinkRepository.save(shareLink);
 
         User owner = shareLink.getCreatedBy();
@@ -553,10 +554,21 @@ public class ShareService {
                         pageable
                 );
 
+        Set<String> accessedShareKeys = activityLogService.getAccessedShareKeys(
+                user.getId(),
+                sharedFiles.getContent()
+        );
+
         Page<ShareLinkResponse> response =
                 sharedFiles.map(shareLink -> {
 
                     String status= getShareStatus(shareLink);
+                    String fileName = shareLink.getFile().getName();
+                    String recipientEmail = shareLink.getRecipientEmail();
+                    boolean accessed = Boolean.TRUE.equals(shareLink.getAccessed())
+                            || accessedShareKeys.contains(
+                                    ActivityLogService.shareAccessKey(fileName, recipientEmail)
+                            );
 
                     return ShareLinkResponse.builder()
                             .id(shareLink.getId())
@@ -591,7 +603,8 @@ public class ShareService {
                             .fileId(
                                     shareLink.getFile().getId()
                             )
-                            .status(status) // ADD THIS
+                            .status(status)
+                            .accessed(accessed)
                             .build();
                 });
 
@@ -815,7 +828,7 @@ public class ShareService {
 
         if (!shareLink.getActive()) {
 
-            throw new RuntimeException(
+            throw new BadRequestException(
                     "Share link is inactive"
             );
         }
@@ -823,7 +836,7 @@ public class ShareService {
         if (shareLink.getExpiresAt()
                 .isBefore(LocalDateTime.now())) {
 
-            throw new RuntimeException(
+            throw new BadRequestException(
                     "Share link expired"
             );
         }

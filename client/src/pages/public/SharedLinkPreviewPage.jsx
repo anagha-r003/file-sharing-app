@@ -9,6 +9,7 @@ import FilePreviewCard from "../../components/sharedlink/FilePreviewCard";
 import PageFooter from "../../components/sharedlink/PageFooter";
 import Toast from "../../components/sharedlink/Toast";
 import LinkExpired from "../../components/sharedlink/LinkExpired";
+import AccessRevoked from "../../components/sharedlink/AccessRevoked";
 import OtpModal from "../../components/restrictedshare/OtpModal";
 import { maskEmail } from "../../utils/formatUtils";
 
@@ -36,6 +37,7 @@ export default function SharedLinkPreviewPage() {
   const [otpError, setOtpError] = useState("");
 
   const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
+  const [linkError, setLinkError] = useState(null); // "expired" | "revoked"
 
   const showToast = (message, type = "success") => {
     setToast({ visible: true, message, type });
@@ -83,10 +85,15 @@ export default function SharedLinkPreviewPage() {
           setAccessGranted(true); // public — no gate
         }
       } catch (error) {
-        showToast(
-          error.response?.data?.message || "Failed to load shared file",
-          "error",
-        );
+        const message = (
+          error.response?.data?.message || ""
+        ).toLowerCase();
+
+        if (message.includes("expired")) {
+          setLinkError("expired");
+        } else {
+          setLinkError("revoked");
+        }
       } finally {
         setLoading(false);
       }
@@ -167,7 +174,7 @@ export default function SharedLinkPreviewPage() {
   }
 
   if (!fileData) {
-    return <LinkExpired />;
+    return linkError === "expired" ? <LinkExpired /> : <AccessRevoked />;
   }
 
   return (
