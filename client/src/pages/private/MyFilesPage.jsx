@@ -114,6 +114,7 @@ function MyFilesPage() {
           onFileClick={setViewingFile}
           onFileUpdate={handleFileUpdate}
           onRename={setRenamingFile}
+          showToast={showToast}
         />
       )}
 

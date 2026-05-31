@@ -1,8 +1,22 @@
 import { useRef, useState } from "react";
+import Toast from "../sharedlink/Toast";
 import { uploadFiles as uploadFilesApi } from "../../services/fileService";
 import { ALLOWED_FILE_EXTS } from "../../common/constants/fileTypes";
 
 function QuickUploadCard({ onUploadComplete }) {
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
+
+    setTimeout(() => {
+      setToast((t) => ({ ...t, visible: false }));
+    }, 3000);
+  };
   const fileInputRef = useRef();
   const dragCounter = useRef(0); // tracks drag depth to avoid flicker on child elements
 
@@ -81,6 +95,7 @@ function QuickUploadCard({ onUploadComplete }) {
     if (validFiles.length === 0) {
       setResults(newResults);
       setUploading(false);
+      showToast("No valid files to upload", "error");
       return;
     }
 
@@ -94,11 +109,18 @@ function QuickUploadCard({ onUploadComplete }) {
       validFiles.forEach((file) => {
         newResults.push({ name: file.name, ok: true });
       });
+      showToast(
+        `Uploaded ${validFiles.length} file${
+          validFiles.length === 1 ? "" : "s"
+        } successfully`,
+        "success",
+      );
     } catch (err) {
       const message = err.response?.data?.message || "Upload failed";
       validFiles.forEach((file) => {
         newResults.push({ name: file.name, ok: false, message });
       });
+      showToast(message, "error");
     }
 
     setResults(newResults);
@@ -262,6 +284,11 @@ function QuickUploadCard({ onUploadComplete }) {
           ))}
         </div>
       )}
+      <Toast
+        message={toast.message}
+        visible={toast.visible}
+        type={toast.type}
+      />
     </section>
   );
 }

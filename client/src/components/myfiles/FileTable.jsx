@@ -28,6 +28,7 @@ function FileTable({
   onRename,
   onFileClick,
   onFileUpdate,
+  showToast,
   showStats = true,
   stats,
 }) {
@@ -103,14 +104,17 @@ function FileTable({
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
+    const fileName = deleteTarget.name;
     setDeleteTarget(null);
 
     try {
       await deleteFile([deleteTarget.id]);
 
       onRefresh();
+      showToast?.(`"${fileName}" deleted`, "success");
     } catch (err) {
       console.error("Delete failed:", err);
+      showToast?.("Delete failed", "error");
     }
   };
 
@@ -125,8 +129,10 @@ function FileTable({
       clearSelection();
 
       onRefresh();
+      showToast?.(`${selectedIds.length} files deleted`, "success");
     } catch (err) {
       console.error("Bulk delete failed:", err);
+      showToast?.("Bulk delete failed", "error");
     } finally {
       setBulkDeleting(false);
     }

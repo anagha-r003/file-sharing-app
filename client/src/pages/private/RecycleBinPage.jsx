@@ -13,6 +13,7 @@ import DaysBar from "../../components/recyclebin/DayBar";
 import ConfirmModal from "../../components/recyclebin/ConfirmModal";
 import Pagination from "../../common/ui/Pagination";
 import { SearchInput } from "../../common/ui";
+import Toast from "../../components/sharedlink/Toast";
 import { usePageSettings } from "../../context/LayoutContext";
 
 import {
@@ -33,14 +34,25 @@ function RecycleBinPage() {
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [statsData, setStatsData] = useState(null); //storage in recycle bin
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ visible: true, message, type });
+
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, visible: false }));
+    }, 3000);
+  };
   const pageSize = 10;
 
   usePageSettings({
     title: "Trash",
     contentClassName: "space-y-4 md:space-y-5",
   });
-
-
 
   const filtered = useMemo(() => {
     return files.filter((f) =>
@@ -162,8 +174,10 @@ function RecycleBinPage() {
       await restoreFiles([id]);
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       await fetchDeletedFiles(page);
+      showToast("File restored successfully", "success");
     } catch (err) {
       console.error("Restore failed", err);
+      showToast("Restore failed", "error");
     }
   };
 
@@ -172,8 +186,10 @@ function RecycleBinPage() {
       await permanentlyDeleteFiles([id]);
       setSelectedIds((prev) => prev.filter((x) => x !== id));
       await fetchDeletedFiles(page);
+      showToast("File permanently deleted", "success");
     } catch (err) {
       console.error("Delete failed", err);
+      showToast("Delete failed", "error");
     }
   };
 
@@ -188,6 +204,7 @@ function RecycleBinPage() {
       if (modal.type === "deleteBulk") {
         await permanentlyDeleteFiles(selectedIds);
         setSelectedIds([]);
+        showToast(`${selectedIds.length} files permanently deleted`, "success");
       }
 
       if (modal.type === "emptyBin") {
@@ -197,15 +214,18 @@ function RecycleBinPage() {
         setFiles([]);
         setSelectedIds([]);
         setTotalElements(0);
+        showToast("Recycle bin emptied", "success");
       }
 
       if (modal.type === "restoreAll") {
         await restoreAllFiles();
+        showToast("All files restored", "success");
       }
 
       if (modal.type === "restoreBulk") {
         await restoreFiles(selectedIds);
         setSelectedIds([]);
+        showToast(`${selectedIds.length} files restored`, "success");
       }
 
       setPage(0);
@@ -215,6 +235,7 @@ function RecycleBinPage() {
       await fetchRecycleBinStats();
     } catch (err) {
       console.error("Action failed", err);
+      showToast("Action failed", "error");
     } finally {
       setModal(null);
     }
@@ -625,6 +646,11 @@ function RecycleBinPage() {
           onCancel={() => setModal(null)}
         />
       )}
+      <Toast
+        message={toast.message}
+        visible={toast.visible}
+        type={toast.type}
+      />
     </>
   );
 }
