@@ -131,9 +131,6 @@ export default function StorageHealth({ refreshKey }) {
         >
           Storage Health
         </h3>
-        <span className="text-[10px] font-semibold text-[#6366f1] bg-[#6366f115] border border-[#6366f122] px-2.5 py-1 rounded-full uppercase tracking-wide">
-          Enterprise
-        </span>
       </div>
 
       {/* Donut chart */}
