@@ -21,6 +21,7 @@ import ResetPasswordPage from "./pages/public/ResetPasswordPage";
 import NotFoundPage from "./pages/public/NotFoundPage";
 import ProfilePage from "./pages/private/ProfilePage";
 import SupportPage from "./pages/private/SupportPage";
+import LandinPage from "./pages/public/LandingPage";
 import LinkExpired from "./components/sharedlink/LinkExpired";
 import AccessRevoked from "./components/sharedlink/AccessRevoked";
 
@@ -33,6 +34,7 @@ function App() {
           <Route element={<GuestRoute />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={<LandinPage />} />
           </Route>
 
           <Route
@@ -69,7 +71,7 @@ function App() {
           </Route>
 
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandinPage />} />
           <Route path="/not-found" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

@@ -30,15 +30,23 @@ function ForgotPasswordPage() {
   };
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-y-auto bg-[radial-gradient(circle_at_top_left,_#1a1a1a_0%,_#0e0e0e_100%)] text-white">
+    <main className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-y-auto bg-[#0a0a14] text-white">
+      {/* Background radial glow — matches login exactly */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(109,40,217,0.25) 0%, rgba(79,48,160,0.1) 40%, transparent 70%)",
+        }}
+      />
       {/* Background grid — matches login */}
-      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(152,169,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(152,169,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(139,92,246,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.04)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
       {/* Card — matches login exactly */}
-      <div className="relative z-10 w-full max-w-md p-8 rounded-xl bg-[#1a1a1a]/60 backdrop-blur-2xl border border-white/5">
+      <div className="relative z-10 w-full max-w-md p-8 rounded-xl bg-[#111118]/60 backdrop-blur-2xl border border-white/5">
         <div className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#131313] rounded-xl border border-white/10 mb-6">
-            <Shield size={26} className="text-[#98a9ff]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#16161f] rounded-xl border border-violet-500/20 mb-6">
+            <Shield size={26} className="text-violet-400" />
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight text-white mb-3">
             Forgot Password
@@ -57,7 +65,7 @@ function ForgotPasswordPage() {
 
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
+                <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div className="relative">
@@ -71,7 +79,7 @@ function ForgotPasswordPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
                     required
-                    className="w-full bg-[#131313] rounded-xl text-white py-3 pl-10 pr-4 outline-none focus:ring-1 focus:ring-cyan-400"
+                    className="w-full bg-[#16161f] rounded-xl text-white py-3 pl-10 pr-4 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
                   />
                 </div>
               </div>
@@ -83,7 +91,18 @@ function ForgotPasswordPage() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-br from-[#98a9ff] to-[#4065ff] text-white font-extrabold text-lg rounded-xl hover:shadow-[0_0_25px_rgba(152,169,255,0.4)] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-4 text-white font-extrabold text-lg rounded-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{
+                  background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                  boxShadow: "0 0 0 rgba(139,92,246,0)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.boxShadow =
+                    "0 0 25px rgba(139,92,246,0.4)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.boxShadow = "0 0 0 rgba(139,92,246,0)")
+                }
               >
                 {loading ? (
                   <>
@@ -109,7 +128,7 @@ function ForgotPasswordPage() {
               </p>
               <p className="text-sm text-gray-400 leading-relaxed">
                 We've sent a password reset link to{" "}
-                <span className="text-[#98a9ff] font-medium">{email}</span>. It
+                <span className="text-violet-400 font-medium">{email}</span>. It
                 expires in 15 minutes.
               </p>
             </div>
@@ -118,17 +137,17 @@ function ForgotPasswordPage() {
                 setSent(false);
                 setEmail("");
               }}
-              className="text-sm text-[#98a9ff] hover:underline transition-colors"
+              className="text-sm text-violet-400 hover:underline transition-colors"
             >
               Didn't receive it? Send again
             </button>
           </div>
         )}
 
-        <div className="mt-10 text-center pt-6 border-t border-zinc-700/30">
+        <div className="mt-10 text-center pt-6 border-t border-white/5">
           <Link
             to="/login"
-            className="flex items-center justify-center gap-2 text-cyan-400 text-sm hover:text-white transition-colors"
+            className="flex items-center justify-center gap-2 text-violet-400 text-sm hover:text-white transition-colors"
           >
             <ArrowLeft size={15} />
             Back to Sign In

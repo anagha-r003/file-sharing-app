@@ -1,21 +1,32 @@
 package com.rapidrise.filesharingapp.service;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
+import com.rapidrise.filesharingapp.dto.response.CleanupDataResponse;
 import com.rapidrise.filesharingapp.dto.response.DashboardStats;
+import com.rapidrise.filesharingapp.dto.response.DuplicateFileGroupResponse;
+import com.rapidrise.filesharingapp.dto.response.FileResponse;
 import com.rapidrise.filesharingapp.dto.response.StorageStatsResponse;
 import com.rapidrise.filesharingapp.entity.User;
+import com.rapidrise.filesharingapp.entity.UserFile;
 import com.rapidrise.filesharingapp.repository.FileRepository;
 import com.rapidrise.filesharingapp.repository.ShareLinkRepository;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
 import com.rapidrise.filesharingapp.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -111,6 +122,68 @@ public class DashboardService {
                 "Storage stats fetched successfully",
                 response
         );
+    }
+
+    public ResponseEntity<ResponseStructure<CleanupDataResponse>> getCleanupData() {
+        log.info("Fetching storage cleanup data");
+
+        User user = SecurityUtil.getCurrentUser();
+        Long userId = user.getId();
+
+        Pageable topTwenty = PageRequest.of(0, 20);
+        List<UserFile> largestFiles =
+                fileRepository.findActiveFilesByUserOrderBySizeDesc(userId, topTwenty);
+
+        List<UserFile> allActive = fileRepository.findAllActiveByUserId(userId);
+
+        Map<String, List<UserFile>> duplicateMap = new LinkedHashMap<>();
+        for (UserFile file : allActive) {
+            String normalizedName = file.getName() == null
+                    ? ""
+                    : file.getName()
+                    .trim()
+                    .toLowerCase()
+                    .replaceAll("\\(\\d+\\)(?=\\.[^.]+$)", "");
+            String key = normalizedName + "\0" + file.getSize();
+            duplicateMap.computeIfAbsent(key, k -> new ArrayList<>()).add(file);
+        }
+
+        List<DuplicateFileGroupResponse> duplicateGroups = duplicateMap.values().stream()
+                .filter(files -> files.size() > 1)
+                .map(files -> DuplicateFileGroupResponse.builder()
+                        .name(files.get(0).getName())
+                        .size(files.get(0).getSize())
+                        .files(files.stream().map(this::toFileResponse).toList())
+                        .build())
+                .sorted(Comparator.comparingLong(
+                        (DuplicateFileGroupResponse group) ->
+                                group.getSize() * group.getFiles().size()
+                ).reversed())
+                .collect(Collectors.toList());
+
+        CleanupDataResponse response = CleanupDataResponse.builder()
+                .largestFiles(largestFiles.stream().map(this::toFileResponse).toList())
+                .duplicateGroups(duplicateGroups)
+                .build();
+
+        return ResponseBuilder.build(
+                HttpStatus.OK,
+                "Cleanup data fetched successfully",
+                response
+        );
+    }
+
+    private FileResponse toFileResponse(UserFile file) {
+        return FileResponse.builder()
+                .id(file.getId())
+                .name(file.getName())
+                .size(file.getSize())
+                .mimeType(file.getMimeType())
+                .type(file.getType())
+                .previewPath(file.getPreviewPath())
+                .isStarred(file.getIsStarred())
+                .uploadedAt(file.getUploadedAt())
+                .build();
     }
 
     public DashboardStats getStats(Long userId) {

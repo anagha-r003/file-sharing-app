@@ -76,111 +76,155 @@ function LoginPage() {
   };
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-y-auto bg-[radial-gradient(circle_at_top_left,_#1a1a1a_0%,_#0e0e0e_100%)] text-white">
-      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(152,169,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(152,169,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-      <div className="relative z-10 w-full max-w-md p-8 rounded-xl bg-[#1a1a1a]/60 backdrop-blur-2xl border border-white/5">
-        <div className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#131313] rounded-xl border border-white/10 mb-6">
-            <span className="text-[#98a9ff] text-3xl">🔐</span>
+    <div className="bg-[#0a0a14] text-white min-h-screen flex flex-col">
+      {/* Top Navbar */}
+      <header className="absolute top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-transparent">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/40">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M7 1L12 4V10L7 13L2 10V4L7 1Z"
+                stroke="white"
+                strokeWidth="1.5"
+                fill="none"
+              />
+              <circle cx="7" cy="7" r="2" fill="white" />
+            </svg>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-white mb-3">
-            Authorize Access
-          </h1>
-          <p className="text-gray-400 text-sm font-medium tracking-wide uppercase">
-            Secure File Vault
-          </p>
+          <span className="font-bold text-base tracking-tight text-white">
+            VaultLink
+          </span>
         </div>
+      </header>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-cyan-400"
-              onCopy={(e) => e.preventDefault()}
-              onPaste={(e) => e.preventDefault()}
-              onCut={(e) => e.preventDefault()}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-            {errors.email && (
-              <p className="text-red-400 text-xs mt-1">{errors.email}</p>
-            )}
+      <main className="relative flex-grow flex items-center justify-center px-4 py-10 overflow-y-auto">
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full"
+            style={{
+              background:
+                "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(109,40,217,0.25) 0%, rgba(79,48,160,0.1) 40%, transparent 70%)",
+            }}
+          />
+        </div>
+        <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(139,92,246,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.04)_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+        <div className="relative z-10 w-full max-w-md p-8 rounded-xl bg-[#111118]/60 backdrop-blur-2xl border border-white/5">
+          <div className="mb-10 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-[#16161f] rounded-xl border border-violet-500/20 mb-6">
+              <span className="text-violet-400 text-3xl">🔐</span>
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white mb-3">
+              Authorize Access
+            </h1>
+            <p className="text-gray-400 text-sm font-medium tracking-wide uppercase">
+              Secure File Vault
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#98a9ff] uppercase tracking-wider">
-              Password
-            </label>
-
-            <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
+                Email Address
+              </label>
               <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
                 onChange={handleChange}
+                className="w-full bg-[#16161f] rounded-xl text-white py-3 px-4 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
                 onCopy={(e) => e.preventDefault()}
                 onPaste={(e) => e.preventDefault()}
                 onCut={(e) => e.preventDefault()}
                 onContextMenu={(e) => e.preventDefault()}
-                className="w-full bg-[#131313] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-cyan-400"
               />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              {errors.email && (
+                <p className="text-red-400 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
-            {errors.password && (
-              <p className="text-red-400 text-xs mt-1">{errors.password}</p>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-violet-400 uppercase tracking-wider">
+                Password
+              </label>
+
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onCopy={(e) => e.preventDefault()}
+                  onPaste={(e) => e.preventDefault()}
+                  onCut={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="w-full bg-[#16161f] rounded-xl text-white py-3 px-4 pr-12 outline-none focus:ring-1 focus:ring-violet-500 border border-white/5"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-red-400 text-xs mt-1">{errors.password}</p>
+              )}
+
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            {errors.general && (
+              <p className="text-red-400 text-sm font-medium">
+                {errors.general}
+              </p>
             )}
 
-            <div className="flex justify-end">
-              <Link
-                to="/forgot-password"
-                className="text-xs text-cyan-400 hover:text-[#98a9ff] transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
-          </div>
-
-          {errors.general && (
-            <p className="text-red-400 text-sm font-medium">{errors.general}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 bg-gradient-to-br from-[#98a9ff] to-[#4065ff] text-white font-extrabold text-lg rounded-xl hover:shadow-[0_0_25px_rgba(152,169,255,0.4)] transition-all active:scale-95 disabled:opacity-50"
-          >
-            {loading ? "Logging in..." : "Secure Login"}
-          </button>
-        </form>
-
-        <div className="mt-10 text-center pt-6 border-t border-zinc-700/30">
-          <p className="text-gray-400 text-sm">
-            Don&apos;t have an account?{" "}
-            <Link
-              to="/register"
-              className="text-cyan-400 font-bold hover:underline"
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 text-white font-extrabold text-lg rounded-xl transition-all active:scale-95 disabled:opacity-50"
+              style={{
+                background: "linear-gradient(135deg, #7c3aed, #6366f1)",
+                boxShadow: "0 0 0 rgba(139,92,246,0)",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 0 25px rgba(139,92,246,0.4)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.boxShadow = "0 0 0 rgba(139,92,246,0)")
+              }
             >
-              Sign Up
-            </Link>
-          </p>
+              {loading ? "Logging in..." : "Secure Login"}
+            </button>
+          </form>
+
+          <div className="mt-10 text-center pt-6 border-t border-white/5">
+            <p className="text-gray-400 text-sm">
+              Don&apos;t have an account?{" "}
+              <Link
+                to="/register"
+                className="text-violet-400 font-bold hover:underline"
+              >
+                Sign Up
+              </Link>
+            </p>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
