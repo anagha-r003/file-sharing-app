@@ -291,12 +291,16 @@ export default function VaultLinkLanding() {
             >
               Get started →
             </button>
-            <a
-              href="#"
+            <button
+              onClick={() =>
+                document.getElementById("features")?.scrollIntoView({
+                  behavior: "smooth",
+                })
+              }
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl text-gray-300 text-sm font-medium border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
             >
               See how it works
-            </a>
+            </button>
           </div>
 
           <p
@@ -312,7 +316,7 @@ export default function VaultLinkLanding() {
       </section>
 
       {/* FEATURES */}
-      <section className="px-6 sm:px-14 pb-28">
+      <section className="px-6 sm:px-14 pb-28" id="features">
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {features.map((f, i) => (
             <FeatureCard key={f.title} {...f} index={i} />
