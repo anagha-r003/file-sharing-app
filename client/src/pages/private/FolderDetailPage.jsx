@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import FolderDetailHeader from "../../components/myfolders/FolderDetailHeader";
 import FolderFileList from "../../components/myfolders/FolderFileList";
@@ -10,7 +10,7 @@ import { downloadFiles } from "../../services/fileService";
 import { usePageSettings } from "../../context/LayoutContext";
 import ShareModal from "../../components/myfiles/ShareModal/ShareModal";
 import RenameModal from "../../common/ui/RenameModal";
-
+import { handleResource404 } from "../../utils/handleResource404";
 import {
   getFolderById,
   removeFileFromFolder,
@@ -50,6 +50,7 @@ function FolderDetailPage() {
     message: "",
     type: "success",
   });
+  const navigate = useNavigate();
 
   usePageSettings({ title: folder?.name ?? "Folder" });
 
@@ -90,6 +91,10 @@ function FolderDetailPage() {
 
       setTotalPages(Math.ceil(folderData.filesCount / pageSize));
     } catch (err) {
+      if (handleResource404(err, navigate)) {
+        return;
+      }
+
       showToast("Failed to load folder", "error");
     } finally {
       setLoading(false);

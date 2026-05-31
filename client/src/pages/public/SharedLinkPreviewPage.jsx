@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import "../../App.css";
 
@@ -12,9 +12,11 @@ import LinkExpired from "../../components/sharedlink/LinkExpired";
 import AccessRevoked from "../../components/sharedlink/AccessRevoked";
 import OtpModal from "../../components/restrictedshare/OtpModal";
 import { maskEmail } from "../../utils/formatUtils";
+import { handleResource404 } from "../../utils/handleResource404";
 
 export default function SharedLinkPreviewPage() {
   const { token } = useParams();
+  const navigate = useNavigate();
   const [fileData, setFileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({
@@ -85,9 +87,11 @@ export default function SharedLinkPreviewPage() {
           setAccessGranted(true); // public — no gate
         }
       } catch (error) {
-        const message = (
-          error.response?.data?.message || ""
-        ).toLowerCase();
+        if (handleResource404(error, navigate)) {
+          return;
+        }
+
+        const message = (error.response?.data?.message || "").toLowerCase();
 
         if (message.includes("expired")) {
           setLinkError("expired");

@@ -140,6 +140,26 @@ function SharedWithMePage() {
     });
   };
 
+  // Returns initials from a name string
+  const getInitials = (name = "") => {
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  // Cycles through a small set of avatar color pairs based on name
+  const getAvatarColors = (name = "") => {
+    const palettes = [
+      { bg: "bg-violet-500/15", text: "text-violet-400" },
+      { bg: "bg-emerald-500/15", text: "text-emerald-400" },
+      { bg: "bg-sky-500/15", text: "text-sky-400" },
+      { bg: "bg-rose-500/15", text: "text-rose-400" },
+      { bg: "bg-amber-500/15", text: "text-amber-400" },
+    ];
+    const idx = name.charCodeAt(0) % palettes.length;
+    return palettes[idx];
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "ACTIVE":
@@ -151,7 +171,6 @@ function SharedWithMePage() {
             Active
           </span>
         );
-
       case "EXPIRED":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -159,7 +178,6 @@ function SharedWithMePage() {
             Expired
           </span>
         );
-
       case "REVOKED":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide bg-red-500/10 text-red-400 border border-red-500/20">
@@ -167,7 +185,6 @@ function SharedWithMePage() {
             Revoked
           </span>
         );
-
       default:
         return null;
     }
@@ -176,6 +193,7 @@ function SharedWithMePage() {
   return (
     <>
       <div className="max-w-[1400px] mx-auto space-y-6">
+        {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-white">
@@ -201,6 +219,7 @@ function SharedWithMePage() {
           </div>
         </div>
 
+        {/* ── Loading ── */}
         {loading ? (
           <div className="p-16 text-center text-slate-500">
             <div className="animate-pulse font-medium text-slate-400">
@@ -208,6 +227,7 @@ function SharedWithMePage() {
             </div>
           </div>
         ) : filteredFiles.length === 0 ? (
+          /* ── Empty state ── */
           <div className="flex flex-col items-center justify-center p-16 rounded-2xl border border-dashed border-white/5 bg-[#111115]/50">
             <span className="material-symbols-outlined text-slate-600 text-5xl mb-4">
               folder_shared
@@ -221,210 +241,301 @@ function SharedWithMePage() {
           </div>
         ) : (
           <>
-            {/* Desktop view: Table */}
-            <div className="hidden md:block overflow-x-auto rounded-2xl border border-white/5 bg-[#111115]">
-              <table className="w-full text-left border-collapse min-w-[820px]">
+            {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                Tablet + Desktop — single responsive table
+                md(768+): fluid w-full, compact text, email hidden
+                lg(1024+): capped 1100px centred, full text + email
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+            <div className="hidden md:block w-full lg:max-w-[1100px] lg:mx-auto rounded-2xl border border-white/5 bg-[#111115] overflow-hidden">
+              <table
+                className="w-full text-left border-collapse"
+                style={{ tableLayout: "fixed" }}
+              >
                 <thead>
-                  <tr className="border-b border-white/5 text-slate-400 text-xs font-bold uppercase tracking-wider bg-white/[0.01]">
-                    <th className="px-6 py-4">File Name</th>
-                    <th className="px-6 py-4">Shared By</th>
-                    <th className="px-6 py-4">Access</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Expiry Date</th>
-                    <th className="px-6 py-4 text-right pr-13">Actions</th>
+                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                    {/* File col — wider on lg */}
+                    <th className="px-3 md:px-4 py-3 md:py-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-500 w-[38%] lg:w-[31%]">
+                      File
+                    </th>
+                    {/* Shared by */}
+                    <th className="px-3 md:px-4 py-3 md:py-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-500 w-[25%] lg:w-[23%]">
+                      Shared by
+                    </th>
+                    {/* Access */}
+                    <th className="px-3 md:px-4 py-3 md:py-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-500 w-[17%] lg:w-[15%]">
+                      Access
+                    </th>
+                    {/* Status */}
+                    <th className="px-3 md:px-4 py-3 md:py-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-500 w-[17%] lg:w-[15%]">
+                      Status
+                    </th>
+                    {/* Actions */}
+                    <th className="px-3 md:px-4 py-3 md:py-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-500 text-right w-[10%] lg:w-[10%]">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-sm text-slate-300">
-                  {filteredFiles.map((file) => (
-                    <tr
-                      key={file.id}
-                      className="hover:bg-white/[0.02] transition-colors group"
-                    >
-                      <td className="px-6 py-4 max-w-[200px] w-[200px]">
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-violet-400 bg-violet-500/10 p-2 rounded-xl text-xl flex-shrink-0">
+
+                <tbody>
+                  {filteredFiles.map((file, idx) => {
+                    const avatarColors = getAvatarColors(file.sharedByName);
+                    return (
+                      <tr
+                        key={file.id}
+                        className={`group transition-colors hover:bg-white/[0.025] ${
+                          idx !== filteredFiles.length - 1
+                            ? "border-b border-white/[0.04]"
+                            : ""
+                        }`}
+                      >
+                        {/* ── File name + expiry ── */}
+                        <td className="px-3 md:px-4 py-3 md:py-3.5">
+                          <div className="flex items-center gap-2 md:gap-2.5">
+                            {/* icon: smaller on tablet */}
+                            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                              <span
+                                className="material-symbols-outlined text-violet-400"
+                                style={{ fontSize: "14px" }}
+                              >
+                                description
+                              </span>
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-xs lg:text-sm font-medium text-slate-100 group-hover:text-violet-300 transition-colors truncate leading-snug">
+                                {file.fileName}
+                              </p>
+                              <p className="text-[10px] lg:text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">
+                                Expires&nbsp;{getFormatDate(file.expiresAt)}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* ── Shared by ──
+                            tablet: avatar + name only
+                            desktop (lg): avatar + name + email below */}
+                        <td className="px-3 md:px-4 py-3 md:py-3.5">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-6 h-6 lg:w-7 lg:h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] lg:text-[10px] font-semibold ${avatarColors.bg} ${avatarColors.text}`}
+                            >
+                              {getInitials(file.sharedByName)}
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-xs lg:text-sm font-medium text-slate-200 truncate leading-snug">
+                                {file.sharedByName}
+                              </p>
+                              {/* email hidden on tablet, shown on desktop */}
+                              <p className="hidden lg:block text-[11px] text-slate-500 mt-0.5 truncate">
+                                {file.sharedByEmail}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* ── Access badge ── */}
+                        <td className="px-3 md:px-4 py-3 md:py-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 lg:py-1 rounded-full text-[10px] lg:text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap ${
+                              file.shareType === "PUBLIC"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-violet-500/10 text-violet-400 border border-violet-500/20"
+                            }`}
+                          >
+                            <span
+                              className="material-symbols-outlined"
+                              style={{ fontSize: "11px" }}
+                            >
+                              {file.shareType === "PUBLIC" ? "public" : "lock"}
+                            </span>
+                            {getShareTypeLabel(file.shareType)}
+                          </span>
+                        </td>
+
+                        {/* ── Status badge ── */}
+                        <td className="px-3 md:px-4 py-3 md:py-3.5">
+                          {getStatusBadge(file.status)}
+                        </td>
+
+                        {/* ── Actions ──
+                            tablet: w-7 h-7 smaller buttons
+                            desktop: w-8 h-8 */}
+                        <td className="px-3 md:px-4 py-3 md:py-3.5">
+                          <div className="flex items-center justify-end gap-1 lg:gap-1.5">
+                            <button
+                              onClick={() => {
+                                if (file.status === "EXPIRED") {
+                                  navigate("/share-expired");
+                                  return;
+                                }
+                                if (file.status === "REVOKED") {
+                                  navigate("/share-revoked");
+                                  return;
+                                }
+                                handlePreview(file);
+                              }}
+                              title="Open file"
+                              className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 border border-transparent hover:border-violet-500/20 transition"
+                            >
+                              <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: "15px" }}
+                              >
+                                open_in_new
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => setRemoveTarget(file)}
+                              disabled={removingId === file.id}
+                              title="Remove from list"
+                              className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-40"
+                            >
+                              <span
+                                className="material-symbols-outlined"
+                                style={{ fontSize: "15px" }}
+                              >
+                                {removingId === file.id
+                                  ? "hourglass_empty"
+                                  : "close"}
+                              </span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                Mobile view — improved stacked cards
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+            <div className="grid grid-cols-1 gap-3 md:hidden">
+              {filteredFiles.map((file) => {
+                const avatarColors = getAvatarColors(file.sharedByName);
+                return (
+                  <div
+                    key={file.id}
+                    className="bg-[#111115] border border-white/[0.06] rounded-2xl overflow-hidden hover:border-violet-500/20 transition-all duration-200 group"
+                  >
+                    {/* Card top — file info + action buttons */}
+                    <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        {/* File icon */}
+                        <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span
+                            className="material-symbols-outlined text-violet-400"
+                            style={{ fontSize: "18px" }}
+                          >
                             description
                           </span>
-                          <div className="truncate min-w-0">
-                            <span className="font-semibold text-white group-hover:text-violet-400 transition truncate block">
-                              {file.fileName}
+                        </div>
+                        {/* File name */}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white group-hover:text-violet-300 transition-colors truncate leading-snug">
+                            {file.fileName}
+                          </p>
+                          {/* Sender row */}
+                          <div className="flex items-center gap-1 mt-1.5 min-w-0">
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[9px] font-semibold ${avatarColors.bg} ${avatarColors.text}`}
+                            >
+                              {getInitials(file.sharedByName)}
+                            </div>
+                            <span className="text-xs text-slate-400 font-medium truncate flex-shrink-0 max-w-[35%]">
+                              {file.sharedByName}
+                            </span>
+                            <span className="text-slate-600 text-xs flex-shrink-0">
+                              ·
+                            </span>
+                            <span className="text-[11px] text-slate-500 truncate min-w-0">
+                              {file.sharedByEmail}
                             </span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <span className="font-medium text-slate-200 block">
-                            {file.sharedByName}
+                      </div>
+
+                      {/* Action buttons top-right */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            if (file.status === "EXPIRED") {
+                              navigate("/share-expired");
+                              return;
+                            }
+                            if (file.status === "REVOKED") {
+                              navigate("/share-revoked");
+                              return;
+                            }
+                            handlePreview(file);
+                          }}
+                          title="Open file"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 border border-transparent hover:border-violet-500/20 transition"
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: "16px" }}
+                          >
+                            open_in_new
                           </span>
-                          <span className="text-xs text-slate-500 block mt-0.5">
-                            {file.sharedByEmail}
+                        </button>
+                        <button
+                          onClick={() => setRemoveTarget(file)}
+                          disabled={removingId === file.id}
+                          title="Remove from list"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-50"
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: "16px" }}
+                          >
+                            {removingId === file.id
+                              ? "hourglass_empty"
+                              : "close"}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Card footer — wraps to two rows on very narrow screens */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 bg-white/[0.02] border-t border-white/[0.04]">
+                      {/* Expiry — takes available space, never pushes badges off screen */}
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide ${
+                          className="material-symbols-outlined text-slate-600 flex-shrink-0"
+                          style={{ fontSize: "13px" }}
+                        >
+                          schedule
+                        </span>
+                        <span className="text-[11px] text-slate-500 truncate">
+                          {getFormatDate(file.expiresAt)}
+                        </span>
+                      </div>
+
+                      {/* Badges — always stay together, wrap below expiry if needed */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap ${
                             file.shareType === "PUBLIC"
                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                               : "bg-violet-500/10 text-violet-400 border border-violet-500/20"
                           }`}
                         >
-                          <span className="material-symbols-outlined text-sm">
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: "11px" }}
+                          >
                             {file.shareType === "PUBLIC" ? "public" : "lock"}
                           </span>
                           {getShareTypeLabel(file.shareType)}
                         </span>
-                      </td>
-
-                      <td className="px-6 py-4">
                         {getStatusBadge(file.status)}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span className="text-slate-400">
-                          {getFormatDate(file.expiresAt)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="inline-flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              if (file.status === "EXPIRED") {
-                                navigate("/share-expired");
-                                return;
-                              }
-
-                              if (file.status === "REVOKED") {
-                                navigate("/share-revoked");
-                                return;
-                              }
-
-                              handlePreview(file);
-                            }}
-                            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
-                          >
-                            <span
-                              className="material-symbols-outlined text-sm"
-                              style={{ fontSize: "16px" }}
-                            >
-                              open_in_new
-                            </span>
-                            Open
-                          </button>
-                          <button
-                            onClick={() => setRemoveTarget(file)}
-                            disabled={removingId === file.id}
-                            title="Remove from list"
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-50"
-                          >
-                            <span className="material-symbols-outlined text-base">
-                              {removingId === file.id
-                                ? "hourglass_empty"
-                                : "close"}
-                            </span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile view: Stacked Card Grid */}
-            <div className="grid grid-cols-1 gap-4 md:hidden">
-              {filteredFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="bg-[#111115] border border-white/5 rounded-2xl p-4 space-y-4 hover:border-violet-500/20 transition-all duration-200 group"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="material-symbols-outlined text-violet-400 bg-violet-500/10 p-2 rounded-xl text-xl flex-shrink-0">
-                        description
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-white group-hover:text-violet-400 transition truncate block text-sm">
-                          {file.fileName}
-                        </span>
-                        <span className="text-xs text-slate-500 block mt-0.5 truncate">
-                          by {file.sharedByName}
-                        </span>
-                        <span className="text-[10px] text-slate-600 block mt-0.5 truncate">
-                          {file.sharedByEmail}
-                        </span>
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
-                        file.shareType === "PUBLIC"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : "bg-violet-500/10 text-violet-400 border border-violet-500/20"
-                      }`}
-                    >
-                      <span
-                        className="material-symbols-outlined text-xs"
-                        style={{ fontSize: "14px" }}
-                      >
-                        {file.shareType === "PUBLIC" ? "public" : "lock"}
-                      </span>
-                      {getShareTypeLabel(file.shareType)}
-                    </span>
-
-                    {getStatusBadge(file.status)}
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-white/5 pt-3">
-                    <div className="text-[11px] text-slate-500">
-                      Expires:{" "}
-                      <span className="text-slate-300 font-medium">
-                        {getFormatDate(file.expiresAt)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          if (file.status === "EXPIRED") {
-                            navigate("/share-expired");
-                            return;
-                          }
-
-                          if (file.status === "REVOKED") {
-                            navigate("/share-revoked");
-                            return;
-                          }
-
-                          handlePreview(file);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
-                      >
-                        <span
-                          className="material-symbols-outlined text-xs"
-                          style={{ fontSize: "14px" }}
-                        >
-                          open_in_new
-                        </span>
-                        Open
-                      </button>
-                      <button
-                        onClick={() => setRemoveTarget(file)}
-                        disabled={removingId === file.id}
-                        title="Remove from list"
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-50"
-                      >
-                        <span className="material-symbols-outlined text-base">
-                          {removingId === file.id ? "hourglass_empty" : "close"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Pagination Controls */}

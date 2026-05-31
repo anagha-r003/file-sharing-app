@@ -18,6 +18,7 @@ import MyFoldersPage from "./pages/private/MyFoldersPage";
 import FolderDetailPage from "./pages/private/FolderDetailPage";
 import ForgotPasswordPage from "./pages/public/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/public/ResetPasswordPage";
+import NotFoundPage from "./pages/public/NotFoundPage";
 import ProfilePage from "./pages/private/ProfilePage";
 import SupportPage from "./pages/private/SupportPage";
 import LinkExpired from "./components/sharedlink/LinkExpired";
@@ -68,8 +69,9 @@ function App() {
           </Route>
 
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/not-found" element={<NotFoundPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

@@ -9,6 +9,7 @@ import com.rapidrise.filesharingapp.entity.UserFile;
 import com.rapidrise.filesharingapp.enums.ShareType;
 import com.rapidrise.filesharingapp.exception.BadRequestException;
 import com.rapidrise.filesharingapp.exception.FileNotFoundException;
+import com.rapidrise.filesharingapp.exception.ShareLinkNotFoundException;
 import com.rapidrise.filesharingapp.exception.UnauthorizedAccessException;
 import com.rapidrise.filesharingapp.jwt.JwtService;
 import com.rapidrise.filesharingapp.repository.FileRepository;
@@ -626,7 +627,7 @@ public class ShareService {
         ShareLink shareLink =
                 shareLinkRepository.findById(shareId)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ShareLinkNotFoundException(
                                         "Share link not found"
                                 ));
 
@@ -676,7 +677,7 @@ public class ShareService {
 
         if (!resource.exists()) {
 
-            throw new RuntimeException(
+            throw new FileNotFoundException(
                     "File not found"
             );
         }
@@ -822,7 +823,7 @@ public class ShareService {
         ShareLink shareLink =
                 shareLinkRepository.findByToken(token)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ShareLinkNotFoundException(
                                         "Invalid share link"
                                 ));
 

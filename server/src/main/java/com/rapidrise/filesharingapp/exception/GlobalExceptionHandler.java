@@ -259,4 +259,20 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+
+    @ExceptionHandler(
+            ShareLinkNotFoundException.class
+    )
+    public ResponseEntity<
+            ResponseStructure<String>>
+    handleShareLinkNotFound(
+            ShareLinkNotFoundException ex
+    ) {
+
+        return ResponseBuilder.build(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                null
+        );
+    }
 }
