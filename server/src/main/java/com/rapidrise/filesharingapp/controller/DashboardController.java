@@ -2,6 +2,7 @@ package com.rapidrise.filesharingapp.controller;
 
 import com.rapidrise.filesharingapp.dto.ResponseStructure;
 import com.rapidrise.filesharingapp.dto.response.ActivityLogResponse;
+import com.rapidrise.filesharingapp.dto.response.CleanupDataResponse;
 import com.rapidrise.filesharingapp.dto.response.DashboardStats;
 import com.rapidrise.filesharingapp.dto.response.StorageStatsResponse;
 import com.rapidrise.filesharingapp.entity.ActivityLog;
@@ -38,6 +39,11 @@ public class DashboardController {
     @GetMapping("/storage")
     public ResponseEntity<ResponseStructure<StorageStatsResponse>> getStorageStats() {
         return dashboardService.getStorageStats();
+    }
+
+    @GetMapping("/cleanup")
+    public ResponseEntity<ResponseStructure<CleanupDataResponse>> getCleanupData() {
+        return dashboardService.getCleanupData();
     }
 
     @GetMapping("/activity")

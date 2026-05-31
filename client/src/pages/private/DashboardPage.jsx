@@ -3,12 +3,16 @@ import SummaryCards from "../../components/dashboard/SummaryCards";
 import QuickUploadCard from "../../components/dashboard/QuickUploadCard";
 import RecentActivity from "../../components/dashboard/RecentActivity";
 import StorageHealth from "../../components/dashboard/StorageHealth";
+import StorageManagementCard from "../../components/dashboard/StorageManagementCard";
+import StorageAlertCard from "../../components/dashboard/StorageAlertCard";
+import CleanupSpaceModal from "../../components/dashboard/CleanupSpaceModal";
 import { useAuth } from "../../context/AuthContext";
 import { usePageSettings } from "../../context/LayoutContext";
 
 const DashboardPage = () => {
   const { user } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
 
   usePageSettings({
     title: "Dashboard",
@@ -16,7 +20,7 @@ const DashboardPage = () => {
   });
 
   const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1); // triggers re-fetch
+    setRefreshKey((prev) => prev + 1);
   };
 
   return (
@@ -38,10 +42,18 @@ const DashboardPage = () => {
           <QuickUploadCard onUploadComplete={handleRefresh} />
           <RecentActivity refreshKey={refreshKey} />
         </div>
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-4">
           <StorageHealth refreshKey={refreshKey} />
+          <StorageManagementCard onCleanUpClick={() => setCleanupOpen(true)} />
+          <StorageAlertCard refreshKey={refreshKey} />
         </div>
       </div>
+
+      <CleanupSpaceModal
+        isOpen={cleanupOpen}
+        onClose={() => setCleanupOpen(false)}
+        onDeleteComplete={handleRefresh}
+      />
     </>
   );
 };
