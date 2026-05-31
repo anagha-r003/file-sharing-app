@@ -32,15 +32,27 @@ function Sidebar({ isOpen, setIsOpen }) {
       >
         {/* Logo */}
         <div className="px-4 py-6 flex items-center justify-center lg:justify-start overflow-hidden">
-          {isOpen ? (
-            <span className="text-xl font-black pl-2 text-violet-400 font-['Space_Grotesk'] whitespace-nowrap">
-              VaultLink
-            </span>
-          ) : (
-            <span className="text-xl font-black pl-2 text-violet-400 font-['Space_Grotesk'] hidden lg:block">
-              V
-            </span>
-          )}
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Logo icon */}
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/40">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path
+                  d="M7 1L12 4V10L7 13L2 10V4L7 1Z"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  fill="none"
+                />
+                <circle cx="7" cy="7" r="2" fill="white" />
+              </svg>
+            </div>
+
+            {/* Title */}
+            {isOpen && (
+              <span className="font-bold text-base tracking-tight text-white whitespace-nowrap">
+                VaultLink
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Nav items */}
