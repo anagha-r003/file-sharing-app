@@ -53,6 +53,9 @@ public class UserFile {
     @Column(nullable = false)
     private String mimeType;
 
+    @Column(length = 64)
+    private String fileHash;
+
     // Physical storage location
     @JsonIgnore
     @Column(nullable = false, unique = true)

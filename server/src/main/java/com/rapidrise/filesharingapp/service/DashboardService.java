@@ -138,13 +138,10 @@ public class DashboardService {
 
         Map<String, List<UserFile>> duplicateMap = new LinkedHashMap<>();
         for (UserFile file : allActive) {
-            String normalizedName = file.getName() == null
-                    ? ""
-                    : file.getName()
-                    .trim()
-                    .toLowerCase()
-                    .replaceAll("\\(\\d+\\)(?=\\.[^.]+$)", "");
-            String key = normalizedName + "\0" + file.getSize();
+            String key =
+                    file.getFileHash()
+                            + "\0"
+                            + file.getSize();
             duplicateMap.computeIfAbsent(key, k -> new ArrayList<>()).add(file);
         }
 
