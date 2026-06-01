@@ -25,20 +25,20 @@ public class ShareController {
     private final ShareService shareService;
     private final RestrictedShareService restrictedShareService;
 
-    @PostMapping("/generate")
-    public ResponseEntity<
-            ResponseStructure<
-                    List<ShareLinkResponse>>>
-    generateShareLink(
-            @RequestBody
-            CreateShareLinkRequest request
-    ) {
-
-        return shareService
-                .generateShareLink(
-                        request
-                );
-    }
+//    @PostMapping("/generate")
+//    public ResponseEntity<
+//            ResponseStructure<
+//                    List<ShareLinkResponse>>>
+//    generateShareLink(
+//            @RequestBody
+//            CreateShareLinkRequest request
+//    ) {
+//
+//        return shareService
+//                .generateShareLink(
+//                        request
+//                );
+//    }
 
     @PostMapping("/send")
     public ResponseEntity<

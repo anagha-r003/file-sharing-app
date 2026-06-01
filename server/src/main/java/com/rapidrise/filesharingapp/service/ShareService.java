@@ -62,14 +62,13 @@ public class ShareService {
 
     @Transactional
     public ResponseEntity<
-            ResponseStructure<
-                    List<ShareLinkResponse>>>
-    generateShareLink(
+            ResponseStructure<String>>
+    sendShareEmail(
             CreateShareLinkRequest request
     ) {
 
         log.info(
-                "Share link creation request received for fileId: {}",
+                "Sending share email for fileId: {}",
                 request.getFileId()
         );
 
@@ -92,21 +91,21 @@ public class ShareService {
                         user.getId()
                 );
 
-        List<ShareLink> shareLinks =
-                new ArrayList<>();
-
-        List<ShareLinkResponse> responseList =
-                new ArrayList<>();
-
         // Validate duplicate recipient emails
-        Set<String> uniqueEmails = new HashSet<>();
+        Set<String> uniqueEmails =
+                new HashSet<>();
 
-        for (String email : request.getRecipientEmails()) {
+        for (String email :
+                request.getRecipientEmails()) {
 
             String normalizedEmail =
-                    email.trim().toLowerCase();
+                    email.trim()
+                            .toLowerCase();
 
-            if (!uniqueEmails.add(normalizedEmail)) {
+            if (!uniqueEmails.add(
+                    normalizedEmail
+            )) {
+
                 throw new BadRequestException(
                         "Duplicate recipient emails are not allowed: "
                                 + email
@@ -114,28 +113,33 @@ public class ShareService {
             }
         }
 
-        for (String recipientEmail
-                : request.getRecipientEmails()) {
+        for (String recipientEmail :
+                request.getRecipientEmails()) {
 
-            if (recipientEmail.equalsIgnoreCase(user.getEmail())) {
+            if (
+                    recipientEmail.equalsIgnoreCase(
+                            user.getEmail()
+                    )
+            ) {
+
                 throw new BadRequestException(
                         "You cannot share files with yourself"
                 );
             }
 
-            boolean recipientHasAccount = userRepository.findByEmail(recipientEmail).isPresent();
+            boolean recipientHasAccount =
+                    userRepository
+                            .findByEmail(
+                                    recipientEmail
+                            )
+                            .isPresent();
 
             // Generate token
             String token =
                     UUID.randomUUID()
                             .toString();
 
-            String shareUrl =
-                    frontendUrl
-                            + "/public/share/"
-                            + token;
-
-            // Create new share link
+            // Create share link
             ShareLink shareLink =
                     ShareLink.builder()
                             .token(token)
@@ -150,195 +154,52 @@ public class ShareService {
                             )
                             .active(true)
                             .downloadCount(0)
-
-                            // NEW
                             .shareType(
                                     request.getShareType()
                             )
-
                             .requiresOtp(
                                     request.getShareType()
                                             == ShareType.RESTRICTED
                                             && !recipientHasAccount
                             )
-
                             .file(file)
                             .createdBy(user)
                             .build();
 
-            // IMPORTANT FIX
-            shareLinks.add(shareLink);
-
-
-
-            // Response object
-            responseList.add(
-                    ShareLinkResponse.builder()
-
-                            .id(
-                                    shareLink.getId()
-                            )
-
-                            .recipientEmail(
-                                    recipientEmail
-                            )
-
-                            .shareUrl(
-                                    shareUrl
-                            )
-
-                            .fileName(
-                                    file.getName()
-                            )
-
-                            .expiresAt(
-                                    request.getExpiresAt()
-                            )
-
-                            .active(true)
-
-                            .downloadCount(0)
-
-                            // ADD THESE
-                            .requiresOtp(
-                                    request.getShareType()
-                                            == ShareType.RESTRICTED
-                                            && !recipientHasAccount
-                            )
-
-                            .shareType(
-                                    request.getShareType().name()
-                            )
-
-                            .sharedByName(
-                                    user.getFirstName()
-                                            + " "
-                                            + user.getLastName()
-                            )
-
-                            .sharedByEmail(
-                                    user.getEmail()
-                            )
-
-                            .viewUrl(
-                                    request.getShareType()
-                                            == ShareType.PUBLIC
-                                            ? baseUrl
-                                              + "/share/view/"
-                                              + token
-                                            : null
-                            )
-
-                            .downloadUrl(
-                                    request.getShareType()
-                                            == ShareType.PUBLIC
-                                            ? baseUrl
-                                              + "/share/download/"
-                                              + token
-                                            : null
-                            )
-
-                            .accessed(false)
-
-                            .build()
+            shareLinkRepository.save(
+                    shareLink
             );
-        }
-
-        shareLinkRepository.saveAll(
-                shareLinks
-        );
-
-        // Activity log and automatic notification
-        for (ShareLink shareLink
-                : shareLinks) {
-
-            activityLogService.log(
-                    user,
-                    "SHARE",
-                    file.getName(),
-                    "with "
-                            + shareLink
-                            .getRecipientEmail()
-            );
-
-            userRepository.findByEmail(shareLink.getRecipientEmail())
-                    .ifPresent(recipient -> {
-                        notificationService.notifyFileShared(
-                                recipient,
-                                user,
-                                file,
-                                shareLink
-                        );
-
-                        if (shareLink.getShareType() == ShareType.RESTRICTED) {
-                            try {
-                                String shareUrl =
-                                        frontendUrl
-                                                + "/public/share/"
-                                                + shareLink.getToken();
-                                emailService.sendShareLinkEmail(
-                                        shareLink.getRecipientEmail(),
-                                        user.getFirstName(),
-                                        shareUrl,
-                                        shareLink.getMessage()
-                                );
-                            } catch (Exception e) {
-                                log.error(
-                                        "Failed to send automatic direct-share notification to {}: {}",
-                                        shareLink.getRecipientEmail(),
-                                        e.getMessage()
-                                );
-                            }
-                        }
-                    });
-        }
-
-        return ResponseBuilder.build(
-                HttpStatus.OK,
-                "Share link generated successfully",
-                responseList
-        );
-    }
-    @Transactional
-    public ResponseEntity<
-            ResponseStructure<String>>
-    sendShareEmail(
-            CreateShareLinkRequest request
-    ) {
-
-        log.info(
-                "Sending share email for fileId: {}",
-                request.getFileId()
-        );
-
-        User user =
-                SecurityUtil.getCurrentUser();
-
-        UserFile file =
-                getAuthorizedFile(
-                        request.getFileId(),
-                        user.getId()
-                );
-
-        for (String recipientEmail :
-                request.getRecipientEmails()) {
-
-            ShareLink shareLink =
-                    shareLinkRepository
-                            .findTopByFileIdAndRecipientEmailOrderByCreatedAtDesc(
-                                    file.getId(),
-                                    recipientEmail
-                            )
-                            .orElseThrow(() ->
-                                    new RuntimeException(
-                                            "Share link not found"
-                                    ));
 
             String shareUrl =
                     frontendUrl
                             + "/public/share/"
                             + shareLink.getToken();
 
+            // Activity log
+            activityLogService.log(
+                    user,
+                    "SHARE",
+                    file.getName(),
+                    "with "
+                            + recipientEmail
+            );
+
+            // In-app notification
+            userRepository
+                    .findByEmail(
+                            recipientEmail
+                    )
+                    .ifPresent(recipient ->
+                            notificationService
+                                    .notifyFileShared(
+                                            recipient,
+                                            user,
+                                            file,
+                                            shareLink
+                                    )
+                    );
+
+            // Send email
             try {
 
                 emailService

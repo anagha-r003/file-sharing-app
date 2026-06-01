@@ -1,22 +1,15 @@
 import { useState } from "react";
-import {
-  generateShareLink,
-  sendShareLink,
-} from "../../../services/shareService";
+import { sendShareLink } from "../../../services/shareService";
 import ShareModalHeader from "./ShareModalHeader";
 import EmailInput from "./EmailInput";
 import AccessSettings from "./AccessSettings";
-import GeneratedLinkDisplay from "./GeneratedLinkDisplay";
 import ShareModalActions from "./ShareModalActions";
 
 function ShareModal({ file, onClose }) {
   const [email, setEmail] = useState("");
   const [emails, setEmails] = useState([]);
   const [message, setMessage] = useState("");
-  const [link, setLink] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -77,66 +70,16 @@ function ShareModal({ file, onClose }) {
     setEmails((prev) => prev.filter((e) => e !== em));
   };
 
-  const handleGenerateLink = async () => {
-    setIsGenerating(true);
-    try {
-      const requestBody = {
-        fileId: file.id,
-        recipientEmails: emails,
-        message: message,
-        expiresAt: expiryDate,
-        shareType: access === "anyone" ? "PUBLIC" : "RESTRICTED",
-      };
-
-      const response = await generateShareLink(requestBody);
-      const generatedLink = response?.data?.[0]?.shareUrl;
-      setLink(generatedLink);
-      return generatedLink;
-    } catch (err) {
-      console.error(err);
-
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to create sharelink";
-
-      showToast(errorMessage, "error");
-
-      return null;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleCopy = async () => {
-    let finalLink = link;
-    if (!finalLink) {
-      finalLink = await handleGenerateLink();
-    }
-    if (!finalLink) return;
-    navigator.clipboard.writeText(finalLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleSend = async () => {
     if (emails.length === 0) {
       showToast("Add atleast one email", "error");
+
       return;
     }
 
     setIsSending(true);
 
     try {
-      let finalLink = link;
-
-      // Generate only if link not exists
-      if (!finalLink) {
-        finalLink = await handleGenerateLink();
-      }
-
-      if (!finalLink) return;
-
       const requestBody = {
         fileId: file.id,
         recipientEmails: emails,
@@ -145,7 +88,6 @@ function ShareModal({ file, onClose }) {
         shareType: access === "anyone" ? "PUBLIC" : "RESTRICTED",
       };
 
-      // NEW API CALL
       await sendShareLink(requestBody);
 
       showToast("File sent successfully!");
@@ -156,12 +98,14 @@ function ShareModal({ file, onClose }) {
     } catch (err) {
       console.error(err);
 
-      showToast("Failed to send email", "error");
+      const errorMessage =
+        err.response?.data?.message || err.message || "Failed to send email";
+
+      showToast(errorMessage, "error");
     } finally {
       setIsSending(false);
     }
   };
-
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
       <div className="bg-[#1e1e1e] border border-white/10 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl max-h-[92vh] overflow-hidden flex flex-col">
@@ -194,19 +138,9 @@ function ShareModal({ file, onClose }) {
             onExpiryDateChange={(e) => setExpiryDate(e.target.value)}
           />
 
-          <GeneratedLinkDisplay
-            link={link}
-            copied={copied}
-            onCopy={handleCopy}
-          />
-
           <ShareModalActions
-            link={link}
             emails={emails}
-            loading={isGenerating || isSending}
-            isGenerating={isGenerating}
             isSending={isSending}
-            onGenerateLink={handleGenerateLink}
             onClose={onClose}
             onSend={handleSend}
             toast={toast}
