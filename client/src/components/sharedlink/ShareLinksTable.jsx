@@ -7,7 +7,6 @@ import { downloadFiles } from "../../services/fileService";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
-
   return new Date(dateStr).toLocaleDateString("en-US", {
     month: "numeric",
     day: "numeric",
@@ -17,17 +16,12 @@ const formatDate = (dateStr) => {
 
 const formatRelative = (dateStr) => {
   if (!dateStr) return "recent";
-
   const date = new Date(dateStr);
   const now = new Date();
-
   const diffMs = now - date;
-
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
   if (diffDays === 0) return "today";
   if (diffDays === 1) return "1d ago";
-
   return `${diffDays}d ago`;
 };
 
@@ -43,9 +37,8 @@ function LinkStatusBadges({ isActive, isExpired, isRevoked, accessed }) {
       : `${badgeClass} bg-red-500/15 text-red-400`;
 
   return (
-    <div className="inline-grid grid-cols-2 gap-x-2 items-center xl:mx-auto">
+    <div className="flex items-center gap-2">
       <span className={linkClass}>{linkLabel}</span>
-
       <span
         className={
           accessed
@@ -63,8 +56,6 @@ function SharedLinksTable({
   sharedLinks = [],
   onRefresh,
   showToast,
-
-  // NEW
   page,
   totalPages,
   totalItems,
@@ -72,14 +63,11 @@ function SharedLinksTable({
   onPageChange,
 }) {
   const [search, setSearch] = useState("");
-
   const [previewFile, setPreviewFile] = useState(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-
     if (!q) return sharedLinks;
-
     return sharedLinks.filter(
       (l) =>
         l.fileName?.toLowerCase().includes(q) ||
@@ -89,26 +77,20 @@ function SharedLinksTable({
 
   const handleRevoke = async (shareId) => {
     const link = sharedLinks.find((l) => l.id === shareId);
-
     if (
       !link ||
       link.active === false ||
       new Date(link.expiryDate) <= new Date()
     ) {
       showToast?.("Link already inactive", "error");
-
       return;
     }
-
     try {
       await revokeShareLink(shareId);
-
       showToast?.("Share link revoked!", "success");
-
       onRefresh?.();
     } catch (error) {
       console.error("Failed to revoke share link", error);
-
       showToast?.("Failed to revoke link", "error");
     }
   };
@@ -121,7 +103,6 @@ function SharedLinksTable({
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
             Sharing history
           </h1>
-
           <p className="text-sm text-slate-500">
             Manage active and expired share links to your files.
           </p>
@@ -140,11 +121,13 @@ function SharedLinksTable({
 
         {/* Table */}
         <div className="bg-[#111114] border border-white/[0.06] rounded-2xl overflow-hidden">
+
+          {/* Column headers — only on xl (true 3-col layout) */}
           {filtered.length > 0 && (
-            <div className="hidden xl:grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-4 px-5 py-3 border-b border-white/[0.05] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <div className="hidden xl:grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] gap-4 px-5 py-3 border-b border-white/[0.05] text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <span>File</span>
-              <span className="text-right">Status</span>
-              <span className="text-right">Actions</span>
+              <span>Status</span>
+              <span>Actions</span>
             </div>
           )}
 
@@ -152,80 +135,98 @@ function SharedLinksTable({
             {filtered.length > 0 ? (
               filtered.map((link) => {
                 const isActive = link.status === "ACTIVE";
-
                 const isExpired = link.status === "EXPIRED";
-
                 const isRevoked = link.status === "REVOKED";
 
                 return (
                   <div
                     key={link.id}
-                    className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.8fr)] gap-3 xl:gap-4 xl:items-center px-5 py-4 hover:bg-white/[0.02] transition-colors"
+                    className="px-5 py-4 hover:bg-white/[0.02] transition-colors"
                   >
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="text-white font-semibold text-base truncate">
-                        {link.fileName}
-                      </span>
+                    {/*
+                      Layout strategy:
+                      - mobile (<md):  full stack, each section on its own line
+                      - tablet (md):   2-col: [file info] [status + actions stacked]
+                      - desktop (xl):  3-col: [file] [status] [actions]
+                    */}
+                    <div className="flex flex-col md:flex-row md:items-start md:gap-4 xl:grid xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] xl:items-center gap-3">
 
-                      <p className="text-xs text-slate-500">
-                        Shared with{" "}
-                        <span className="text-slate-400 font-medium">
-                          {link.recipientEmail}
+                      {/* File info */}
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <span className="text-white font-semibold text-base truncate">
+                          {link.fileName}
                         </span>
-                        {" · "}
-                        {isRevoked
-                          ? `Revoked ${formatDate(link.expiryDate)}`
-                          : isExpired
-                            ? `Expired ${formatDate(link.expiryDate)}`
-                            : `Expires ${formatDate(link.expiryDate)}`}
-                        {" · "}
-                        Created {formatRelative(link.createdAt)}
-                      </p>
-                    </div>
+                        <p className="text-xs text-slate-500">
+                          Shared with{" "}
+                          <span className="text-slate-400 font-medium">
+                            {link.recipientEmail}
+                          </span>
+                          {" · "}
+                          {isRevoked
+                            ? `Revoked ${formatDate(link.expiryDate)}`
+                            : isExpired
+                              ? `Expired ${formatDate(link.expiryDate)}`
+                              : `Expires ${formatDate(link.expiryDate)}`}
+                          {" · "}
+                          Created {formatRelative(link.createdAt)}
+                        </p>
+                      </div>
 
-                    <LinkStatusBadges
-                      isActive={isActive}
-                      isExpired={isExpired}
-                      isRevoked={isRevoked}
-                      accessed={link.accessed}
-                    />
+                      {/*
+                        On tablet (md): right column — badges on top, buttons below
+                        On desktop (xl): badges and buttons are separate grid cells
+                      */}
+                      <div className="flex flex-col gap-2 md:items-start xl:contents">
 
-                    <div className="flex items-center gap-2 flex-shrink-0 xl:justify-end">
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(link.shareUrl);
+                        {/* Status badges */}
+                        <div className="xl:flex xl:items-center">
+                          <LinkStatusBadges
+                            isActive={isActive}
+                            isExpired={isExpired}
+                            isRevoked={isRevoked}
+                            accessed={link.accessed}
+                          />
+                        </div>
 
-                          showToast?.("Link copied!", "success");
-                        }}
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#26262b] hover:bg-[#303036] text-white text-xs font-medium rounded-lg transition-colors"
-                      >
-                        Copy
-                      </button>
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(link.shareUrl);
+                              showToast?.("Link copied!", "success");
+                            }}
+                            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#26262b] hover:bg-[#303036] text-white text-xs font-medium rounded-lg transition-colors"
+                          >
+                            Copy
+                          </button>
 
-                      <button
-                        onClick={() =>
-                          setPreviewFile({
-                            id: link.fileId,
-                            name: link.fileName,
-                            size: 0,
-                          })
-                        }
-                        className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
-                      >
-                        Open
-                      </button>
+                          <button
+                            onClick={() =>
+                              setPreviewFile({
+                                id: link.fileId,
+                                name: link.fileName,
+                                size: 0,
+                              })
+                            }
+                            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2a2542] hover:bg-[#342e52] text-[#a78bfa] text-xs font-medium rounded-lg transition-colors"
+                          >
+                            Open
+                          </button>
 
-                      <button
-                        disabled={!isActive}
-                        onClick={() => handleRevoke(link.id)}
-                        className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg transition-colors ${
-                          !isActive
-                            ? "text-slate-600 cursor-not-allowed opacity-40 bg-transparent"
-                            : "bg-[#2e1a1a] hover:bg-[#3d2222] text-red-400"
-                        }`}
-                      >
-                        Revoke
-                      </button>
+                          <button
+                            disabled={!isActive}
+                            onClick={() => handleRevoke(link.id)}
+                            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg transition-colors ${
+                              !isActive
+                                ? "text-slate-600 cursor-not-allowed opacity-40 bg-transparent"
+                                : "bg-[#2e1a1a] hover:bg-[#3d2222] text-red-400"
+                            }`}
+                          >
+                            Revoke
+                          </button>
+                        </div>
+
+                      </div>
                     </div>
                   </div>
                 );

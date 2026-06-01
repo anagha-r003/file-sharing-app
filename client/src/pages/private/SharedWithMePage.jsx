@@ -239,11 +239,7 @@ function SharedWithMePage() {
           </div>
         ) : (
           <>
-            {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                Tablet + Desktop — single responsive table
-                md(768+): fluid w-full, compact text, email hidden
-                lg(1024+): capped 1100px centred, full text + email
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+            {/*Tablet + Desktop — single responsive table */}
             <div className="hidden md:block w-full lg:max-w-[1100px] lg:mx-auto rounded-2xl border border-white/5 bg-[#111115] overflow-hidden">
               <table
                 className="w-full text-left border-collapse"
@@ -251,7 +247,7 @@ function SharedWithMePage() {
               >
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.02]">
-                    {/* File col — wider on lg */}
+                    {/* File col */}
                     <th className="px-3 md:px-4 py-3 md:py-3.5 text-[11px] font-semibold uppercase tracking-widest text-slate-500 w-[38%] lg:w-[31%]">
                       File
                     </th>
@@ -309,9 +305,7 @@ function SharedWithMePage() {
                           </div>
                         </td>
 
-                        {/* ── Shared by ──
-                            tablet: avatar + name only
-                            desktop (lg): avatar + name + email below */}
+                        {/* ── Shared by ──  */}
                         <td className="px-3 md:px-4 py-3 md:py-3.5">
                           <div className="flex items-center gap-2">
                             <div
@@ -355,9 +349,7 @@ function SharedWithMePage() {
                           {getStatusBadge(file.status)}
                         </td>
 
-                        {/* ── Actions ──
-                            tablet: w-7 h-7 smaller buttons
-                            desktop: w-8 h-8 */}
+                        {/* ── Actions ── */}
                         <td className="px-3 md:px-4 py-3 md:py-3.5">
                           <div className="flex items-center justify-end gap-1 lg:gap-1.5">
                             <button
@@ -406,9 +398,7 @@ function SharedWithMePage() {
               </table>
             </div>
 
-            {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                Mobile view — improved stacked cards
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+            {/*Mobile view — improved stacked cards*/}
             <div className="grid grid-cols-1 gap-3 md:hidden">
               {filteredFiles.map((file) => {
                 const avatarColors = getAvatarColors(file.sharedByName);
