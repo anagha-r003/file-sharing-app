@@ -8,8 +8,8 @@ import {
   Check,
   XCircle,
   Calendar,
-} from "lucide-react"; // ← added Calendar icon
-import { Card, Button, Badge } from "../../common/ui";
+} from "lucide-react";
+import { Card, Button } from "../../common/ui";
 import { usePageSettings } from "../../context/LayoutContext";
 import Toast from "../../components/sharedlink/Toast";
 import { useAuth } from "../../context/AuthContext";
@@ -72,7 +72,6 @@ function TextInput({
   );
 }
 
-// ─── CHANGE 1: Added DateInput component (styled to match TextInput) ───────
 function DateInput({ value, onChange }) {
   return (
     <div className="relative">
@@ -98,7 +97,6 @@ function PasswordInput({ value, onChange, placeholder }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
-      {/* Dummy hidden input tricks browser autofill away */}
       <input type="password" style={{ display: "none" }} readOnly />
       <input
         type={show ? "text" : "password"}
@@ -166,9 +164,8 @@ function useToast(duration = 3000) {
   return { toastState, showToast };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // ProfilePage
-// ─────────────────────────────────────────────────────────────────────────────
+
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
 
@@ -177,18 +174,14 @@ export default function ProfilePage() {
   // Profile form
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [dob, setDob] = useState(""); // ← CHANGE 2: added dob state
+  const [dob, setDob] = useState("");
 
   // Password form
   const [currentPass, setCurrentPass] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
 
-  const [loading, setLoading] = useState(false);
-
   const { toastState, showToast } = useToast(3000);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -197,7 +190,7 @@ export default function ProfilePage() {
         const profileData = response.data;
         setFirstName(profileData.firstName || "");
         setLastName(profileData.lastName || "");
-        setDob(profileData.dob || ""); // ← CHANGE 3: populate dob from API
+        setDob(profileData.dob || "");
         updateUser(profileData);
       } catch (error) {
         console.log("Profile fetch failed:", error);
@@ -208,24 +201,57 @@ export default function ProfilePage() {
 
   // Derived
   const initials =
-    ((firstName[0] ?? "") + (lastName[0] ?? "")).toUpperCase() || "AR";
+    ((firstName[0] ?? "") + (lastName[0] ?? "")).toUpperCase() || "?";
   const displayName =
-    [firstName.trim(), lastName.trim()].filter(Boolean).join(" ") ||
-    "Ann Roberts";
+    [firstName.trim(), lastName.trim()].filter(Boolean).join(" ") || "User";
   const strength = getStrength(newPass);
 
   // Handlers
   const handleSaveInfo = async () => {
     try {
-      if (!firstName.trim() || !lastName.trim()) {
-        showToast("Please enter both first and last name.", "error");
+      const trimmedFirstName = firstName.trim();
+      const trimmedLastName = lastName.trim();
+
+      // First name validations
+      if (!trimmedFirstName) {
+        showToast("First name is required", "error");
+        return;
+      }
+
+      if (trimmedFirstName.length < 2 || trimmedFirstName.length > 30) {
+        showToast("First name must be 2 to 30 characters", "error");
+        return;
+      }
+
+      if (!/^[A-Za-z_]+$/.test(trimmedFirstName)) {
+        showToast(
+          "First name can only contain letters and underscore",
+          "error",
+        );
+        return;
+      }
+
+      // Last name validations
+      if (!trimmedLastName) {
+        showToast("Last name is required", "error");
+        return;
+      }
+
+      if (trimmedLastName.length < 1 || trimmedLastName.length > 30) {
+        showToast("Last name must be 1 to 30 characters", "error");
+        return;
+      }
+
+      // DOB validation
+      if (!dob) {
+        showToast("Date of birth is required", "error");
         return;
       }
 
       const payload = {
-        firstName,
-        lastName,
-        dob, // ← CHANGE 4: include dob in save payload
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        dob,
       };
 
       const response = await updateProfile(payload);
@@ -240,7 +266,7 @@ export default function ProfilePage() {
   const handleResetInfo = () => {
     setFirstName(user?.firstName || "");
     setLastName(user?.lastName || "");
-    setDob(user?.dob || ""); // ← CHANGE 5: reset dob on cancel
+    setDob(user?.dob || "");
   };
 
   const handleSavePassword = async () => {
@@ -329,14 +355,6 @@ export default function ProfilePage() {
 
         {/* Personal Information */}
         <SectionCard icon={<User size={16} />} title="Personal Information">
-          {/*
-            ── CHANGE 6 ────────────────────────────────────────────────────────
-            Grid changed from `grid-cols-1 sm:grid-cols-2`
-            to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
-            so DOB sits on the same row as First/Last Name on wider screens.
-            On sm screens it wraps to a new row (still looks clean).
-            ────────────────────────────────────────────────────────────────────
-          */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <div className="flex flex-col gap-2">
               <FieldLabel>First Name</FieldLabel>
