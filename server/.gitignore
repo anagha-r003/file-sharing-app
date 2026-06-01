@@ -37,3 +37,5 @@ uploads/
 
 # Preview thumbnails
 uploads/previews/
+
+src/main/resources/application.properties
