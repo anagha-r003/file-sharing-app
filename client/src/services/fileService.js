@@ -78,32 +78,12 @@ export const deleteFile = async (fileIds) => {
   return deleteFiles(fileIds);
 };
 
-// export const uploadFile = async (file, onProgress) => {
-//   return uploadFiles([file], onProgress);
-// };
 
 export const viewFile = async (fileId) => {
   const response = await api.get(`/files/${fileId}/view`);
   return response.data;
 };
 
-// export const downloadFile = async (fileId, fileName = "download") => {
-//   const response = await api.get(`/files/${fileId}/download`, {
-//     responseType: "blob",
-//   });
-
-//   const url = window.URL.createObjectURL(new Blob([response.data]));
-
-//   const link = document.createElement("a");
-//   link.href = url;
-//   link.setAttribute("download", fileName);
-//   document.body.appendChild(link);
-//   link.click();
-//   link.remove();
-//   window.URL.revokeObjectURL(url);
-
-//   return response.data;
-// };
 
 export const starFile = async (fileId) => {
   const response = await api.patch(`/files/star/${fileId}`);

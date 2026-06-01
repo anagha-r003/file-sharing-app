@@ -190,7 +190,7 @@ function SharedLinksTable({
 
                         {/* Action buttons */}
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <button
+                          {/* <button
                             onClick={() => {
                               navigator.clipboard.writeText(link.shareUrl);
                               showToast?.("Link copied!", "success");
@@ -198,7 +198,7 @@ function SharedLinksTable({
                             className="flex items-center gap-1.5 px-3.5 py-2 bg-[#26262b] hover:bg-[#303036] text-white text-xs font-medium rounded-lg transition-colors"
                           >
                             Copy
-                          </button>
+                          </button> */}
 
                           <button
                             onClick={() =>
