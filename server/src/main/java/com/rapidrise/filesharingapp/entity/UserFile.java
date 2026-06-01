@@ -90,10 +90,6 @@ public class UserFile {
     // Trash deletion timestamp
     private LocalDateTime deletedAt;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private Boolean encrypted = false;
-
     @Column(nullable = false)
     @ColumnDefault("0")
     @Builder.Default
