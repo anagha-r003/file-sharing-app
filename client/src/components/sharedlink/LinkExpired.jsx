@@ -1,5 +1,4 @@
-import React from "react";
-import { Clock, ArrowLeft } from "lucide-react"; // Using Lucide icons for a clean look
+import { Clock } from "lucide-react"; 
 
 const LinkExpired = () => {
   return (
@@ -15,18 +14,9 @@ const LinkExpired = () => {
         <h1 className="text-3xl font-bold tracking-tight mb-4">Link Expired</h1>
         <p className="text-zinc-400 leading-relaxed mb-10">
           This secure link is no longer active.
-          {/* For your protection, VaultLink 
-          automatically revokes access tokens after a period of inactivity. */}
+          
         </p>
 
-        {/* Primary Action */}
-        {/* <button
-          onClick={() => (window.location.href = "/dashboard")}
-          className="w-full bg-[#7c3aed] hover:bg-[#8b5cf6] text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.98] shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
-        >
-          <ArrowLeft size={18} />
-          Return to Dashboard
-        </button> */}
 
         {/* Footer Branding */}
         <div className="mt-8 pt-8 border-t border-[#27272a]">

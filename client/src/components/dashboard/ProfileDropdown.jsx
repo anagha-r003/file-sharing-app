@@ -16,11 +16,11 @@ const ProfileDropdown = ({ isOpen, onClose }) => {
   const initials =
     (
       (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")
-    ).toUpperCase() || "AR";
+    ).toUpperCase() || "U";
 
   const fullName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-    "Ann Roberts";
+    "User";
 
   const handleNavigate = (path) => {
     onClose();

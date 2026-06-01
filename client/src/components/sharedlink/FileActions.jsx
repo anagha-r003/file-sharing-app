@@ -1,10 +1,4 @@
-/**
- * FileActions
- * Props:
- *   onDownload {function}
- *   onPreview  {function}
- *   onCopy     {function}
- */
+
 export default function FileActions({ onDownload, onPreview, onCopy }) {
   return (
     <div className="px-5 sm:px-7 py-5 flex items-center justify-between gap-2">

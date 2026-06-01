@@ -4,7 +4,6 @@ import {
   downloadFiles,
   starFile,
   unstarFile,
-  renameFile,
 } from "../../services/fileService";
 
 import ShareModal from "./ShareModal/ShareModal";
@@ -20,7 +19,6 @@ import { getFileStats } from "../../utils/fileUtils";
 
 function FileTable({
   files,
-  page,
   setPage,
   pageSize,
   setPageSize,
@@ -75,8 +73,6 @@ function FileTable({
   // Selection state
   const allPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
-
-  const somePageSelected = pageIds.some((id) => selectedIds.includes(id));
 
   // Statistics
   const finalStats = useMemo(
@@ -147,19 +143,6 @@ function FileTable({
       onFileUpdate?.({ ...file, isStarred: !file.isStarred });
     } catch (err) {
       console.error("Star/unstar failed", err);
-    }
-  };
-
-  const handleRenameFile = async (file, newName) => {
-    try {
-      await renameFile(file.id, newName);
-
-      onFileUpdate?.({
-        ...file,
-        name: newName,
-      });
-    } catch (err) {
-      console.error("Rename failed", err);
     }
   };
 

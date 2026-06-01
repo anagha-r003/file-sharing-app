@@ -194,18 +194,18 @@ function SharedWithMePage() {
     <>
       <div className="max-w-[1400px] mx-auto space-y-6">
         {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-white">
+        <div className="flex flex-col gap-5 px-1">
+          <div className="flex flex-col gap-1.5">
+            <h2 className="text-lg font-bold tracking-tight text-white leading-snug">
               Files Shared Directly with You
             </h2>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-slate-400 leading-relaxed">
               View files shared to your account, including public and restricted
               links.
             </p>
           </div>
 
-          <div className="relative w-full sm:max-w-xs">
+          <div className="relative w-full">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">
               search
             </span>
@@ -214,7 +214,7 @@ function SharedWithMePage() {
               placeholder="Search shared files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#13131a] border border-white/5 rounded-xl text-slate-200 text-sm pl-10 pr-4 py-2.5 outline-none focus:border-violet-500/30 focus:ring-1 focus:ring-violet-500/20 placeholder:text-slate-600 transition"
+              className="w-full bg-[#13131a] border border-white/5 rounded-xl text-slate-200 text-sm pl-10 pr-4 py-3 outline-none focus:border-violet-500/30 focus:ring-1 focus:ring-violet-500/20 placeholder:text-slate-600 transition"
             />
           </div>
         </div>
@@ -235,9 +235,7 @@ function SharedWithMePage() {
             <h3 className="text-lg font-bold text-slate-400">
               No shared files found
             </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Files shared directly to your email will appear here.
-            </p>
+            
           </div>
         ) : (
           <>

@@ -1,4 +1,3 @@
-import React from "react";
 import { ShieldOff, Info } from "lucide-react";
 
 const AccessRevoked = () => {

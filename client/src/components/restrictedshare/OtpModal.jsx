@@ -1,17 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 
-/* ─────────────────────────────────────────────
-   OtpModal
-   Props:
-     isOpen      : boolean
-     onClose     : () => void
-     onSubmit    : (otp: string) => void
-     onResend    : () => void
-     isLoading   : boolean
-     isResending : boolean
-     email       : string
-     error       : string  (from parent, e.g. "Invalid OTP")
-───────────────────────────────────────────── */
 export function OtpModal({
   isOpen,
   onClose,
@@ -112,7 +100,6 @@ export function OtpModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
-      //onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className="w-full max-w-md rounded-2xl p-6 shadow-2xl"

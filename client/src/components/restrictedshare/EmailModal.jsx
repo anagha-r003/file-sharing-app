@@ -1,14 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 
-/* ─────────────────────────────────────────────
-   EmailModal
-   Props:
-     isOpen    : boolean
-     onClose   : () => void
-     onSubmit  : (email: string) => void
-     isLoading : boolean
-     fileName  : string
-───────────────────────────────────────────── */
 const EmailModal = ({ isOpen, onClose, onSubmit, isLoading, fileName }) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");

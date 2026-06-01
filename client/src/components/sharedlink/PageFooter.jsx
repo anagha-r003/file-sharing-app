@@ -1,10 +1,4 @@
-/**
- * PageFooter
- * Props:
- *   brandName {string} – e.g. "VaultLink"
- *   brandHref {string} – link for the brand name
- *   reportHref {string} – link for "Report abuse"
- */
+
 export default function PageFooter({
   brandName = "VaultLink",
   brandHref = "#",

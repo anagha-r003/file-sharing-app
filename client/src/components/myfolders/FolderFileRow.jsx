@@ -1,26 +1,12 @@
 import { useState } from "react";
-import { downloadFiles } from "../../services/fileService";
 import { getFileMeta, formatSize, formatDate } from "../../utils/fileUtils";
 import ActionMenu from "../../common/ui/ActionMenu";
 
 function FolderFileRow({ file, onRemove, onView, onShare, onRename }) {
   const { icon, color, badge } = getFileMeta(file.name);
-
-  // Track whether this row's menu is open so dots stay visible while menu is open
   const [menuOpen, setMenuOpen] = useState(false);
 
-  async function handleDownload(e) {
-    e.stopPropagation();
-    try {
-      await downloadFiles([file.id]);
-    } catch (err) {
-      console.error("Download failed:", err);
-    }
-  }
-
   return (
-    // Use `relative` so the ActionMenu can use `absolute` positioning
-    // scoped to this row and escape the overflow of the parent list
     <div
       onClick={onView}
       className="group relative flex items-center gap-3 px-4 md:px-5 py-3.5 hover:bg-white/[0.02] transition"
@@ -57,11 +43,7 @@ function FolderFileRow({ file, onRemove, onView, onShare, onRename }) {
         </div>
       </div>
 
-      {/* Action Menu
-          - Always visible (opacity-100), no more hiding on non-hover rows
-          - stopPropagation so clicking dots doesn't trigger onView
-          - Pass onOpenChange so we can track open state for the overflow fix
-      */}
+      {/* Action Menu */} 
       <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <ActionMenu
           onOpenChange={setMenuOpen}

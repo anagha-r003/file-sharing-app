@@ -50,7 +50,7 @@ function RecycleBinPage() {
   const pageSize = 10;
 
   usePageSettings({
-    title: "Trash",
+    title: "Recycle Bin",
     contentClassName: "space-y-4 md:space-y-5",
   });
 
