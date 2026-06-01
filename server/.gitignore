@@ -44,3 +44,5 @@ uploads/
 # Preview thumbnails
 uploads/previews/
 >>>>>>> feature/file-management
+
+src/main/resources/application.properties
