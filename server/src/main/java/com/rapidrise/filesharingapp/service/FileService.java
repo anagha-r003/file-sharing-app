@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -217,6 +218,11 @@ public class FileService {
                         filePath
                 );
 
+                String fileHash =
+                        generateFileHash(
+                                filePath
+                        );
+
                 // Generate preview
                 String previewPath =
                         generatePreviewSafely(
@@ -247,6 +253,7 @@ public class FileService {
                                 .mimeType(
                                         mimeType
                                 )
+                                .fileHash(fileHash)
                                 .type(
                                         FileType
                                                 .fromMimeType(
@@ -1142,5 +1149,64 @@ public class FileService {
         }
 
         return finalName;
+    }
+
+    private String generateFileHash(
+            Path filePath
+    ) {
+        try {
+
+            MessageDigest digest =
+                    MessageDigest.getInstance(
+                            "SHA-256"
+                    );
+
+            try (
+                    InputStream inputStream =
+                            Files.newInputStream(filePath)
+            ) {
+
+                byte[] buffer =
+                        new byte[8192];
+
+                int bytesRead;
+
+                while (
+                        (bytesRead =
+                                inputStream.read(buffer))
+                                != -1
+                ) {
+                    digest.update(
+                            buffer,
+                            0,
+                            bytesRead
+                    );
+                }
+            }
+
+            byte[] hashBytes =
+                    digest.digest();
+
+            StringBuilder hex =
+                    new StringBuilder();
+
+            for (byte b : hashBytes) {
+                hex.append(
+                        String.format(
+                                "%02x",
+                                b
+                        )
+                );
+            }
+
+            return hex.toString();
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to generate file hash",
+                    e
+            );
+        }
     }
 }
