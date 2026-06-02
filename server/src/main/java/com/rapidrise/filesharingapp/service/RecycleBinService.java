@@ -9,10 +9,7 @@ import com.rapidrise.filesharingapp.entity.User;
 import com.rapidrise.filesharingapp.entity.UserFile;
 import com.rapidrise.filesharingapp.exception.FileNotFoundException;
 import com.rapidrise.filesharingapp.exception.InvalidFileException;
-import com.rapidrise.filesharingapp.repository.FileRepository;
-import com.rapidrise.filesharingapp.repository.ShareHistoryRepository;
-import com.rapidrise.filesharingapp.repository.ShareLinkRepository;
-import com.rapidrise.filesharingapp.repository.UserRepository;
+import com.rapidrise.filesharingapp.repository.*;
 import com.rapidrise.filesharingapp.util.ResponseBuilder;
 import com.rapidrise.filesharingapp.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +41,7 @@ public class RecycleBinService {
     private final ShareLinkRepository shareLinkRepository;
     private final UserRepository userRepository;
     private final ShareHistoryRepository shareHistoryRepository;
+    private final RestrictedShareOtpRepository restrictedShareOtpRepository;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -192,6 +190,7 @@ public class RecycleBinService {
 
         // Save history
         shareHistoryRepository.saveAll(historyList);
+        restrictedShareOtpRepository.deleteAllByShareLinkFileIdIn(uniqueIdList);
         shareLinkRepository.deleteAllByFileIdIn(uniqueIdList);
 
         // Delete physical files
@@ -313,6 +312,8 @@ public class RecycleBinService {
             shareHistoryRepository.saveAll(historyList);
             log.info("{} share history record(s) saved", historyList.size());
         }
+
+        restrictedShareOtpRepository.deleteAllByShareLinkFileIdIn(allFileIds);
 
         // Delete share links
         shareLinkRepository.deleteAllByFileIdIn(allFileIds);
