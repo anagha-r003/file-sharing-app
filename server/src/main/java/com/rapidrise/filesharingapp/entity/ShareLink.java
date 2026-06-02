@@ -3,6 +3,8 @@ package com.rapidrise.filesharingapp.entity;
 import com.rapidrise.filesharingapp.enums.ShareType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -45,6 +47,7 @@ public class ShareLink {
     private Boolean hiddenByRecipient = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "file_id", nullable = false)
     private UserFile file;
 
