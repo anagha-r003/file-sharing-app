@@ -152,151 +152,75 @@ public class RecycleBinService {
 
     @Transactional
     public ResponseEntity<ResponseStructure<String>>
-    permanentlyDeleteFiles(
-            List<Long> fileIds
-    ) throws IOException {
-
-        log.info(
-                "Permanent delete request for fileIds: {}",
-                fileIds
-        );
+    permanentlyDeleteFiles(List<Long> fileIds) throws IOException {
 
         if (fileIds == null || fileIds.isEmpty()) {
-
-            throw new InvalidFileException(
-                    "No files selected"
-            );
+            throw new InvalidFileException("No files selected");
         }
 
         User user = SecurityUtil.getCurrentUser();
-
         Set<Long> uniqueIds = new HashSet<>(fileIds);
+        List<Long> uniqueIdList = new ArrayList<>(uniqueIds);
 
-        List<UserFile> files =
-                fileRepository
-                        .findAllByIdInAndUserIdAndIsDeletedTrue(
-                                new ArrayList<>(uniqueIds),
-                                user.getId()
-                        );
+        List<UserFile> files = fileRepository
+                .findAllByIdInAndUserIdAndIsDeletedTrue(uniqueIdList, user.getId());
 
         if (files.size() != uniqueIds.size()) {
-
-            throw new FileNotFoundException(
-                    "One or more files not found"
-            );
+            throw new FileNotFoundException("One or more files not found");
         }
 
         long totalFreedStorage = 0;
+        List<ShareHistory> historyList = new ArrayList<>();
 
-        List<ShareHistory> historyList =
-                new ArrayList<>();
-
+        // Archive share history BEFORE deleting anything
         for (UserFile file : files) {
-
-            // Fetch shares
-            List<ShareLink> shares =
-                    shareLinkRepository.findByFile(file);
-
-            // Convert share -> history
+            List<ShareLink> shares = shareLinkRepository.findByFile(file);
             for (ShareLink share : shares) {
-
                 historyList.add(
                         ShareHistory.builder()
                                 .fileId(file.getId())
                                 .fileName(file.getName())
                                 .fileType(file.getType().name())
                                 .fileSize(file.getSize())
-                                .sharedByUserId(
-                                        share.getCreatedBy().getId()
-                                )
-                                .sharedAt(
-                                        share.getCreatedAt()
-                                )
+                                .sharedByUserId(share.getCreatedBy().getId())
+                                .sharedAt(share.getCreatedAt())
                                 .deletedAt(LocalDateTime.now())
                                 .build()
                 );
             }
+        }
 
-            // Delete shares
-            shareLinkRepository.deleteAll(shares);
+        // Save history
+        shareHistoryRepository.saveAll(historyList);
+        shareLinkRepository.deleteAllByFileIdIn(uniqueIdList);
 
-            // Delete actual file
-//            Files.deleteIfExists(
-//                    Paths.get(file.getPath())
-//            );
-
+        // Delete physical files
+        for (UserFile file : files) {
             Path filePath = Paths.get(file.getPath());
-
             log.info("Deleting file: {}", filePath.toAbsolutePath());
-
             boolean deleted = Files.deleteIfExists(filePath);
-
             log.info("Deleted: {}", deleted);
 
-            // Delete preview if exists
-//            if (file.getPreviewPath() != null) {
-//
-//                Files.deleteIfExists(
-//                        Paths.get(file.getPreviewPath())
-//                );
-//            }
-
             if (file.getPreviewPath() != null) {
-
-                Path previewPath = Paths.get(
-                        uploadDir,
-                        file.getPreviewPath()
-                ).normalize();
-
-                log.info(
-                        "Deleting preview: {}",
-                        previewPath.toAbsolutePath()
-                );
-
-                boolean previewDeleted =
-                        Files.deleteIfExists(previewPath);
-
-                log.info(
-                        "Preview deleted: {}",
-                        previewDeleted
-                );
+                Path previewPath = Paths.get(uploadDir, file.getPreviewPath()).normalize();
+                log.info("Deleting preview: {}", previewPath.toAbsolutePath());
+                boolean previewDeleted = Files.deleteIfExists(previewPath);
+                log.info("Preview deleted: {}", previewDeleted);
             }
 
             totalFreedStorage += file.getSize();
         }
 
-        // Save history
-        shareHistoryRepository.saveAll(historyList);
-
-        // Update storage once
-        user.setStorageUsed(
-                Math.max(
-                        0,
-                        user.getStorageUsed()
-                                - totalFreedStorage
-                )
-        );
-
+        // Update storage
+        user.setStorageUsed(Math.max(0, user.getStorageUsed() - totalFreedStorage));
         userRepository.save(user);
 
-        // Delete DB records
-        fileRepository.permanentlyDeleteFiles(
-                new ArrayList<>(uniqueIds),
-                user.getId()
-        );
+        // Delete file DB records
+        fileRepository.permanentlyDeleteFiles(uniqueIdList, user.getId());
 
-        fileRepository.flush();
+        log.info("{} file(s) permanently deleted", files.size());
 
-        log.info(
-                "{} file(s) permanently deleted",
-                files.size()
-        );
-
-        return ResponseBuilder.build(
-                HttpStatus.OK,
-                "Files permanently deleted",
-                null
-        );
+        return ResponseBuilder.build(HttpStatus.OK, "Files permanently deleted", null);
     }
 
     @Transactional
@@ -342,204 +266,97 @@ public class RecycleBinService {
 
         User user = SecurityUtil.getCurrentUser();
 
-        log.info(
-                "Current user: {} (id={})",
-                user.getEmail(),
-                user.getId()
-        );
+        log.info("Current user: {} (id={})", user.getEmail(), user.getId());
 
         List<UserFile> files =
-                fileRepository
-                        .findAllByUserIdAndIsDeletedTrue(
-                                user.getId()
-                        );
+                fileRepository.findAllByUserIdAndIsDeletedTrue(user.getId());
 
-        log.info(
-                "{} deleted file(s) found in recycle bin",
-                files.size()
-        );
+        log.info("{} deleted file(s) found in recycle bin", files.size());
+
+        if (files.isEmpty()) {
+            Map<String, Object> emptyResponse = new HashMap<>();
+            emptyResponse.put("deletedCount", 0);
+            emptyResponse.put("freedStorageBytes", 0);
+            return ResponseBuilder.build(HttpStatus.OK, "Recycle bin is already empty", emptyResponse);
+        }
 
         long totalFreedStorage = 0;
+        List<ShareHistory> historyList = new ArrayList<>();
+        List<Long> allFileIds = files.stream().map(UserFile::getId).toList();
 
-        List<ShareHistory> historyList =
-                new ArrayList<>();
-
+        // Build share history
         for (UserFile file : files) {
 
-            log.info(
-                    "Processing file: {} (id={})",
-                    file.getName(),
-                    file.getId()
-            );
+            log.info("Processing file: {} (id={})", file.getName(), file.getId());
 
-            // Fetch share links
-            List<ShareLink> shares =
-                    shareLinkRepository.findByFile(file);
+            List<ShareLink> shares = shareLinkRepository.findByFile(file);
 
-            log.info(
-                    "{} share link(s) found for file={}",
-                    shares.size(),
-                    file.getName()
-            );
+            log.info("{} share link(s) found for file={}", shares.size(), file.getName());
 
-            // Save share history
             for (ShareLink share : shares) {
-
                 historyList.add(
                         ShareHistory.builder()
                                 .fileId(file.getId())
                                 .fileName(file.getName())
                                 .fileType(file.getType().name())
                                 .fileSize(file.getSize())
-                                .sharedByUserId(
-                                        share.getCreatedBy().getId()
-                                )
-                                .sharedAt(
-                                        share.getCreatedAt()
-                                )
+                                .sharedByUserId(share.getCreatedBy().getId())
+                                .sharedAt(share.getCreatedAt())
                                 .deletedAt(LocalDateTime.now())
                                 .build()
                 );
             }
-
-            // Delete share links
-            shareLinkRepository.deleteAll(shares);
-
-            log.info(
-                    "Deleted {} share link(s) for file={}",
-                    shares.size(),
-                    file.getName()
-            );
-
-            // Delete actual file
-            Path filePath =
-                    Paths.get(file.getPath())
-                            .normalize();
-
-            log.info(
-                    "Deleting physical file: {}",
-                    filePath.toAbsolutePath()
-            );
-
-            boolean fileDeleted =
-                    Files.deleteIfExists(filePath);
-
-            log.info(
-                    "Physical file deleted = {}",
-                    fileDeleted
-            );
-
-            // Delete preview file
-            if (file.getPreviewPath() != null) {
-
-                Path previewPath =
-                        Paths.get(
-                                uploadDir,
-                                file.getPreviewPath()
-                        ).normalize();
-
-                log.info(
-                        "Deleting preview file: {}",
-                        previewPath.toAbsolutePath()
-                );
-
-                boolean previewDeleted =
-                        Files.deleteIfExists(
-                                previewPath
-                        );
-
-                log.info(
-                        "Preview deleted = {}",
-                        previewDeleted
-                );
-            } else {
-
-                log.info(
-                        "No preview file for {}",
-                        file.getName()
-                );
-            }
-
-            totalFreedStorage +=
-                    file.getSize();
-
-            log.info(
-                    "Freed {} bytes from file={}",
-                    file.getSize(),
-                    file.getName()
-            );
         }
 
         // Save share history
         if (!historyList.isEmpty()) {
-
-            shareHistoryRepository
-                    .saveAll(historyList);
-
-            log.info(
-                    "{} share history record(s) saved",
-                    historyList.size()
-            );
+            shareHistoryRepository.saveAll(historyList);
+            log.info("{} share history record(s) saved", historyList.size());
         }
 
-        // Delete DB records
-        fileRepository.deleteRecycleBinFiles(
-                user.getId()
-        );
+        // Delete share links
+        shareLinkRepository.deleteAllByFileIdIn(allFileIds);
+        log.info("Share links deleted for {} file(s)", allFileIds.size());
 
-        fileRepository.flush();
+        // Delete physical files and previews
+        for (UserFile file : files) {
 
-        log.info(
-                "Deleted recycle bin DB records for userId={}",
-                user.getId()
-        );
+            Path filePath = Paths.get(file.getPath()).normalize();
+            log.info("Deleting physical file: {}", filePath.toAbsolutePath());
+            boolean fileDeleted = Files.deleteIfExists(filePath);
+            log.info("Physical file deleted = {}", fileDeleted);
+
+            if (file.getPreviewPath() != null) {
+                Path previewPath = Paths.get(uploadDir, file.getPreviewPath()).normalize();
+                log.info("Deleting preview file: {}", previewPath.toAbsolutePath());
+                boolean previewDeleted = Files.deleteIfExists(previewPath);
+                log.info("Preview deleted = {}", previewDeleted);
+            } else {
+                log.info("No preview file for {}", file.getName());
+            }
+
+            totalFreedStorage += file.getSize();
+            log.info("Freed {} bytes from file={}", file.getSize(), file.getName());
+        }
+
+        // Delete file DB records
+        fileRepository.deleteRecycleBinFiles(user.getId());
+        log.info("Deleted recycle bin DB records for userId={}", user.getId());
 
         // Update storage
-        long oldStorage =
-                user.getStorageUsed();
-
-        long updatedStorage =
-                Math.max(
-                        0,
-                        oldStorage
-                                - totalFreedStorage
-                );
-
-        user.setStorageUsed(
-                updatedStorage
-        );
-
+        long oldStorage = user.getStorageUsed();
+        long updatedStorage = Math.max(0, oldStorage - totalFreedStorage);
+        user.setStorageUsed(updatedStorage);
         userRepository.save(user);
+        log.info("Storage updated: {} -> {} bytes", oldStorage, updatedStorage);
 
-        log.info(
-                "Storage updated: {} -> {} bytes",
-                oldStorage,
-                updatedStorage
-        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("deletedCount", files.size());
+        response.put("freedStorageBytes", totalFreedStorage);
 
-        Map<String, Object> response =
-                new HashMap<>();
+        log.info("Recycle bin cleared successfully. Deleted {} file(s)", files.size());
 
-        response.put(
-                "deletedCount",
-                files.size()
-        );
-
-        response.put(
-                "freedStorageBytes",
-                totalFreedStorage
-        );
-
-        log.info(
-                "Recycle bin cleared successfully. Deleted {} file(s)",
-                files.size()
-        );
-
-        return ResponseBuilder.build(
-                HttpStatus.OK,
-                "Recycle bin cleared successfully",
-                response
-        );
+        return ResponseBuilder.build(HttpStatus.OK, "Recycle bin cleared successfully", response);
     }
     public ResponseEntity<ResponseStructure<RecycleBinStatsResponse>>
     getRecycleBinStats() {
