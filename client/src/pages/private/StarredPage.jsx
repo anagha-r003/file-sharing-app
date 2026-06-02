@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import FileTable from "../../components/myfiles/FileTable"; // Reuse your existing table logic
 import { getStarredFiles } from "../../services/fileService";
 import { usePageSettings } from "../../context/LayoutContext";
+import RenameModal from "../../common/ui/RenameModal";
+import { renameFile } from "../../services/fileService";
+import Toast from "../../components/sharedlink/Toast";
 
 function StarredPage() {
   const [starredFiles, setStarredFiles] = useState(null);
@@ -13,6 +16,14 @@ function StarredPage() {
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  const [renamingFile, setRenamingFile] = useState(null);
+
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "success",
+  });
 
   const fetchStarredData = async () => {
     setLoading(true);
@@ -37,6 +48,41 @@ function StarredPage() {
           )
         : prev.content.filter((file) => file.id !== updatedFile.id),
     }));
+    showToast(`"${updatedFile.name}" unstarred successfully`, "success");
+  };
+
+  const showToast = (message, type = "success") => {
+    setToast({
+      visible: true,
+      message,
+      type,
+    });
+
+    setTimeout(() => {
+      setToast((t) => ({
+        ...t,
+        visible: false,
+      }));
+    }, 3000);
+  };
+
+  const handleRename = async (file, newName) => {
+    try {
+      await renameFile(file.id, newName);
+
+      const updatedFile = {
+        ...file,
+        name: newName,
+      };
+
+      handleFileUpdate(updatedFile);
+
+      setRenamingFile(null);
+
+      showToast(`"${newName}" renamed successfully`, "success");
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Rename failed", "error");
+    }
   };
 
   useEffect(() => {
@@ -78,6 +124,8 @@ function StarredPage() {
             setPageSize={setPageSize}
             onRefresh={() => fetchStarredData()}
             onFileUpdate={handleFileUpdate}
+            onRename={setRenamingFile}
+            showToast={showToast}
             showStats={false}
           />
         ) : (
@@ -96,6 +144,22 @@ function StarredPage() {
             </p>
           </div>
         )}
+
+        {renamingFile && (
+          <RenameModal
+            isOpen={!!renamingFile}
+            currentName={renamingFile.name}
+            type="file"
+            onClose={() => setRenamingFile(null)}
+            onSave={(newName) => handleRename(renamingFile, newName)}
+          />
+        )}
+
+        <Toast
+          message={toast.message}
+          visible={toast.visible}
+          type={toast.type}
+        />
       </div>
     </>
   );
