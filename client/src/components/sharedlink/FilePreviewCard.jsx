@@ -18,7 +18,7 @@ export default function FilePreviewCard({
   const lowerType = fileType?.toLowerCase();
   const isPdf = lowerType === "pdf";
   const isImage = ["png", "jpg", "jpeg", "webp", "gif"].includes(lowerType);
-  const isVideo = ["mp4", "webm", "ogg"].includes(lowerType);
+  const isVideo = ["mp4", "webm", "ogg", "mkv"].includes(lowerType);
 
   // Format expiry date nicely
   const formatDate = (dateStr) => {
